@@ -49,13 +49,13 @@ bool Number::operator==(const Number& num) const
 const std::string Number::to_string()
 {
 	std::string result;
-	result.resize(64+8,'\n');
+	result.resize(64 + 8,'\n');
 	unsigned long long tmp = num_;
 	
-	for (int i = 63; i>=0; i--)
+	for (int i = 63; i >= 0; i--)
 		{
-			result[i+i/8]=(tmp&1);
-			tmp>>=1;
+			result[i+i/8] = '0' + (tmp&1);
+			tmp >>= 1;
 		}
 	return result;
 }	
