@@ -1,11 +1,13 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <stdint.h>
+
 namespace pismo
 {
 	typedef uint64_t Bitboard;
 
-	enum Color { WHITE = 0, BLACK}
+	enum Color { WHITE = 0, BLACK};
 
 	enum Piece { PAWN_WHITE = 0, KNIGHT_WHITE, BISHOP_WHITE,
 		ROOK_WHITE, QUEEN_WHITE, KING_WHITE, PAWN_BLACK, KNIGHT_BLACK,

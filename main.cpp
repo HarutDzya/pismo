@@ -1,9 +1,13 @@
 #include <iostream>
-#include "bitboard.h"
+#include "Position.h"
 
 
 int main()
 {
-	Bitboard testboard=Number(0xFFFF00000000FFFF);
-	std::cout<<testboard.to_string();
+	using namespace pismo;
+	Position pos;
+	std::vector<std::pair<Square, Piece> > pcs;
+	pcs.push_back(std::pair<Square, Piece>(C2, BISHOP_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(B5, KING_BLACK));
+	pos.init_position(pcs);
 }

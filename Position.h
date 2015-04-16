@@ -13,9 +13,9 @@ public:
 	Position();
 
 
-	set_piece(Square s, Piece p);
+	void set_piece(Square s, Piece p);
 
-	init_position(<std::vector<std::pair<Square, Piece> > pieces); 
+	void init_position(const std::vector<std::pair<Square, Piece> >& pieces); 
 
 
 //data members
