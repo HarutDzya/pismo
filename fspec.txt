@@ -1,0 +1,4 @@
+1. though postion is more conventional naiming, maybe we should rename it to state (or PositionState)?
+because Position class not only describes current position of pieces but also state (dynamics) of position
+like move turn or if king is checked etc.
+
