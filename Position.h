@@ -16,6 +16,9 @@ public:
 	void set_piece(Square s, Piece p);
 
 	void init_position(const std::vector<std::pair<Square, Piece> >& pieces); 
+	bool move_is_legal(Square from, Square to) const;
+	void move(Square from, Square to);
+	void print() const;
 
 
 //data members
