@@ -47,6 +47,16 @@ public:
 	*/
 	void print_single() const;
 
+//private member functions
+private:
+	bool move_legal_pawn(Square from, Square to, Color clr) const;
+	bool move_legal_knight(Square from, Square to, Color clr) const;
+	bool move_legal_bishop(Square from, Square to, Color clr) const;
+	bool move_legal_rook(Square from, Square to, Color clr) const;
+	bool move_legal_queen(Square from, Square to, Color clr) const;
+	bool move_legal_king(Square from, Square to, Color clr) const;
+	bool en_passant(Square from, Square to, Color clr) const;
+
 //data members
 private:
 	Piece board[8][8];
@@ -58,6 +68,8 @@ private:
 	bool whiteToPlay;
 	//true - if the movers king is under attack
 	bool kingUnderAttack;
+	// the file number of possible en_passant, -1 if none
+	int enPassantFile;
 };
 
 }
