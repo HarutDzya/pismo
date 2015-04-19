@@ -1,11 +1,11 @@
-run: Position.o main.o
-	g++ -g main.o Position.o
+run: PositionState.o main.o
+	g++ -g main.o PositionState.o
 
-Position.o: Position.cpp Position.h utils.h
-	g++ -g -c Position.cpp -o Position.o
+PositionState.o: PositionState.cpp 
+	g++ -g -c PositionState.cpp -o PositionState.o
 
-main.o: main.cpp Position.h utils.h
+main.o: main.cpp 
 	g++ -g -c main.cpp -o main.o
 
 clean:
-	rm -rf main.o Position.o a.out
+	rm -rf main.o PositionState.o a.out
