@@ -17,59 +17,75 @@ public:
 
 	void init_position(const std::vector<std::pair<Square, Piece> >& pieces); 
 	/*
-	Checks only the presence of the piece in Square from, whether it 
-	is that peice turn and the emptiness of the Square to
+	Checks all the rules of the game for legality of the move
+	even if it involves capture of the opponent piece
 	*/
-	bool move_is_legal(Square from, Square to) const;
+	bool move_is_legal(const move_info& move, move_type& type) const;
 	
 	/*
 	Makes a move if the move if legal according to the move_is_legal
 	method
 	*/
-	void move(Square from, Square to);
+	void make_move(const move_info& move);
+	
 	
 	/*
-	Checks all the rules of the game for legality of the move
-	even if it involves capture of the opponent piece
+	Prints board for white pieces using information from 
+	_white_pieces Bitboard
 	*/
-	bool move_is_legal_full(Square from, Square to) const;
+	void print_white_pieces() const;
 	
 	/*
-	Prints two boards for white and black pieces seperately
-	using information from whitePieces Bitboard and blackPieces
-	Bitboard
+	Prints board for black pieces using information from 
+	_black_pieses Bitboard
 	*/
-	void print_double() const;
+	void print_black_pieces() const;
+
 
 	/*
 	Prints single board for both pieces using information
-	from board array
+	from _board array
 	*/
-	void print_single() const;
+	void print_board() const;
 
 //private member functions
 private:
-	bool move_legal_pawn(Square from, Square to, Color clr) const;
-	bool move_legal_knight(Square from, Square to, Color clr) const;
-	bool move_legal_bishop(Square from, Square to, Color clr) const;
-	bool move_legal_rook(Square from, Square to, Color clr) const;
-	bool move_legal_queen(Square from, Square to, Color clr) const;
-	bool move_legal_king(Square from, Square to, Color clr) const;
-	bool en_passant(Square from, Square to, Color clr) const;
+	bool pawn_move_is_legal(const move_info& move) const;
+	bool knight_move_is_legal(const move_info& move) const;
+	bool bishop_move_is_legal(const move_info& move) const;
+	bool rook_move_is_legal(const move_info& move) const;
+	bool queen_move_is_legal(const move_info& move) const;
+	bool king_move_is_legal(const move_info& move) const;
+	bool en_passant_is_legal(const move_info& move) const;
+	
 
+	void make_normal_move(const move_info& move);
+	void make_castling_move(const move_info& move);
+	void make_en_passant_move(const move_info& move);
+	void make_en_passant_capture(const move_info& move);
+	void make_promotion_move(const move_info& move);
 //data members
 private:
-	Piece board[8][8];
+	Piece _board[8][8];
 
-	Bitboard whitePieces;
-	Bitboard blackPieces;
+	Bitboard _white_pieces;
+	Bitboard _black_pieces;
+
+	Count _white_pieces_count[PIECE_NB / 2];
+	Count _black_pieces_count[PIECE_NB / 2];
 
 	//true - if white's move, false - black's move
-	bool whiteToPlay;
+	bool _white_to_play;
 	//true - if the movers king is under attack
-	bool kingUnderAttack;
+	bool _king_under_attack;
 	// the file number of possible en_passant, -1 if none
-	int enPassantFile;
+	int _en_passant_file;
+
+	// true if appropriate castling is allowed
+	bool _white_left_castling;
+	bool _white_right_castling;
+	bool _black_left_castling;
+	bool _black_right_castling;
 };
 
 }

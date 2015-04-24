@@ -4,27 +4,51 @@
 namespace pismo
 {
 
-PositionState::PositionState() : whiteToPlay(true), kingUnderAttack(false), enPassantFile(-1), whitePieces(0), blackPieces(0)
+PositionState::PositionState() : 
+_white_to_play(true),
+_king_under_attack(false),
+_en_passant_file(-1),
+_white_pieces(0), 
+_black_pieces(0)
+_white_left_castling(true);
+_white_right_castling(true);
+_black_left_castling(true);
+_black_right_castling(true);
 {
-	for(int i = 0; i < 8; ++i)
-		for(int j = 0; j < 8; ++j)
-			board[i][j] = ETY_SQUARE;
+	for(int i = 0; i < 8; ++i) {
+		for(int j = 0; j < 8; ++j) {
+			_board[i][j] = ETY_SQUARE;
+		}
+	}
+	for(int i = 0; i < PIECE_NB / 2; ++i) {
+		_white_pieces_count[i] = 0;
+		_black_pieces_count[i] = 0;
+	} 
 }
 
 void PositionState::set_piece(Square s, Piece p)
 {
-	board[s / 8][s % 8] = p;
+	_board[s / 8][s % 8] = p;
 	Bitboard tmp = 1;
-	if(p <= KING_WHITE)
-		whitePieces |= (tmp << s);
-	else
-		blackPieces |= (tmp << s);
+	if(p <= KING_WHITE) {
+		_white_pieces |= (tmp << s);
+	}
+	else {
+		_black_pieces |= (tmp << s);
+	}
 }
 
 void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& pieces)
 {
-	for(std::size_t i = 0; i < pieces.size(); ++i)
+	for(std::size_t i = 0; i < pieces.size(); ++i) {
 		set_piece(pieces[i].first, pieces[i].second);
+		if (pieces[i].second <= KING_WHITE) {
+			++(_white_pieces_count[pieces[i].second]);
+		}
+		else {
+			++(_black_pieces_count[pieces[i].second % (PIECE_NB / 2)]);
+		}
+	}
 }
 
 bool PositionState::move_is_legal(Square from, Square to) const
@@ -39,38 +63,201 @@ bool PositionState::move_is_legal(Square from, Square to) const
 		return false;
 }
 
-void PositionState::move(Square from, Square to)
+void PositionState::make_move(const move_info& move)
 {
-	if (move_is_legal(from, to))
-	{
-		Bitboard tmp = 1;
-		Piece pfrom = board[from / 8][from % 8];
-		if (pfrom <= KING_WHITE)
-		{
-			whitePieces ^= (tmp << from);
-			whitePieces |= (tmp << to);
+	move_type type;
+	if (move_is_legal(move, type)) {
+	switch(type) {
+		case NORMAL_MOVE: 
+			make_normal_move(move);
+			break;
+		case CASTLING:
+			make_castling_move(move);
+			break;
+		case EN_PASSANT_MOVE:
+			make_en_passant_move(move);
+			break;
+		case EN_PASSANT_CAPTURE:
+			make_en_passant_capture(move);
+			break;
+		case PROMOTION:
+			make_promotion_move(move);
+			break;
+	}
+	
+	if (white_to_play) {
+		if (white_left_castling || white_right_castling) {
+			if (_board[E1 / 8][E1 % 8] != KING_WHITE){
+				white_left_castling = false;
+				white_right_castling = false;
+			}
+			else if (_board[A1 / 8][A1 % 8] != ROOK_WHITE) {
+				white_left_castling = false;
+			}
+			else if (_board[H1 / 8][H1 % 8] != ROOK_WHITE) {
+				white_right_castling = false;
+			}
 		}
-		else
-		{
-			blackPieces ^= (tmp << from);
-			blackPieces |= (tmp << to);
+		// todo : check if black king is under attack
+	}
+	else {
+		if (black_left_castling || black_right_castling) {
+			if (_board[E8 / 8][E8 % 8] != KING_BLACK){
+				black_left_castling = false;
+				black_right_castling = false;
+			}
+			else if (_board[A8 / 8][A8 % 8] != ROOK_BLACK) {
+				black_left_castling = false;
+			}
+			else if (_board[H8 / 8][H8 % 8] != ROOK_BLACK) {
+				black_right_castling = false;
+			}
 		}
-		board[from / 8][from % 8] = ETY_SQUARE;
-		board[to / 8][to % 8] = pfrom;
-		whiteToPlay = !whiteToPlay;
+		// todo : check if white king is under attack
+	}
+	
+	white_to_play = !white_to_play;
 	}
 }
 
-void PositionState::print_double() const
+void PositionState::make_normal_move(const move_info& move)
+{
+	Bitboard tmp = 1;
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	if (white_to_play) {			
+		_white_pieces ^= (tmp << move.from);
+		_white_pieces |= (tmp << move.to);
+		if (_board[move.to / 8][move.to % 8] != ETY_SQAURE) {
+			_black_pieces ^= (tmp << move.to);
+			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
+		}
+	}
+	else {
+		_black_pieces ^= (tmp << move.from);
+		_black_pieces |= (tmp << move.to);
+		if (_board[move.to / 8][move.to % 8] != ETY_SQAURE) {
+			_white_pieces ^= (tmp << move.to);
+			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
+		}
+	}
+	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
+	_board[move.to / 8][move.to % 8] = pfrom;
+	_en_passant_file = -1;				
+}
+
+void PositionState::make_castling_move(const move_info& move)
+{
+	if (white_to_play) {
+		if (move.from < move.to) {
+			_white_pieces ^= WHITE_RIGHT_CASTLING;	
+			_board[move.from / 8][move.from % 8] = ETY_SQAURE;
+			_board[move.to / 8][move.to % 8] = KING_WHITE;
+			_board[move.to / 8][move.to % 8 + 1] = ETY_SQUARE;
+			_board[move.to / 8][move.to % 8 - 1] = ROOK_WHITE;
+		}	
+		else {
+			_white_pieces ^= WHITE_LEFT_CASTLING;	
+			_board[move.from / 8][move.from % 8] = ETY_SQAURE;
+			_board[move.to / 8][move.to % 8] = KING_WHITE;
+			_board[move.to / 8][move.to % 8 - 2] = ETY_SQUARE;
+			_board[move.to / 8][move.to % 8 + 1] = ROOK_WHITE;
+		}
+	}
+	else {
+		if (move.from < move.to) {
+			_black_pieces ^= BLACK_RIGHT_CASTLING;	
+			_board[move.from / 8][move.from % 8] = ETY_SQAURE;
+			_board[move.to / 8][move.to % 8] = KING_BLACK;
+			_board[move.to / 8][move.to % 8 + 1] = ETY_SQUARE;
+			_board[move.to / 8][move.to % 8 - 1] = ROOK_BLACK;
+		}	
+		else {
+			_black_pieces ^= BLACK_LEFT_CASTLING;	
+			_board[move.from / 8][move.from % 8] = ETY_SQAURE;
+			_board[move.to / 8][move.to % 8] = KING_BLACK;
+			_board[move.to / 8][move.to % 8 - 2] = ETY_SQUARE;
+			_board[move.to / 8][move.to % 8 + 1] = ROOK_BLACK;
+		}
+
+}
+
+void PositionState::make_en_passant_move(const move_info& move)
+{
+	Bitboard tmp = 1;
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	if (white_to_play) {
+		_white_pieces ^= (tmp << move.from);
+		_white_pieces |= (tmp << move.to);
+	}
+	else {
+		_balck_pieces ^= (tmp << move.from);
+		_balck_pieces |= (tmp << move.to);
+	}	
+	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
+	_board[move.to / 8][move.to % 8] = pfrom;
+	_en_passant_file = move.from % 8;					
+}
+
+void PositionState::make_en_passant_capture(const move_info& move)
+{
+	Bitboard tmp = 1;
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	if (white_to_play) {
+		_white_pieces ^= (tmp << move.from);
+		_white_pieces |= (tmp << move.to);
+		_black_pieces ^= (tmp << (move.to - 8));
+		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
+		_board[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
+	}
+	else {
+		_balck_pieces ^= (tmp << move.from);
+		_black_pieces |= (tmp << move.to);
+		_white_pieces ^= (tmp << (move.to + 8));
+		--(_white_pieces_count[PAWN_WHITE]);
+		_board[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
+		
+	}
+	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
+	_board[move.to / 8][move.to % 8] = pfrom;
+	_en_passant_file = -1;
+}
+
+void PositionState::make_promotion_move(const move_info& move)
+{
+	Bitboard tmp = 1;
+	if (white_to_play) {
+		_white_pieces ^= (tmp << move.from);
+		_white_pieces |= (tmp << move.to);
+		if (_board[move.to / 8][move.to % 8] != ETY_SQAURE) {
+			_black_pieces ^= (tmp << move.to);
+			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
+		}
+		--(_white_pieces_count[_board[move.from / 8][move.from % 8]]);
+		++(_white_pieces_count[move.promoted]);
+	}
+	else {
+		_black_pieces ^= (tmp << move.from);
+		_black_pieces |= (tmp << move.to);
+		if (_board[move.to / 8][move.to % 8] != ETY_SQAURE) {
+			_white_pieces ^= (tmp << move.to);
+			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
+		}
+		--(_black_pieces_count[_board[move.from / 8][move.from % 8] % (PIECE_NB / 2)]);
+		++(_black_pieces_count[move.promoted % (PIECE_NB / 2)]);
+		
+		}
+	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
+	_board[move.to / 8][move.to % 8] = move.promoted;
+	_en_passant_file = -1;
+}
+
+void PositionState::print_white_pieces() const
 {
 	std::cout << "White pieces:" << std::endl;
-	for(int i = 7; i >= 0; --i)
-	{
-		for(int j = 0; j < 8; ++j)
-		{
-			if ((whitePieces >> (i * 8 + j)) & 1)	
-				switch(board[i][j])
-				{
+	for(int i = 7; i >= 0; --i) {
+		for(int j = 0; j < 8; ++j) {
+			if ((_white_pieces >> (i * 8 + j)) & 1) {	
+				switch(_board[i][j]) {
 					case PAWN_WHITE: std::cout << "P ";
 						break;
 					case KNIGHT_WHITE: std::cout << "K ";
@@ -83,22 +270,27 @@ void PositionState::print_double() const
 						break;
 					case KING_WHITE: std::cout << "K ";
 						break;
+					default: std::cout << "X "; 
 				}
-			else
+			}
+			else {
 				std::cout << "E ";
-		if (j == 7)
-			std::cout << std::endl;
+			}
+			
+			if (j == 7) {
+				std::cout << std::endl;
+			}
 		}
 	}
+}
 
+void PositionState::print_black_pieces() const
+{
 	std::cout << "Black pieces:" << std::endl;
-	for(int i = 7; i >= 0; --i)
-	{
-		for(int j = 0; j < 8; ++j)
-		{
-			if ((blackPieces >> (i * 8 + j)) & 1)	
-				switch(board[i][j])
-				{
+	for(int i = 7; i >= 0; --i) {
+		for(int j = 0; j < 8; ++j) {
+			if ((_black_pieces >> (i * 8 + j)) & 1) {	
+				switch(_board[i][j]) {
 					case PAWN_BLACK: std::cout << "P ";
 						break;
 					case KNIGHT_BLACK: std::cout << "K ";
@@ -111,24 +303,26 @@ void PositionState::print_double() const
 						break;
 					case KING_BLACK: std::cout << "K ";
 						break;
+					default: std::cout << "X ";
 				}
-			else
+			}
+			else {
 				std::cout << "E ";
-		if (j == 7)
-			std::cout << std::endl;
+			}
+
+			if (j == 7) {
+				std::cout << std::endl;
+			}
 		}
 	}
 }
 
-void PositionState::print_single() const
+void PositionState::print_board() const
 {
 	std::cout << "Complete board" << std::endl; 
-	for(int i = 7; i >= 0; --i)
-	{
-		for(int j = 0; j < 8; ++j)
-		{
-			switch(board[i][j])
-			{
+	for(int i = 7; i >= 0; --i) {
+		for(int j = 0; j < 8; ++j) {
+			switch(_board[i][j]) {
 				case PAWN_WHITE: std::cout << "PW ";
 					break;
 				case KNIGHT_WHITE: std::cout << "KW ";
@@ -159,8 +353,9 @@ void PositionState::print_single() const
 					break;
 			}
 			
-			if (j == 7)
+			if (j == 7) {
 				std::cout << std::endl;
+			}
 		}
 	}
 }
