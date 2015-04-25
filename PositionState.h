@@ -50,13 +50,14 @@ public:
 
 //private member functions
 private:
-	bool pawn_move_is_legal(const move_info& move) const;
+	bool pawn_move_is_legal(const move_info& move, move_type& type) const;
 	bool knight_move_is_legal(const move_info& move) const;
 	bool bishop_move_is_legal(const move_info& move) const;
 	bool rook_move_is_legal(const move_info& move) const;
 	bool queen_move_is_legal(const move_info& move) const;
 	bool king_move_is_legal(const move_info& move) const;
-	bool en_passant_is_legal(const move_info& move) const;
+	bool en_passant_capture_is_legal(const move_info& move) const;
+	bool castling_is_legal(const move_info& move) const;
 	
 
 	void make_normal_move(const move_info& move);
@@ -64,6 +65,8 @@ private:
 	void make_en_passant_move(const move_info& move);
 	void make_en_passant_capture(const move_info& move);
 	void make_promotion_move(const move_info& move);
+
+	void update_castling_variables();
 //data members
 private:
 	Piece _board[8][8];

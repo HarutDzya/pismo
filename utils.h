@@ -40,16 +40,18 @@ struct move_info {
 };
 
 enum move_type {
-	NORMAL_MOVE = 0, CASTLING,
+	NORMAL_MOVE = 0, CASTLING_MOVE,
 	EN_PASSANT_MOVE, EN_PASSANT_CAPTURE,
-	PROMOTION
+	PROMOTION_MOVE
 };
 
 const Bitboard WHITE_RIGHT_CASTLING = 0x00000000000000F0; // Bitboard of squares involved in right castling of white
 const Bitboard WHITE_LEFT_CASTLING = 0x000000000000001D; // Bitboard of squares involved in left castling of white
 const Bitboard BLACK_RIGHT_CASTLING = 0xF000000000000000; // Bitboard of squares involved in right castling of black
-const Bitboard BALCK_LEFT_CASTLING =  0x1D00000000000000; // Bitboard of squares involved in left castling of black 
+const Bitboard BLACK_LEFT_CASTLING =  0x1D00000000000000; // Bitboard of squares involved in left castling of black 
 
+const Bitboard PAWN_WHITE_INIT = 0x000000000000FF00; // Bitboard of white pawn initial position
+const Bitboard PAWN_BLACK_INIT = 0x00FF000000000000; // Bitboard of black pawn initial position
 }
 
 #endif //UTILS_H_
