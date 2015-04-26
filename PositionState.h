@@ -26,7 +26,8 @@ public:
 	Makes a move if the move if legal according to the move_is_legal
 	method
 	*/
-	void make_move(const move_info& move);
+	//Temporary changed the return value to bool
+	bool make_move(const move_info& move);
 	
 	
 	/*

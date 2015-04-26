@@ -40,7 +40,7 @@ void PositionState::set_piece(Square s, Piece p)
 
 void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& pieces)
 {
-	//TODO: check position validity
+	//TODO: check init position validity
 
 	for(std::size_t i = 0; i < pieces.size(); ++i) {
 		set_piece(pieces[i].first, pieces[i].second);
@@ -123,7 +123,6 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 	Bitboard tmp = 1;
 	Bitboard init;
 	if (_white_to_play) {
-		init = PAWN_WHITE_INIT;
 		// Checks for single square movement of the pawn
 		if (move.to - move.from == 8 && ((tmp << move.to) ^ _black_pieces)) {
 			if (move.to >= A8) {
@@ -136,13 +135,14 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 			}
 		}
 		// Checks for the move of pawn from game starting position
-		else if (move.to - move.from == 16 && ((tmp << move.from) & init) &&
+		else if (move.to - move.from == 16 && ((tmp << move.from) & PAWN_WHITE_INIT) &&
 		!((tmp << (move.from + 8)) & (_white_pieces | _black_pieces)) && ((tmp << move.to) ^ _black_pieces)) {
 			type = EN_PASSANT_MOVE;
 			result = true;
 		}
-		// Checks for usual capture movement of the pawn
-		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (tmp << move.to & _black_pieces)) {
+		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
+		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (tmp << move.to & _black_pieces)
+		&& (move.to / 8 - move.from / 8) == 1) {
 			if (move.to >= A8) {
 				type = PROMOTION_MOVE;
 				result = true;
@@ -158,7 +158,6 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 		}
 	}
 	else {
-		init = PAWN_BLACK_INIT;
 		// Checks for single square movement of the pawn
 		if (move.from - move.to == 8 && ((tmp << move.to) ^ _white_pieces)) {
 			if (move.to <= H1) {
@@ -171,13 +170,14 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 			}
 		}
 		// Checks for the move of pawn from game starting position
-		else if (move.from - move.to == 16 && ((tmp << move.from) & init) &&
+		else if (move.from - move.to == 16 && ((tmp << move.from) & PAWN_BLACK_INIT) &&
 		!((tmp << (move.from - 8)) & (_white_pieces | _black_pieces)) && ((tmp << move.to) ^ _white_pieces)) {
 			type = EN_PASSANT_MOVE;
 			result = true;
 		}
-		// Checks for usual capture movement of the pawn
-		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (tmp << move.to & _white_pieces)) {
+		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
+		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (tmp << move.to & _white_pieces)
+		&& (move.from / 8 - move.to / 8) == 1) {
 			if (move.to <= H1) {
 				type = PROMOTION_MOVE;
 				result = true;
@@ -261,7 +261,7 @@ bool PositionState::castling_is_legal(const move_info& move) const
 	return true;
 }
 
-void PositionState::make_move(const move_info& move)
+bool PositionState::make_move(const move_info& move)
 {
 	move_type type;
 	if (move_is_legal(move, type)) {
@@ -288,7 +288,9 @@ void PositionState::make_move(const move_info& move)
 	// accordingly
 	
 	_white_to_play = !_white_to_play;
+	return true;
 	}
+	return false;
 }
 
 void PositionState::make_normal_move(const move_info& move)
