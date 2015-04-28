@@ -125,7 +125,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 	if (_white_to_play) {
 		// Checks for single square movement of the pawn
 		if (move.to - move.from == 8 && ((tmp << move.to) ^ _black_pieces)) {
-			if (move.to >= A8) {
+			if (move.to >= A8 && move.promoted > PAWN_WHITE && move.promoted < KING_WHITE ) {
 				type = PROMOTION_MOVE;
 				result = true;
 			}
@@ -143,7 +143,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
 		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (tmp << move.to & _black_pieces)
 		&& (move.to / 8 - move.from / 8) == 1) {
-			if (move.to >= A8) {
+			if (move.to >= A8 && move.promoted > PAWN_WHITE && move.promoted < KING_WHITE) {
 				type = PROMOTION_MOVE;
 				result = true;
 			}
@@ -160,7 +160,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 	else {
 		// Checks for single square movement of the pawn
 		if (move.from - move.to == 8 && ((tmp << move.to) ^ _white_pieces)) {
-			if (move.to <= H1) {
+			if (move.to <= H1 && move.promoted > PAWN_BLACK && move.promoted < KING_BLACK) {
 				type = PROMOTION_MOVE;
 				result = true;
 			}
@@ -178,7 +178,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
 		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (tmp << move.to & _white_pieces)
 		&& (move.from / 8 - move.to / 8) == 1) {
-			if (move.to <= H1) {
+			if (move.to <= H1 && move.promoted > PAWN_BLACK && move.promoted < KING_BLACK) {
 				type = PROMOTION_MOVE;
 				result = true;
 			}
@@ -406,7 +406,7 @@ void PositionState::make_promotion_move(const move_info& move)
 			_black_pieces ^= (tmp << move.to);
 			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
 		}
-		--(_white_pieces_count[_board[move.from / 8][move.from % 8]]);
+		--(_white_pieces_count[PAWN_WHITE]);
 		++(_white_pieces_count[move.promoted]);
 	}
 	else {
@@ -416,7 +416,7 @@ void PositionState::make_promotion_move(const move_info& move)
 			_white_pieces ^= (tmp << move.to);
 			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
 		}
-		--(_black_pieces_count[_board[move.from / 8][move.from % 8] % (PIECE_NB / 2)]);
+		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
 		++(_black_pieces_count[move.promoted % (PIECE_NB / 2)]);
 		
 		}
