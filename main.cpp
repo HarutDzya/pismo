@@ -19,13 +19,19 @@ int main()
 		pcs.push_back(std::pair<Square, Piece>((Square)(8 + i), PAWN_WHITE));
 		pcs.push_back(std::pair<Square, Piece>((Square)(6 * 8 + i), PAWN_BLACK));
 	}
+	pcs.push_back(std::pair<Square, Piece>(B1, KNIGHT_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(G1, KNIGHT_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(B8, KNIGHT_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(G8, KNIGHT_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(E1, KING_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(E8, KING_BLACK));
 	pos.init_position(pcs);
 	pos.print_board();
 	std::cout << "Please enter next move (q to stop the game)" << std::endl;
 	std::string sqfrom;
 	std::string sqto;
 	std::string prom;
-	while (std::cin >> sqfrom && sqfrom != "q" && std::cin >> sqto && std::cin >> prom) {
+	while (std::cin >> sqfrom && sqfrom != "q" && std::cin >> sqto && std::getline(std::cin, prom)) {
 		move_info move;
 		if(prom == "QW") {
 			move.from = board_rep[sqfrom];
@@ -43,7 +49,8 @@ int main()
 			move.promoted = ETY_SQUARE;
 		}
 	
-  		if (pos.make_move(move)) {
+  		if (pos.move_is_legal(move)) {
+			pos.make_move(move);
 			pos.print_board();
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}

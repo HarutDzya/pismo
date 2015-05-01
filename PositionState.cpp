@@ -1,4 +1,6 @@
 #include "PositionState.h"
+#include <assert.h>
+#include <cstdlib>
 #include <iostream>
 
 namespace pismo
@@ -53,19 +55,13 @@ void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& 
 	}
 }
 
-bool PositionState::move_is_legal(const move_info& move, move_type& type) const
+bool PositionState::move_is_legal(const move_info& move) const
 {
 	Piece pfrom = _board[move.from  / 8][move.from % 8];
 	Piece pto = _board[move.to  / 8][move.to % 8];
-	type = NORMAL_MOVE;
 	Bitboard tmp = 1;
 	if(pfrom == ETY_SQUARE) {
 		return false;
-	}
-
-	if((pfrom == KING_WHITE && pto == ROOK_WHITE) || (pfrom == KING_BLACK && pto == ROOK_BLACK)) {
-		type = CASTLING_MOVE;
-		return castling_is_legal(move);
 	}
 
 	if(_white_to_play) {
@@ -75,8 +71,8 @@ bool PositionState::move_is_legal(const move_info& move, move_type& type) const
 		else {
 			switch(pfrom) {
 				case PAWN_WHITE: 
-					return pawn_move_is_legal(move, type);
-				case KNIGHT_WHITE: 
+					return pawn_move_is_legal(move);
+				case KNIGHT_WHITE:
 					return knight_move_is_legal(move);
 				case BISHOP_WHITE:
 					return bishop_move_is_legal(move);
@@ -85,7 +81,12 @@ bool PositionState::move_is_legal(const move_info& move, move_type& type) const
 				case QUEEN_WHITE:
 					return queen_move_is_legal(move);
 				case KING_WHITE:
-					return king_move_is_legal(move);
+					if (std::abs(move.from % 8 - move.to % 8) > 1) { 
+						return castling_is_legal(move);
+					}
+					else { 
+						return king_move_is_legal(move);
+					}
 				default: 
 					return false;
 			}
@@ -98,7 +99,7 @@ bool PositionState::move_is_legal(const move_info& move, move_type& type) const
 		else {
 			switch(pfrom) {
 				case PAWN_BLACK: 
-					return pawn_move_is_legal(move, type);
+					return pawn_move_is_legal(move);
 				case KNIGHT_BLACK: 
 					return knight_move_is_legal(move);
 				case BISHOP_BLACK:
@@ -108,7 +109,12 @@ bool PositionState::move_is_legal(const move_info& move, move_type& type) const
 				case QUEEN_BLACK:
 					return queen_move_is_legal(move);
 				case KING_BLACK:
-					return king_move_is_legal(move);
+					if (std::abs(move.from % 8 - move.to % 8) > 1) { 
+						return castling_is_legal(move);
+					}
+					else { 
+						return king_move_is_legal(move);
+					}
 				default: 
 					return false;
 			}
@@ -117,78 +123,60 @@ bool PositionState::move_is_legal(const move_info& move, move_type& type) const
 
 }
 
-bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) const
+bool PositionState::pawn_move_is_legal(const move_info& move) const
 {
 	bool result = false; 
 	Bitboard tmp = 1;
 	Bitboard init;
 	if (_white_to_play) {
+		assert(move.from > H1);
 		// Checks for single square movement of the pawn
 		if (move.to - move.from == 8 && ((tmp << move.to) ^ _black_pieces)) {
-			if (move.to >= A8 && move.promoted > PAWN_WHITE && move.promoted < KING_WHITE ) {
-				type = PROMOTION_MOVE;
-				result = true;
+			if (move.to >= A8) {
+				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
-			else {
-				type = NORMAL_MOVE;
-				result = true;
-			}
+			result = true;
 		}
 		// Checks for the move of pawn from game starting position
 		else if (move.to - move.from == 16 && ((tmp << move.from) & PAWN_WHITE_INIT) &&
 		!((tmp << (move.from + 8)) & (_white_pieces | _black_pieces)) && ((tmp << move.to) ^ _black_pieces)) {
-			type = EN_PASSANT_MOVE;
 			result = true;
 		}
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
 		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (tmp << move.to & _black_pieces)
 		&& (move.to / 8 - move.from / 8) == 1) {
-			if (move.to >= A8 && move.promoted > PAWN_WHITE && move.promoted < KING_WHITE) {
-				type = PROMOTION_MOVE;
-				result = true;
+			if (move.to >= A8) {
+				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
-			else {
-				type = NORMAL_MOVE;
-				result = true;
-			}
+			result = true;
 		}
 		else if (en_passant_capture_is_legal(move)) {
-			type = EN_PASSANT_CAPTURE;
 			result = true;
 		}
 	}
 	else {
 		// Checks for single square movement of the pawn
+		assert(move.from < A8);
 		if (move.from - move.to == 8 && ((tmp << move.to) ^ _white_pieces)) {
-			if (move.to <= H1 && move.promoted > PAWN_BLACK && move.promoted < KING_BLACK) {
-				type = PROMOTION_MOVE;
-				result = true;
+			if (move.to <= H1) {
+				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
-			else {
-				type = NORMAL_MOVE;
-				result = true;
-			}
+			result = true;
 		}
 		// Checks for the move of pawn from game starting position
 		else if (move.from - move.to == 16 && ((tmp << move.from) & PAWN_BLACK_INIT) &&
 		!((tmp << (move.from - 8)) & (_white_pieces | _black_pieces)) && ((tmp << move.to) ^ _white_pieces)) {
-			type = EN_PASSANT_MOVE;
 			result = true;
 		}
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
 		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (tmp << move.to & _white_pieces)
 		&& (move.from / 8 - move.to / 8) == 1) {
-			if (move.to <= H1 && move.promoted > PAWN_BLACK && move.promoted < KING_BLACK) {
-				type = PROMOTION_MOVE;
-				result = true;
+			if (move.to <= H1) {
+				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
-			else {
-				type = NORMAL_MOVE;
-				result = true;
-			}
+			result = true;
 		}
 		else if (en_passant_capture_is_legal(move)) {
-			type = EN_PASSANT_CAPTURE;
 			result = true;
 		}
 	}
@@ -201,8 +189,8 @@ bool PositionState::pawn_move_is_legal(const move_info& move, move_type& type) c
 bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 {
 	if (_en_passant_file != -1) {
-	//TODO: add assertion to ensure there is an oponent's pawn in en_passant_file (square)	
 		if (_white_to_play) {
+			assert(_board[4][_en_passant_file] == PAWN_BLACK);
 			if (_en_passant_file == 0 && move.from == B5 && move.to == A6) {
 				return true;
 			}
@@ -215,6 +203,7 @@ bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 			}
 		}
 		else {
+			assert(_board[3][_en_passant_file] == PAWN_WHITE);
 			if (_en_passant_file == 0 && move.from == B4 && move.to == A3) {
 				return true;
 			}
@@ -233,7 +222,39 @@ bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 
 bool PositionState::knight_move_is_legal(const move_info& move) const
 {
-	return true;
+	Bitboard tmp = 1;
+	switch (move.from % 8) {
+		case 0: 
+			if ((tmp << move.to) & (move.from <= A3 ? (KNIGHT_MOVES_A3 >> A3 - move.from) :
+			(KNIGHT_MOVES_A3 << move.from - A3))) {
+				return true;
+			}
+			break;
+		case 1:
+			if ((tmp << move.to) & (move.from <= B3 ? (KNIGHT_MOVES_B3 >> B3 - move.from) :
+			(KNIGHT_MOVES_B3 << move.from - B3))) {
+				return true; 	
+			}
+			break;
+		case 6:
+			if ((tmp << move.to) & (move.from <= G3 ? (KNIGHT_MOVES_G3 >> G3 - move.from) :
+			(KNIGHT_MOVES_G3 << move.from - G3))) {
+				return true;
+			}
+			break;
+		case 7:
+			if ((tmp << move.to) & (move.from <= H3 ? (KNIGHT_MOVES_H3 >> H3 - move.from) :
+			(KNIGHT_MOVES_H3 << move.from - H3))) {
+				return true;
+			}
+			break;
+		default:
+			if ((tmp << move.to) & (move.from <= C3 ? (KNIGHT_MOVES_C3 >> C3 - move.from) :
+			(KNIGHT_MOVES_C3 << move.from - C3))) {
+				return true;
+			}
+	}
+	return false;
 }
 
 bool PositionState::bishop_move_is_legal(const move_info& move) const
@@ -253,7 +274,27 @@ bool PositionState::queen_move_is_legal(const move_info& move) const
 
 bool PositionState::king_move_is_legal(const move_info& move) const
 {
-	return true;
+	Bitboard tmp = 1;
+	switch (move.from % 8) {
+		case 0: 
+			if ((tmp << move.to) & (move.from <= A2 ? (KING_MOVES_A2 >> A2 - move.from) :
+			(KING_MOVES_A2 << move.from - A2))) {
+				return true;
+			}
+			break;
+		case 7:
+			if ((tmp << move.to) & (move.from <= H2 ? (KING_MOVES_H2 >> H2 - move.from) :
+			(KING_MOVES_H2 << move.from - H2))) {
+				return true;
+			}
+			break;
+		default:
+			if ((tmp << move.to) & (move.from <= B2 ? (KING_MOVES_B2 >> B2 - move.from) :
+			(KING_MOVES_B2 << move.from - B2))) {
+				return true;
+			}
+	}
+	return false;
 }
 
 bool PositionState::castling_is_legal(const move_info& move) const
@@ -261,36 +302,36 @@ bool PositionState::castling_is_legal(const move_info& move) const
 	return true;
 }
 
-bool PositionState::make_move(const move_info& move)
+void PositionState::make_move(const move_info& move)
 {
-	move_type type;
-	if (move_is_legal(move, type)) {
-	switch(type) {
-		case NORMAL_MOVE: 
-			make_normal_move(move);
-			break;
-		case CASTLING_MOVE:
-			make_castling_move(move);
-			break;
-		case EN_PASSANT_MOVE:
-			make_en_passant_move(move);
-			break;
-		case EN_PASSANT_CAPTURE:
-			make_en_passant_capture(move);
-			break;
-		case PROMOTION_MOVE:
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	Piece pto = _board[move.to / 8][move.to % 8];
+	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
+		if(move.to >= A8 || move.to <= H1) {
 			make_promotion_move(move);
-			break;
+		}
+		else if (std::abs(move.from - move.to) == 16) {
+			make_en_passant_move(move);
+		}
+		else if (((move.to - move.from) % 8) && pto == ETY_SQUARE) {
+			make_en_passant_capture(move);
+		}
+		else {
+			make_normal_move(move);
+		}
 	}
+	else if ((pfrom == KING_WHITE || pfrom == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
+		make_castling_move(move);
+	}		
+	else {
+		make_normal_move(move);
+	}
+
 	
-	update_castling_variables();
-	// todo : check if opponents king is under attack and update the variable
-	// accordingly
+	update_castling_rights();
+	// todo : check if opponents king is under attack and update the variable accordingly
 	
 	_white_to_play = !_white_to_play;
-	return true;
-	}
-	return false;
 }
 
 void PositionState::make_normal_move(const move_info& move)
@@ -425,7 +466,7 @@ void PositionState::make_promotion_move(const move_info& move)
 	_en_passant_file = -1;
 }
 
-void PositionState::update_castling_variables()
+void PositionState::update_castling_rights()
 {
 	if (_white_to_play) {
 		if (_white_left_castling || _white_right_castling) {
@@ -433,11 +474,13 @@ void PositionState::update_castling_variables()
 				_white_left_castling = false;
 				_white_right_castling = false;
 			}
-			else if (_board[A1 / 8][A1 % 8] != ROOK_WHITE) {
-				_white_left_castling = false;
-			}
-			else if (_board[H1 / 8][H1 % 8] != ROOK_WHITE) {
-				_white_right_castling = false;
+			else {
+				if (_board[A1 / 8][A1 % 8] != ROOK_WHITE) {
+					_white_left_castling = false;
+				}
+				if (_board[H1 / 8][H1 % 8] != ROOK_WHITE) {
+					_white_right_castling = false;
+				}
 			}
 		}
 	}
@@ -447,11 +490,13 @@ void PositionState::update_castling_variables()
 				_black_left_castling = false;
 				_black_right_castling = false;
 			}
-			else if (_board[A8 / 8][A8 % 8] != ROOK_BLACK) {
-				_black_left_castling = false;
-			}
-			else if (_board[H8 / 8][H8 % 8] != ROOK_BLACK) {
-				_black_right_castling = false;
+			else {
+				if (_board[A8 / 8][A8 % 8] != ROOK_BLACK) {
+					_black_left_castling = false;
+				}
+				if (_board[H8 / 8][H8 % 8] != ROOK_BLACK) {
+					_black_right_castling = false;
+				}
 			}
 		}
 	}
@@ -466,7 +511,7 @@ void PositionState::print_white_pieces() const
 				switch(_board[i][j]) {
 					case PAWN_WHITE: std::cout << "P ";
 						break;
-					case KNIGHT_WHITE: std::cout << "K ";
+					case KNIGHT_WHITE: std::cout << "N ";
 						break;
 					case BISHOP_WHITE: std::cout << "B ";
 						break;
@@ -499,7 +544,7 @@ void PositionState::print_black_pieces() const
 				switch(_board[i][j]) {
 					case PAWN_BLACK: std::cout << "P ";
 						break;
-					case KNIGHT_BLACK: std::cout << "K ";
+					case KNIGHT_BLACK: std::cout << "N ";
 						break;
 					case BISHOP_BLACK: std::cout << "B ";
 						break;
@@ -531,7 +576,7 @@ void PositionState::print_board() const
 			switch(_board[i][j]) {
 				case PAWN_WHITE: std::cout << "PW ";
 					break;
-				case KNIGHT_WHITE: std::cout << "KW ";
+				case KNIGHT_WHITE: std::cout << "NW ";
 					break;
 				case BISHOP_WHITE: std::cout << "BW ";
 					break;
@@ -543,7 +588,7 @@ void PositionState::print_board() const
 					break;
 				case PAWN_BLACK: std::cout << "PB ";
 					break;
-				case KNIGHT_BLACK: std::cout << "KB ";
+				case KNIGHT_BLACK: std::cout << "NB ";
 					break;
 				case BISHOP_BLACK: std::cout << "BB ";
 					break;

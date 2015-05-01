@@ -20,14 +20,14 @@ public:
 	Checks all the rules of the game for legality of the move
 	even if it involves capture of the opponent piece
 	*/
-	bool move_is_legal(const move_info& move, move_type& type) const;
+	bool move_is_legal(const move_info& move) const;
 	
 	/*
 	Makes a move if the move if legal according to the move_is_legal
 	method
 	*/
 	//Temporary changed the return value to bool
-	bool make_move(const move_info& move);
+	void make_move(const move_info& move);
 	
 	
 	/*
@@ -51,7 +51,7 @@ public:
 
 //private member functions
 private:
-	bool pawn_move_is_legal(const move_info& move, move_type& type) const;
+	bool pawn_move_is_legal(const move_info& move) const;
 	bool knight_move_is_legal(const move_info& move) const;
 	bool bishop_move_is_legal(const move_info& move) const;
 	bool rook_move_is_legal(const move_info& move) const;
@@ -67,7 +67,7 @@ private:
 	void make_en_passant_capture(const move_info& move);
 	void make_promotion_move(const move_info& move);
 
-	void update_castling_variables();
+	void update_castling_rights();
 //data members
 private:
 	Piece _board[8][8];
