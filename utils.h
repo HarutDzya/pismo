@@ -7,7 +7,7 @@ namespace pismo
 {
 
 typedef uint64_t Bitboard;
-typedef unsigned long Count;
+typedef unsigned int Count;
  
 enum Color { 
 	WHITE = 0, 
