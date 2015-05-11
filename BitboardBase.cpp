@@ -2,6 +2,21 @@
 
 namespace pismo
 {
+
+BitboardBase::BitboardBase()
+{
+	init_square_to_bitboard();
+	init_square_to_bitboard_transpose();
+	init_square_to_bitboard_a1h8();
+	init_square_to_bitboard_a8h1();
+
+	init_move_pos_board_rank();
+	init_move_pos_board_file();
+	init_move_pos_board_a1h8();
+	init_move_pos_board_a8h1();
+}
+
+
 Bitboard BitboardBase::square_to_bitboard(Square sq) const
 {
 	return _square_to_bitboard[sq];
@@ -21,16 +36,30 @@ Bitboard BitboardBase::square_to_bitboard_a8h1(Square sq) const
 {
 	return _square_to_bitboard_a8h1[sq];
 }
-  
 
-void BitboardBase::init_square_to_bitboard()
+Bitboard BitboardBase::get_legal_rank_moves(Square from, const Bitboard& occupied_squares) const
 {
-	Bitboard tmp = 1;
-	for (int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
-		_square_to_bitboard[sq] = (tmp << sq);
-	}
+	Bitrank rank_occup = occupied_squares >> (from / 8) * 8;
+	return _move_pos_board_rank[from][rank_occup];
+}  
+
+Bitboard BitboardBase::get_legal_file_moves(Square from, const Bitboard& occupied_squares) const
+{
+	Bitrank file_occup = occupied_squares >> (from / 8) * 8;
+	return _move_pos_board_file[from][file_occup];
 }
 
+Bitboard BitboardBase::get_legal_diag_a1h8_moves(Square from, const Bitboard& occupied_squares) const
+{
+	Bitrank diag_occup = occupied_squares >> (from / 8) * 8;
+	return _move_pos_board_diag_a1h8[from][diag_occup];
+}
+
+Bitboard BitboardBase::get_legal_diag_a8h1_moves(Square from, const Bitboard& occupied_squares) const
+{
+	Bitrank diag_occup = occupied_squares >> (from / 8) * 8;
+	return _move_pos_board_diag_a8h1[from][diag_occup];
+}
 
 // Normal Bitboard.                    Flipped Bitboard.
 // a8 b8 c8 d8 e8 f8 g8 h8             a8 a7 a6 a5 a4 a3 a2 a1 
@@ -42,13 +71,11 @@ void BitboardBase::init_square_to_bitboard()
 // a2 b2 c2 d2 e2 f2 g2 h2             g8 g7 g6 g5 g4 g3 g2 g1 
 // a1 b1 c1 d1 e1 f1 g1 h1             h8 h7 h6 h5 h4 h3 h2 h1 
 
-void BitboardBase::init_square_to_bitboard_transpose()
+Square BitboardBase::square_to_square_transpose(Square sq) const
 {
-	Bitboard tmp = 1;
-	for (int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
-		_square_to_bitboard_transpose[sq] = (tmp << (63 - sq / 8 - (sq % 8) * 8));
-	}
+	return (Square) (63 - sq / 8 - (sq % 8) * 8);
 }
+
 
 // Normal Bitboard.                    Flipped Bitboard.
 // a8 b8 c8 d8 e8 f8 g8 h8             a8|b1 c2 d3 e4 f5 g6 h7 
@@ -60,20 +87,14 @@ void BitboardBase::init_square_to_bitboard_transpose()
 // a2 b2 c2 d2 e2 f2 g2 h2             a2 b3 c4 d5 e6 f7 g8|h1 
 // a1 b1 c1 d1 e1 f1 g1 h1             a1 b2 c3 d4 e5 f6 g7 h8 
 
-
-
-void BitboardBase::init_square_to_bitboard_a1h8()
+Square BitboardBase::square_to_square_a1h8(Square sq) const
 {
-	Bitboard tmp = 1;
-	int shift = 0;
-	for (int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
-		shift = sq - (sq % 8) * 8;
-		if (shift < 0) {  
-			_square_to_bitboard_a1h8[sq] = (tmp << (64 + shift));
-		}
-		else {
-			_square_to_bitboard_a1h8[sq] = (tmp << shift);
-		}
+	unsigned int sq_a1h8 = sq - (sq % 8) * 8;
+	if (sq_a1h8 < 0) {
+		return (Square) (64 + sq_a1h8);
+	}
+	else {
+		return (Square) sq_a1h8;
 	}
 }
 
@@ -87,18 +108,46 @@ void BitboardBase::init_square_to_bitboard_a1h8()
 // a2 b2 c2 d2 e2 f2 g2 h2             a2 b1|c8 d7 e6 f5 g4 h3
 // a1 b1 c1 d1 e1 f1 g1 h1             a1|b8 c7 d6 e5 f4 g3 h2
 
+Square BitboardBase::square_to_square_a8h1(Square sq) const
+{
+	unsigned int sq_a8h1 = sq + (sq % 8) * 8;
+	if (sq_a8h1 > 64) {
+		return (Square) (sq_a8h1 - 64);
+	}
+	else {
+		return (Square) sq_a8h1;
+	}
+}
+
+void BitboardBase::init_square_to_bitboard()
+{
+	Bitboard tmp = 1;
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		_square_to_bitboard[sq] = (tmp << sq);
+	}
+}
+
+void BitboardBase::init_square_to_bitboard_transpose()
+{
+	Bitboard tmp = 1;
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		_square_to_bitboard_transpose[sq] = (tmp << square_to_square_transpose((Square) sq));
+	}
+}
+
+void BitboardBase::init_square_to_bitboard_a1h8()
+{
+	Bitboard tmp = 1;
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		_square_to_bitboard_a1h8[sq] = (tmp << square_to_square_a1h8((Square) sq));
+	}
+}
+
 void BitboardBase::init_square_to_bitboard_a8h1()
 {
 	Bitboard tmp = 1;
-	int shift = 0;
-	for (int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
-		shift = sq + (sq % 8) * 8;
-		if (shift > 64) {  
-			_square_to_bitboard_a8h1[sq] = (tmp << (shift - 64));
-		}
-		else {
-			_square_to_bitboard_a8h1[sq] = (tmp << shift);
-		}
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		_square_to_bitboard_a8h1[sq] = (tmp << square_to_square_a8h1((Square) sq));
 	}
 }
 
@@ -106,12 +155,13 @@ void BitboardBase::init_move_pos_board_rank()
 {
 	Bitrank rank_tmp;
 	Bitboard board_tmp;
-	for (int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
-		for (int rank_occup = 0; rank_occup < 256; ++rank_occup) {
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		for (unsigned int rank_occup = 0; rank_occup < 256; ++rank_occup) {
 			rank_tmp = rank_occup; 
 			if (rank_tmp & (1 << sq % 8)) {
 				rank_tmp = move_pos_rank(sq % 8, rank_tmp);
-				board_tmp = (rank_tmp << (sq / 8) * 8);
+				board_tmp = rank_tmp;
+				board_tmp  <<= (sq / 8) * 8;
 				_move_pos_board_rank[sq][rank_occup] = board_tmp;
 			}
 			else {
@@ -121,8 +171,146 @@ void BitboardBase::init_move_pos_board_rank()
 	}
 }
 
+void BitboardBase::init_move_pos_board_file()
+{
+	Bitrank file_tmp;
+	Bitboard board_tmp;
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		Square sq_transpose = square_to_square_transpose((Square) sq);
+		for (unsigned int file_occup = 0; file_occup < 256; ++file_occup) {
+			file_tmp = file_occup; 
+			if (file_tmp & (1 << sq_transpose % 8)) {
+				file_tmp = move_pos_rank(sq_transpose % 8, file_tmp);
+				board_tmp = file_tmp;
+				board_tmp  <<= (sq_transpose / 8) * 8;
+				_move_pos_board_file[sq][file_occup] = board_tmp;
+			}
+			else {
+				_move_pos_board_file[sq][file_occup] = 0;
+			}
+		}
+	}
+}
+
+void BitboardBase::init_move_pos_board_a1h8()
+{
+	Bitrank diag_a1h8_tmp;
+	Bitrank diag_allowed;
+	Bitboard board_tmp;
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		Square sq_a1h8 = square_to_square_a1h8((Square) sq);
+		if (sq_a1h8 % 8 < 8 - sq_a1h8 / 8) {
+			diag_allowed = OCCUPATION_FROM_LSB[8 - sq_a1h8 / 8];
+		}
+		else {
+			diag_allowed = ~OCCUPATION_FROM_LSB[8 - sq_a1h8 / 8];
+		}
+		for (unsigned int diag_occup = 0; diag_occup < 256; ++diag_occup) {
+			diag_a1h8_tmp = diag_occup; 
+			if (diag_a1h8_tmp & (1 << sq_a1h8 % 8)) {
+				diag_a1h8_tmp = move_pos_rank(sq_a1h8 % 8, diag_a1h8_tmp);
+				board_tmp = (diag_a1h8_tmp & diag_allowed);
+				board_tmp  <<= (sq_a1h8 / 8) * 8;
+				_move_pos_board_diag_a1h8[sq][diag_occup] = board_tmp;
+			}
+			else {
+				_move_pos_board_diag_a1h8[sq][diag_occup] = 0;
+			}
+		}
+	}
+}
+
+void BitboardBase::init_move_pos_board_a8h1()
+{
+	Bitrank diag_a8h1_tmp;
+	Bitrank diag_allowed;
+	Bitboard board_tmp;
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		Square sq_a8h1 = square_to_square_a8h1((Square) sq);
+		if (sq_a8h1 % 8 < sq_a8h1 / 8 + 1) {
+			diag_allowed = OCCUPATION_FROM_LSB[sq_a8h1 / 8 + 1];
+		}
+		else {
+			diag_allowed = ~OCCUPATION_FROM_LSB[sq_a8h1 / 8 + 1];
+		}
+		for (unsigned int diag_occup = 0; diag_occup < 256; ++diag_occup) {
+			diag_a8h1_tmp = diag_occup; 
+			if (diag_a8h1_tmp & (1 << sq_a8h1 % 8)) {
+				diag_a8h1_tmp = move_pos_rank(sq_a8h1 % 8, diag_a8h1_tmp);
+				board_tmp = (diag_a8h1_tmp & diag_allowed);
+				board_tmp  <<= (sq_a8h1 / 8) * 8;
+				_move_pos_board_diag_a8h1[sq][diag_occup] = board_tmp;
+			}
+			else {
+				_move_pos_board_diag_a8h1[sq][diag_occup] = 0;
+			}
+		}
+	}
+}
+
 Bitrank BitboardBase::move_pos_rank(unsigned int position, Bitrank rank_occup) const
 {
+	int right_set_bit = find_msb_set(rank_occup << (8 - position));
+	int left_set_bit = find_lsb_set(rank_occup >> (1 + position));
+	if (right_set_bit == -1 && left_set_bit == -1) {
+		return OCCUPATION_FROM_LSB[8] ^ (1 << position);
+	}
+	else if (right_set_bit == -1) {
+		return OCCUPATION_FROM_LSB[position + 2 + left_set_bit] ^ (1 << position);
+	}
+	else if (left_set_bit == -1) {
+		return OCCUPATION_FROM_LSB[8] ^ OCCUPATION_FROM_LSB[position - 8 + right_set_bit] ^ (1 << position);
+	}
+	else {
+		return OCCUPATION_FROM_LSB[position - 8 + right_set_bit] ^ 
+		OCCUPATION_FROM_LSB[position + 2 + left_set_bit] ^ (1 << position);	
+	}
 	return 0;
+}
+
+int BitboardBase::find_lsb_set(Bitrank rank) const 
+{
+	if (rank) {
+		if (rank & 0x01) {
+			return 0;
+		}
+		else {
+			int result = 1;
+			if ((rank & 0x0F) == 0) {
+				rank >>= 4;
+				result += 4;
+			}
+			if ((rank & 0x03) == 0) {
+				rank >>= 2;
+				result += 2;
+			}
+			return result - (rank & 0x01);
+		}
+	}
+
+	return -1;
+}
+
+int BitboardBase::find_msb_set(Bitrank rank) const
+{
+	if (rank) {
+		if (rank & 0x80) {
+			return 7;
+		}
+		else {
+			int result = 6;
+			if ((rank & 0xF0) == 0) {
+				rank <<= 4;
+				result -= 4;
+			}
+			if ((rank & 0xC0) == 0) {
+				rank <<= 2;
+				result -= 2;
+			}
+			return result + ((rank & 0x80) >> 7);
+		}
+	}
+	
+	return -1; 
 }
 }

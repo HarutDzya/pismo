@@ -2,7 +2,6 @@
 #include <map>
 #include "PositionState.h"
 
-
 int main()
 {
 	using namespace pismo;
