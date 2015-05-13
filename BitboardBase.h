@@ -18,8 +18,8 @@ public:
 	
 	Bitboard square_to_bitboard(Square sq) const;
 	Bitboard square_to_bitboard_transpose(Square sq) const;
-	Bitboard square_to_bitboard_a1h8(Square sq) const;
-	Bitboard square_to_bitboard_a8h1(Square sq) const;
+	Bitboard square_to_bitboard_diag_a1h8(Square sq) const;
+	Bitboard square_to_bitboard_diag_a8h1(Square sq) const;
 	
 	Bitboard get_legal_rank_moves(Square from, const Bitboard& occupied_squares) const;
 	Bitboard get_legal_file_moves(Square from, const Bitboard& occupied_squares) const;

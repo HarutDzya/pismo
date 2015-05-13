@@ -2,10 +2,12 @@
 #define POSITIONSTATE_H_
 
 #include "utils.h"
+#include "BitboardBase.h"
 #include <vector>
 
 namespace pismo
 {
+const BitboardBase BASE;
 
 class PositionState
 {
@@ -26,9 +28,14 @@ public:
 	Makes a move if the move if legal according to the move_is_legal
 	method
 	*/
-	//Temporary changed the return value to bool
 	void make_move(const move_info& move);
-	
+
+	/*
+	First function adds a piece into all 4 bitboards in the
+	appropriate position, the second one removes the piece
+	*/
+	void add_piece_to_bitboards(Square sq, Color clr);
+	void remove_piece_from_bitboards(Square sq, Color clr);	
 	
 	/*
 	Prints board for white pieces using information from 
@@ -73,7 +80,13 @@ private:
 	Piece _board[8][8];
 
 	Bitboard _white_pieces;
+	Bitboard _white_pieces_transpose;
+	Bitboard _white_pieces_diag_a1h8;
+	Bitboard _white_pieces_diag_a8h1;
 	Bitboard _black_pieces;
+	Bitboard _black_pieces_transpose;
+	Bitboard _black_pieces_diag_a1h8;
+	Bitboard _black_pieces_diag_a8h1;
 
 	Count _white_pieces_count[PIECE_NB / 2];
 	Count _black_pieces_count[PIECE_NB / 2];

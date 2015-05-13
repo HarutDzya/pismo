@@ -11,7 +11,13 @@ _white_to_play(true),
 _king_under_attack(false),
 _en_passant_file(-1),
 _white_pieces(0), 
+_white_pieces_transpose(0),
+_white_pieces_diag_a1h8(0),
+_white_pieces_diag_a8h1(0),
 _black_pieces(0),
+_black_pieces_transpose(0),
+_black_pieces_diag_a1h8(0),
+_black_pieces_diag_a8h1(0),
 _white_left_castling(true),
 _white_right_castling(true),
 _black_left_castling(true),
@@ -33,10 +39,10 @@ void PositionState::set_piece(Square s, Piece p)
 	_board[s / 8][s % 8] = p;
 	Bitboard tmp = 1;
 	if(p <= KING_WHITE) {
-		_white_pieces |= (tmp << s);
+		add_piece_to_bitboards(s, WHITE);
 	}
 	else {
-		_black_pieces |= (tmp << s);
+		add_piece_to_bitboards(s, BLACK);
 	}
 }
 
@@ -59,13 +65,12 @@ bool PositionState::move_is_legal(const move_info& move) const
 {
 	Piece pfrom = _board[move.from  / 8][move.from % 8];
 	Piece pto = _board[move.to  / 8][move.to % 8];
-	Bitboard tmp = 1;
 	if(pfrom == ETY_SQUARE) {
 		return false;
 	}
 
 	if(_white_to_play) {
-		if((tmp << move.from & _black_pieces) || (tmp << move.to & _white_pieces)) {
+		if((BASE.square_to_bitboard(move.from) & _black_pieces) || (BASE.square_to_bitboard(move.to) & _white_pieces)) {
 			return false;
 		}
 		else {
@@ -93,7 +98,7 @@ bool PositionState::move_is_legal(const move_info& move) const
 		}
 	}
 	else {
-		if((tmp << move.from & _white_pieces) || (tmp << move.to & _black_pieces)) {
+		if((BASE.square_to_bitboard(move.from) & _white_pieces) || (BASE.square_to_bitboard(move.to) & _black_pieces)) {
 			return false;
 		}
 		else {
@@ -126,24 +131,22 @@ bool PositionState::move_is_legal(const move_info& move) const
 bool PositionState::pawn_move_is_legal(const move_info& move) const
 {
 	bool result = false; 
-	Bitboard tmp = 1;
-	Bitboard init;
 	if (_white_to_play) {
 		assert(move.from > H1);
 		// Checks for single square movement of the pawn
-		if (move.to - move.from == 8 && ((tmp << move.to) ^ _black_pieces)) {
+		if (move.to - move.from == 8 && (BASE.square_to_bitboard(move.to) ^ _black_pieces)) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
 			result = true;
 		}
 		// Checks for the move of pawn from game starting position
-		else if (move.to - move.from == 16 && ((tmp << move.from) & PAWN_WHITE_INIT) &&
-		!((tmp << (move.from + 8)) & (_white_pieces | _black_pieces)) && ((tmp << move.to) ^ _black_pieces)) {
+		else if (move.to - move.from == 16 && (BASE.square_to_bitboard(move.from) & PAWN_WHITE_INIT) &&
+		!(BASE.square_to_bitboard((Square)(move.from + 8)) & (_white_pieces | _black_pieces)) && (BASE.square_to_bitboard(move.to) ^ _black_pieces)) {
 			result = true;
 		}
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
-		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (tmp << move.to & _black_pieces)
+		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (BASE.square_to_bitboard(move.to) & _black_pieces)
 		&& (move.to / 8 - move.from / 8) == 1) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
@@ -157,19 +160,19 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 	else {
 		// Checks for single square movement of the pawn
 		assert(move.from < A8);
-		if (move.from - move.to == 8 && ((tmp << move.to) ^ _white_pieces)) {
+		if (move.from - move.to == 8 && (BASE.square_to_bitboard(move.to) ^ _white_pieces)) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
 			result = true;
 		}
 		// Checks for the move of pawn from game starting position
-		else if (move.from - move.to == 16 && ((tmp << move.from) & PAWN_BLACK_INIT) &&
-		!((tmp << (move.from - 8)) & (_white_pieces | _black_pieces)) && ((tmp << move.to) ^ _white_pieces)) {
+		else if (move.from - move.to == 16 && (BASE.square_to_bitboard(move.from) & PAWN_BLACK_INIT) &&
+		!(BASE.square_to_bitboard((Square)(move.from - 8)) & (_white_pieces | _black_pieces)) && (BASE.square_to_bitboard(move.to) ^ _white_pieces)) {
 			result = true;
 		}
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
-		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (tmp << move.to & _white_pieces)
+		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (BASE.square_to_bitboard(move.to) & _white_pieces)
 		&& (move.from / 8 - move.to / 8) == 1) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
@@ -222,34 +225,33 @@ bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 
 bool PositionState::knight_move_is_legal(const move_info& move) const
 {
-	Bitboard tmp = 1;
 	switch (move.from % 8) {
 		case 0: 
-			if ((tmp << move.to) & (move.from <= A3 ? (KNIGHT_MOVES_A3 >> A3 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= A3 ? (KNIGHT_MOVES_A3 >> A3 - move.from) :
 			(KNIGHT_MOVES_A3 << move.from - A3))) {
 				return true;
 			}
 			break;
 		case 1:
-			if ((tmp << move.to) & (move.from <= B3 ? (KNIGHT_MOVES_B3 >> B3 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= B3 ? (KNIGHT_MOVES_B3 >> B3 - move.from) :
 			(KNIGHT_MOVES_B3 << move.from - B3))) {
 				return true; 	
 			}
 			break;
 		case 6:
-			if ((tmp << move.to) & (move.from <= G3 ? (KNIGHT_MOVES_G3 >> G3 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= G3 ? (KNIGHT_MOVES_G3 >> G3 - move.from) :
 			(KNIGHT_MOVES_G3 << move.from - G3))) {
 				return true;
 			}
 			break;
 		case 7:
-			if ((tmp << move.to) & (move.from <= H3 ? (KNIGHT_MOVES_H3 >> H3 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= H3 ? (KNIGHT_MOVES_H3 >> H3 - move.from) :
 			(KNIGHT_MOVES_H3 << move.from - H3))) {
 				return true;
 			}
 			break;
 		default:
-			if ((tmp << move.to) & (move.from <= C3 ? (KNIGHT_MOVES_C3 >> C3 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= C3 ? (KNIGHT_MOVES_C3 >> C3 - move.from) :
 			(KNIGHT_MOVES_C3 << move.from - C3))) {
 				return true;
 			}
@@ -259,37 +261,56 @@ bool PositionState::knight_move_is_legal(const move_info& move) const
 
 bool PositionState::bishop_move_is_legal(const move_info& move) const
 {
-	return true;
+	if((BASE.square_to_bitboard_diag_a1h8(move.to) & BASE.get_legal_diag_a1h8_moves(move.from, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8))
+	|| (BASE.square_to_bitboard_diag_a8h1(move.to) & BASE.get_legal_diag_a8h1_moves(move.from, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1))) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 bool PositionState::rook_move_is_legal(const move_info& move) const
 {
-	return true;
+	if((BASE.square_to_bitboard(move.to) & BASE.get_legal_rank_moves(move.from, _white_pieces | _black_pieces))
+	|| (BASE.square_to_bitboard_transpose(move.to) & BASE.get_legal_file_moves(move.from, _white_pieces_transpose | _black_pieces_transpose))) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 bool PositionState::queen_move_is_legal(const move_info& move) const
 {
-	return true;
+	if((BASE.square_to_bitboard(move.to) & BASE.get_legal_rank_moves(move.from, _white_pieces | _black_pieces))
+	|| (BASE.square_to_bitboard_transpose(move.to) & BASE.get_legal_file_moves(move.from, _white_pieces_transpose | _black_pieces_transpose)) 
+	|| (BASE.square_to_bitboard_diag_a1h8(move.to) & BASE.get_legal_diag_a1h8_moves(move.from, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8))
+	|| (BASE.square_to_bitboard_diag_a8h1(move.to) & BASE.get_legal_diag_a8h1_moves(move.from, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1))) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 bool PositionState::king_move_is_legal(const move_info& move) const
 {
-	Bitboard tmp = 1;
 	switch (move.from % 8) {
 		case 0: 
-			if ((tmp << move.to) & (move.from <= A2 ? (KING_MOVES_A2 >> A2 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= A2 ? (KING_MOVES_A2 >> A2 - move.from) :
 			(KING_MOVES_A2 << move.from - A2))) {
 				return true;
 			}
 			break;
 		case 7:
-			if ((tmp << move.to) & (move.from <= H2 ? (KING_MOVES_H2 >> H2 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= H2 ? (KING_MOVES_H2 >> H2 - move.from) :
 			(KING_MOVES_H2 << move.from - H2))) {
 				return true;
 			}
 			break;
 		default:
-			if ((tmp << move.to) & (move.from <= B2 ? (KING_MOVES_B2 >> B2 - move.from) :
+			if (BASE.square_to_bitboard(move.to) & (move.from <= B2 ? (KING_MOVES_B2 >> B2 - move.from) :
 			(KING_MOVES_B2 << move.from - B2))) {
 				return true;
 			}
@@ -336,21 +357,20 @@ void PositionState::make_move(const move_info& move)
 
 void PositionState::make_normal_move(const move_info& move)
 {
-	Bitboard tmp = 1;
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_white_to_play) {			
-		_white_pieces ^= (tmp << move.from);
-		_white_pieces |= (tmp << move.to);
+		remove_piece_from_bitboards(move.from, WHITE);
+		add_piece_to_bitboards(move.to, WHITE);
 		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
-			_black_pieces ^= (tmp << move.to);
+			remove_piece_from_bitboards(move.to, BLACK);
 			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
 		}
 	}
 	else {
-		_black_pieces ^= (tmp << move.from);
-		_black_pieces |= (tmp << move.to);
+		remove_piece_from_bitboards(move.from, BLACK);
+		add_piece_to_bitboards(move.to, BLACK);
 		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
-			_white_pieces ^= (tmp << move.to);
+			remove_piece_from_bitboards(move.to, WHITE);
 			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
 		}
 	}
@@ -398,15 +418,14 @@ void PositionState::make_castling_move(const move_info& move)
 
 void PositionState::make_en_passant_move(const move_info& move)
 {
-	Bitboard tmp = 1;
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_white_to_play) {
-		_white_pieces ^= (tmp << move.from);
-		_white_pieces |= (tmp << move.to);
+		remove_piece_from_bitboards(move.from, WHITE);
+		add_piece_to_bitboards(move.to, WHITE);
 	}
 	else {
-		_black_pieces ^= (tmp << move.from);
-		_black_pieces |= (tmp << move.to);
+		remove_piece_from_bitboards(move.from, BLACK);
+		add_piece_to_bitboards(move.to, BLACK);
 	}	
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
@@ -415,19 +434,18 @@ void PositionState::make_en_passant_move(const move_info& move)
 
 void PositionState::make_en_passant_capture(const move_info& move)
 {
-	Bitboard tmp = 1;
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_white_to_play) {
-		_white_pieces ^= (tmp << move.from);
-		_white_pieces |= (tmp << move.to);
-		_black_pieces ^= (tmp << (move.to - 8));
+		remove_piece_from_bitboards(move.from, WHITE);
+		add_piece_to_bitboards(move.to, WHITE);
+		remove_piece_from_bitboards((Square) (move.to - 8), BLACK);
 		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
 		_board[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
 	}
 	else {
-		_black_pieces ^= (tmp << move.from);
-		_black_pieces |= (tmp << move.to);
-		_white_pieces ^= (tmp << (move.to + 8));
+		remove_piece_from_bitboards(move.from, BLACK);
+		add_piece_to_bitboards(move.to, BLACK);
+		remove_piece_from_bitboards((Square) (move.to + 8), WHITE);
 		--(_white_pieces_count[PAWN_WHITE]);
 		_board[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
 		
@@ -441,20 +459,20 @@ void PositionState::make_promotion_move(const move_info& move)
 {
 	Bitboard tmp = 1;
 	if (_white_to_play) {
-		_white_pieces ^= (tmp << move.from);
-		_white_pieces |= (tmp << move.to);
+		remove_piece_from_bitboards(move.from, WHITE);
+		add_piece_to_bitboards(move.to, WHITE);
 		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
-			_black_pieces ^= (tmp << move.to);
+			remove_piece_from_bitboards(move.to, BLACK);
 			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
 		}
 		--(_white_pieces_count[PAWN_WHITE]);
 		++(_white_pieces_count[move.promoted]);
 	}
 	else {
-		_black_pieces ^= (tmp << move.from);
-		_black_pieces |= (tmp << move.to);
+		remove_piece_from_bitboards(move.from, BLACK);
+		add_piece_to_bitboards(move.to, BLACK);
 		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
-			_white_pieces ^= (tmp << move.to);
+			remove_piece_from_bitboards(move.to, WHITE);	
 			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
 		}
 		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
@@ -501,7 +519,42 @@ void PositionState::update_castling_rights()
 		}
 	}
 }
+
+void PositionState::add_piece_to_bitboards(Square sq, Color clr)
+{
+	assert(clr == WHITE || clr == BLACK);
+	if (clr == WHITE) {
+		_white_pieces |= BASE.square_to_bitboard(sq);
+		_white_pieces_transpose |= BASE.square_to_bitboard_transpose(sq);
+		_white_pieces_diag_a1h8 |= BASE.square_to_bitboard_diag_a1h8(sq);
+		_white_pieces_diag_a8h1 |= BASE.square_to_bitboard_diag_a8h1(sq);
+	}
+	else {
+		_black_pieces |= BASE.square_to_bitboard(sq);
+		_black_pieces_transpose |= BASE.square_to_bitboard_transpose(sq);
+		_black_pieces_diag_a1h8 |= BASE.square_to_bitboard_diag_a1h8(sq);
+		_black_pieces_diag_a8h1 |= BASE.square_to_bitboard_diag_a8h1(sq);
+	}
 	
+}
+
+void PositionState::remove_piece_from_bitboards(Square sq, Color clr)
+{
+	assert(clr == WHITE || clr == BLACK);
+	if (clr == WHITE) {
+		_white_pieces ^= BASE.square_to_bitboard(sq);
+		_white_pieces_transpose ^= BASE.square_to_bitboard_transpose(sq);
+		_white_pieces_diag_a1h8 ^= BASE.square_to_bitboard_diag_a1h8(sq);
+		_white_pieces_diag_a8h1 ^= BASE.square_to_bitboard_diag_a8h1(sq);
+	}
+	else {
+		_black_pieces ^= BASE.square_to_bitboard(sq);
+		_black_pieces_transpose ^= BASE.square_to_bitboard_transpose(sq);
+		_black_pieces_diag_a1h8 ^= BASE.square_to_bitboard_diag_a1h8(sq);
+		_black_pieces_diag_a8h1 ^= BASE.square_to_bitboard_diag_a8h1(sq);
+	}
+	
+}
 void PositionState::print_white_pieces() const
 {
 	std::cout << "White pieces:" << std::endl;
