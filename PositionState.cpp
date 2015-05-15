@@ -134,7 +134,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 	if (_white_to_play) {
 		assert(move.from > H1);
 		// Checks for single square movement of the pawn
-		if (move.to - move.from == 8 && (BASE.square_to_bitboard(move.to) ^ _black_pieces)) {
+		if (move.to - move.from == 8 && !(BASE.square_to_bitboard(move.to) & _black_pieces)) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
@@ -142,7 +142,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 		}
 		// Checks for the move of pawn from game starting position
 		else if (move.to - move.from == 16 && (BASE.square_to_bitboard(move.from) & PAWN_WHITE_INIT) &&
-		!(BASE.square_to_bitboard((Square)(move.from + 8)) & (_white_pieces | _black_pieces)) && (BASE.square_to_bitboard(move.to) ^ _black_pieces)) {
+		!(BASE.square_to_bitboard((Square)(move.from + 8)) & (_white_pieces | _black_pieces)) && !(BASE.square_to_bitboard(move.to) & _black_pieces)) {
 			result = true;
 		}
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
@@ -160,7 +160,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 	else {
 		// Checks for single square movement of the pawn
 		assert(move.from < A8);
-		if (move.from - move.to == 8 && (BASE.square_to_bitboard(move.to) ^ _white_pieces)) {
+		if (move.from - move.to == 8 && !(BASE.square_to_bitboard(move.to) & _white_pieces)) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
@@ -168,7 +168,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 		}
 		// Checks for the move of pawn from game starting position
 		else if (move.from - move.to == 16 && (BASE.square_to_bitboard(move.from) & PAWN_BLACK_INIT) &&
-		!(BASE.square_to_bitboard((Square)(move.from - 8)) & (_white_pieces | _black_pieces)) && (BASE.square_to_bitboard(move.to) ^ _white_pieces)) {
+		!(BASE.square_to_bitboard((Square)(move.from - 8)) & (_white_pieces | _black_pieces)) && !(BASE.square_to_bitboard(move.to) & _white_pieces)) {
 			result = true;
 		}
 		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
@@ -558,8 +558,8 @@ void PositionState::remove_piece_from_bitboards(Square sq, Color clr)
 void PositionState::print_white_pieces() const
 {
 	std::cout << "White pieces:" << std::endl;
-	for(int i = 7; i >= 0; --i) {
-		for(int j = 0; j < 8; ++j) {
+	for (int i = 7; i >= 0; --i) {
+		for (int j = 0; j < 8; ++j) {
 			if ((_white_pieces >> (i * 8 + j)) & 1) {	
 				switch(_board[i][j]) {
 					case PAWN_WHITE: std::cout << "P ";
@@ -591,8 +591,8 @@ void PositionState::print_white_pieces() const
 void PositionState::print_black_pieces() const
 {
 	std::cout << "Black pieces:" << std::endl;
-	for(int i = 7; i >= 0; --i) {
-		for(int j = 0; j < 8; ++j) {
+	for (int i = 7; i >= 0; --i) {
+		for (int j = 0; j < 8; ++j) {
 			if ((_black_pieces >> (i * 8 + j)) & 1) {	
 				switch(_board[i][j]) {
 					case PAWN_BLACK: std::cout << "P ";
@@ -624,8 +624,8 @@ void PositionState::print_black_pieces() const
 void PositionState::print_board() const
 {
 	std::cout << "Complete board" << std::endl; 
-	for(int i = 7; i >= 0; --i) {
-		for(int j = 0; j < 8; ++j) {
+	for (int i = 7; i >= 0; --i) {
+		for (int j = 0; j < 8; ++j) {
 			switch(_board[i][j]) {
 				case PAWN_WHITE: std::cout << "PW ";
 					break;
@@ -655,6 +655,33 @@ void PositionState::print_board() const
 					break;
 				default: std::cout << "XX ";
 					break;
+			}
+			
+			if (j == 7) {
+				std::cout << std::endl;
+			}
+		}
+	}
+}
+
+void PositionState::print_possible_moves(Square from) const
+{
+	Piece promoted;
+	if (_white_to_play) {
+		promoted = QUEEN_WHITE;
+	}
+	else {
+		promoted = QUEEN_BLACK;
+	}
+	std::cout << "Possible moves" << std::endl;
+	for (int i = 7; i >= 0; --i) {
+		for(int j = 0; j < 8; ++j) {
+			move_info move = {from, (Square) (i * 8 + j), promoted};
+			if (move_is_legal(move)) {
+				std::cout << "L ";
+			}
+			else {
+				std::cout << "X ";
 			}
 			
 			if (j == 7) {

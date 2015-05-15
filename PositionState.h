@@ -7,6 +7,7 @@
 
 namespace pismo
 {
+// Probably the BitboardBase class should be made singleton
 const BitboardBase BASE;
 
 class PositionState
@@ -29,13 +30,6 @@ public:
 	method
 	*/
 	void make_move(const move_info& move);
-
-	/*
-	First function adds a piece into all 4 bitboards in the
-	appropriate position, the second one removes the piece
-	*/
-	void add_piece_to_bitboards(Square sq, Color clr);
-	void remove_piece_from_bitboards(Square sq, Color clr);	
 	
 	/*
 	Prints board for white pieces using information from 
@@ -49,12 +43,16 @@ public:
 	*/
 	void print_black_pieces() const;
 
-
 	/*
 	Prints single board for both pieces using information
 	from _board array
 	*/
 	void print_board() const;
+
+	/*
+	Prints possible moves from Square from on the board
+	*/
+	void print_possible_moves(Square from) const;
 
 //private member functions
 private:
@@ -75,6 +73,14 @@ private:
 	void make_promotion_move(const move_info& move);
 
 	void update_castling_rights();
+
+	/*
+	First function adds a piece into all 4 bitboards in the
+	appropriate position, the second one removes the piece
+	*/
+	void add_piece_to_bitboards(Square sq, Color clr);
+	void remove_piece_from_bitboards(Square sq, Color clr);	
+
 //data members
 private:
 	Piece _board[8][8];

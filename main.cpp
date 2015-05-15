@@ -24,6 +24,18 @@ int main()
 	pcs.push_back(std::pair<Square, Piece>(G8, KNIGHT_BLACK));
 	pcs.push_back(std::pair<Square, Piece>(E1, KING_WHITE));
 	pcs.push_back(std::pair<Square, Piece>(E8, KING_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(A1, ROOK_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(H1, ROOK_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(A8, ROOK_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(H8, ROOK_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(C1, BISHOP_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(F1, BISHOP_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(C8, BISHOP_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(F8, BISHOP_BLACK));
+	pcs.push_back(std::pair<Square, Piece>(D1, QUEEN_WHITE));
+	pcs.push_back(std::pair<Square, Piece>(D8, QUEEN_BLACK));
+
+
 	pos.init_position(pcs);
 	pos.print_board();
 	std::cout << "Please enter next move (q to stop the game)" << std::endl;
@@ -47,14 +59,15 @@ int main()
 			move.to = board_rep[sqto];
 			move.promoted = ETY_SQUARE;
 		}
-	
-  		if (pos.move_is_legal(move)) {
+  		
+		if (pos.move_is_legal(move)) {
 			pos.make_move(move);
 			pos.print_board();
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
 		else {
 			std::cout << "Move is illegal" << std::endl;
+			pos.print_possible_moves(move.from);	
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
 	}
@@ -63,3 +76,4 @@ int main()
 	pos.print_white_pieces();
 	pos.print_black_pieces();
 }
+
