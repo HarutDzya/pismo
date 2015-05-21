@@ -2,19 +2,17 @@
 #define POSITIONSTATE_H_
 
 #include "utils.h"
-#include "BitboardBase.h"
+#include "BitboardImpl.h"
 #include <vector>
 
 namespace pismo
 {
-// Probably the BitboardBase class should be made singleton
-const BitboardBase BASE;
 
 class PositionState
 {
 public:
 	PositionState();
-
+	~PositionState();
 
 	void set_piece(Square s, Piece p);
 
@@ -56,6 +54,7 @@ public:
 
 //private member functions
 private:
+	bool init_position_is_valid(const std::vector<std::pair<Square, Piece> >& pieces) const;
 	bool pawn_move_is_legal(const move_info& move) const;
 	bool knight_move_is_legal(const move_info& move) const;
 	bool bishop_move_is_legal(const move_info& move) const;
@@ -96,6 +95,8 @@ private:
 
 	Count _white_pieces_count[PIECE_NB / 2];
 	Count _black_pieces_count[PIECE_NB / 2];
+
+	const BitboardImpl* _bitboard_impl;
 
 	//true - if white's move, false - black's move
 	bool _white_to_play;

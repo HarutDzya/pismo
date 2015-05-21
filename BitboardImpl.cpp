@@ -1,9 +1,9 @@
-#include "BitboardBase.h"
+#include "BitboardImpl.h"
 
 namespace pismo
 {
 
-BitboardBase::BitboardBase()
+BitboardImpl::BitboardImpl()
 {
 	init_square_to_bitboard();
 	init_square_to_bitboard_transpose();
@@ -17,32 +17,32 @@ BitboardBase::BitboardBase()
 }
 
 // Returns the bitboard with sq Square filled 
-Bitboard BitboardBase::square_to_bitboard(Square sq) const
+Bitboard BitboardImpl::square_to_bitboard(Square sq) const
 {
 	return _square_to_bitboard[sq];
 }
 
 // Returns the transposed bitboard with sq Square filled
-Bitboard BitboardBase::square_to_bitboard_transpose(Square sq) const
+Bitboard BitboardImpl::square_to_bitboard_transpose(Square sq) const
 {
 	return _square_to_bitboard_transpose[sq];
 }
 
 // Returns the 45 angle rotated bitboard with sq Square filled
-Bitboard BitboardBase::square_to_bitboard_diag_a1h8(Square sq) const
+Bitboard BitboardImpl::square_to_bitboard_diag_a1h8(Square sq) const
 {
 	return _square_to_bitboard_a1h8[sq];
 }
 
 // Returns the -45 angle rotated bitboard with sq Square filled
-Bitboard BitboardBase::square_to_bitboard_diag_a8h1(Square sq) const
+Bitboard BitboardImpl::square_to_bitboard_diag_a8h1(Square sq) const
 {
 	return _square_to_bitboard_a8h1[sq];
 }
 
 // Returns the bitboard for possible rank moves from Square from. 
 // The occupied_squares bitboard is the unrotated bitboard with occupied squares bit set to one
-Bitboard BitboardBase::get_legal_rank_moves(Square from, const Bitboard& occupied_squares) const
+Bitboard BitboardImpl::get_legal_rank_moves(Square from, const Bitboard& occupied_squares) const
 {
 	Bitrank rank_occup = occupied_squares >> (from / 8) * 8;
 	return _move_pos_board_rank[from][rank_occup];
@@ -50,7 +50,7 @@ Bitboard BitboardBase::get_legal_rank_moves(Square from, const Bitboard& occupie
 
 // Returns the transposed bitboard for possible file moves from Square from. 
 // The occupied_squares bitboard is the transposed bitboard with occupied squares bit set to one
-Bitboard BitboardBase::get_legal_file_moves(Square from, const Bitboard& occupied_squares) const
+Bitboard BitboardImpl::get_legal_file_moves(Square from, const Bitboard& occupied_squares) const
 {
 	Bitrank file_occup = occupied_squares >> (square_to_square_transpose(from) / 8) * 8;
 	return _move_pos_board_file[from][file_occup];
@@ -58,7 +58,7 @@ Bitboard BitboardBase::get_legal_file_moves(Square from, const Bitboard& occupie
 
 // Returns the 45 angle rotated bitboard for possible a1h8 diagonal moves from Square from. 
 // The occupied_squares bitboard is the 45 angle rotated bitboard with occupied squares bit set to one
-Bitboard BitboardBase::get_legal_diag_a1h8_moves(Square from, const Bitboard& occupied_squares) const
+Bitboard BitboardImpl::get_legal_diag_a1h8_moves(Square from, const Bitboard& occupied_squares) const
 {
 	Bitrank diag_occup = occupied_squares >> (square_to_square_a1h8(from) / 8) * 8;
 	return _move_pos_board_diag_a1h8[from][diag_occup];
@@ -66,7 +66,7 @@ Bitboard BitboardBase::get_legal_diag_a1h8_moves(Square from, const Bitboard& oc
 
 // Returns the -45 angle rotated bitboard for possible a8h1 diagonal moves from Square from. 
 // The occupied_squares bitboard is the -45 angle rotated bitboard with occupied squares bit set to one
-Bitboard BitboardBase::get_legal_diag_a8h1_moves(Square from, const Bitboard& occupied_squares) const
+Bitboard BitboardImpl::get_legal_diag_a8h1_moves(Square from, const Bitboard& occupied_squares) const
 {
 	Bitrank diag_occup = occupied_squares >> (square_to_square_a8h1(from) / 8) * 8;
 	return _move_pos_board_diag_a8h1[from][diag_occup];
@@ -82,7 +82,7 @@ Bitboard BitboardBase::get_legal_diag_a8h1_moves(Square from, const Bitboard& oc
 // a2 b2 c2 d2 e2 f2 g2 h2             g8 g7 g6 g5 g4 g3 g2 g1 
 // a1 b1 c1 d1 e1 f1 g1 h1             h8 h7 h6 h5 h4 h3 h2 h1 
 // Square to Square conversion from unrotated board to transposed board
-Square BitboardBase::square_to_square_transpose(Square sq) const
+Square BitboardImpl::square_to_square_transpose(Square sq) const
 {
 	return (Square) (63 - sq / 8 - (sq % 8) * 8);
 }
@@ -98,7 +98,7 @@ Square BitboardBase::square_to_square_transpose(Square sq) const
 // a2 b2 c2 d2 e2 f2 g2 h2             a2 b3 c4 d5 e6 f7 g8|h1 
 // a1 b1 c1 d1 e1 f1 g1 h1             a1 b2 c3 d4 e5 f6 g7 h8 
 // Square to Square conversion from unrotated board to 45 angle rotated board
-Square BitboardBase::square_to_square_a1h8(Square sq) const
+Square BitboardImpl::square_to_square_a1h8(Square sq) const
 {
 	int sq_a1h8 = sq - (sq % 8) * 8;
 	if (sq_a1h8 < 0) {
@@ -119,7 +119,7 @@ Square BitboardBase::square_to_square_a1h8(Square sq) const
 // a2 b2 c2 d2 e2 f2 g2 h2             a2 b1|c8 d7 e6 f5 g4 h3
 // a1 b1 c1 d1 e1 f1 g1 h1             a1|b8 c7 d6 e5 f4 g3 h2
 //Square to Square conversion from unrotated board to -45 angle rotated board
-Square BitboardBase::square_to_square_a8h1(Square sq) const
+Square BitboardImpl::square_to_square_a8h1(Square sq) const
 {
 	int sq_a8h1 = sq + (sq % 8) * 8;
 	if (sq_a8h1 > 64) {
@@ -130,7 +130,7 @@ Square BitboardBase::square_to_square_a8h1(Square sq) const
 	}
 }
 
-void BitboardBase::init_square_to_bitboard()
+void BitboardImpl::init_square_to_bitboard()
 {
 	Bitboard tmp = 1;
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
@@ -138,7 +138,7 @@ void BitboardBase::init_square_to_bitboard()
 	}
 }
 
-void BitboardBase::init_square_to_bitboard_transpose()
+void BitboardImpl::init_square_to_bitboard_transpose()
 {
 	Bitboard tmp = 1;
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
@@ -146,7 +146,7 @@ void BitboardBase::init_square_to_bitboard_transpose()
 	}
 }
 
-void BitboardBase::init_square_to_bitboard_a1h8()
+void BitboardImpl::init_square_to_bitboard_a1h8()
 {
 	Bitboard tmp = 1;
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
@@ -154,7 +154,7 @@ void BitboardBase::init_square_to_bitboard_a1h8()
 	}
 }
 
-void BitboardBase::init_square_to_bitboard_a8h1()
+void BitboardImpl::init_square_to_bitboard_a8h1()
 {
 	Bitboard tmp = 1;
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
@@ -162,7 +162,7 @@ void BitboardBase::init_square_to_bitboard_a8h1()
 	}
 }
 
-void BitboardBase::init_move_pos_board_rank()
+void BitboardImpl::init_move_pos_board_rank()
 {
 	Bitrank rank_tmp;
 	Bitboard board_tmp;
@@ -182,7 +182,7 @@ void BitboardBase::init_move_pos_board_rank()
 	}
 }
 
-void BitboardBase::init_move_pos_board_file()
+void BitboardImpl::init_move_pos_board_file()
 {
 	Bitrank file_tmp;
 	Bitboard board_tmp;
@@ -203,7 +203,7 @@ void BitboardBase::init_move_pos_board_file()
 	}
 }
 
-void BitboardBase::init_move_pos_board_a1h8()
+void BitboardImpl::init_move_pos_board_a1h8()
 {
 	Bitrank diag_a1h8_tmp;
 	Bitrank diag_allowed;
@@ -231,7 +231,7 @@ void BitboardBase::init_move_pos_board_a1h8()
 	}
 }
 
-void BitboardBase::init_move_pos_board_a8h1()
+void BitboardImpl::init_move_pos_board_a8h1()
 {
 	Bitrank diag_a8h1_tmp;
 	Bitrank diag_allowed;
@@ -259,7 +259,7 @@ void BitboardBase::init_move_pos_board_a8h1()
 	}
 }
 // Returns Bitrank of possible moves for ranl_occup occupied bitrank when the piece is at position
-Bitrank BitboardBase::move_pos_rank(unsigned int position, Bitrank rank_occup) const
+Bitrank BitboardImpl::move_pos_rank(unsigned int position, Bitrank rank_occup) const
 {
 	int right_set_bit = find_msb_set(rank_occup << (8 - position));
 	int left_set_bit = find_lsb_set(rank_occup >> (1 + position));
@@ -281,7 +281,7 @@ Bitrank BitboardBase::move_pos_rank(unsigned int position, Bitrank rank_occup) c
 
 // Returns the position of least significant bit set in the Bitrank
 // Uses binary search algorithm
-int BitboardBase::find_lsb_set(Bitrank rank) const 
+int BitboardImpl::find_lsb_set(Bitrank rank) const 
 {
 	if (rank) {
 		if (rank & 0x01) {
@@ -306,7 +306,7 @@ int BitboardBase::find_lsb_set(Bitrank rank) const
 
 // Returns the position of the most significant bit set in the Bitrank
 // Uses binary search algorithm
-int BitboardBase::find_msb_set(Bitrank rank) const
+int BitboardImpl::find_msb_set(Bitrank rank) const
 {
 	if (rank) {
 		if (rank & 0x80) {

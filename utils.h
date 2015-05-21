@@ -1,12 +1,8 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <stdint.h>
-
 namespace pismo
 {
-
-typedef uint64_t Bitboard;
 typedef unsigned int Count;
  
 enum Color { 
@@ -39,24 +35,6 @@ struct move_info {
 	Piece promoted;
 };
 
-const Bitboard WHITE_RIGHT_CASTLING = 0x00000000000000F0; // Bitboard of squares involved in right castling of white
-const Bitboard WHITE_LEFT_CASTLING = 0x000000000000001D; // Bitboard of squares involved in left castling of white
-const Bitboard BLACK_RIGHT_CASTLING = 0xF000000000000000; // Bitboard of squares involved in right castling of black
-const Bitboard BLACK_LEFT_CASTLING =  0x1D00000000000000; // Bitboard of squares involved in left castling of black 
-
-const Bitboard PAWN_WHITE_INIT = 0x000000000000FF00; // Bitboard of white pawn initial position
-const Bitboard PAWN_BLACK_INIT = 0x00FF000000000000; // Bitboard of black pawn initial position
-
-
-const Bitboard KNIGHT_MOVES_C3 = 0x0000000A1100110A; // Bitboard for possible moves of knight at Square C3
-const Bitboard KNIGHT_MOVES_B3 = 0x0000000508000805; // Bitboard for possible moves of knight at Square B3
-const Bitboard KNIGHT_MOVES_A3 = 0x0000000204000402; // Bitboard for possible moves of knight at Square A3
-const Bitboard KNIGHT_MOVES_G3 = 0x000000A0100010A0; // Bitboard for possible moves of knight at Sqaure G3
-const Bitboard KNIGHT_MOVES_H3 = 0x0000004020002040; // Bitboard for possible moves of knight at Square H3
-
-const Bitboard KING_MOVES_B2 = 0x0000000000070507; // Bitboard for possible moves of king at Square B2
-const Bitboard KING_MOVES_A2 = 0x0000000000030203; // Bitboard for possible moves of king at Square A2
-const Bitboard KING_MOVES_H2 = 0x0000000000C080C0; // Bitboard for possible moves of king at Square H2 
 }
 
 #endif //UTILS_H_
