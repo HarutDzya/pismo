@@ -18,6 +18,13 @@ const Bitboard BLACK_LEFT_CASTLING =  0x1D00000000000000; // Bitboard of squares
 const Bitboard PAWN_WHITE_INIT = 0x000000000000FF00; // Bitboard of white pawn initial position
 const Bitboard PAWN_BLACK_INIT = 0x00FF000000000000; // Bitboard of black pawn initial position
 
+const Bitboard PAWN_WHITE_ATTACK_A2 = 0x0000000000020000; // Bitboard of white pawn attacked squares when on square A1
+const Bitboard PAWN_WHITE_ATTACK_B2 = 0x0000000000050000; // Bitboard of white pawn attacked squares when on square B1
+const Bitboard PAWN_WHITE_ATTACK_H2 = 0x0000000000400000; // Bitboard of white pawn attacked squares when on square H1
+const Bitboard PAWN_BLACK_ATTACK_A7 = 0x0000020000000000; // Bitboard of black pawn attacked squares when on square A7
+const Bitboard PAWN_BLACK_ATTACK_G7 = 0x0000A00000000000; // Bitboard of black pawn attacked squares when on square B7
+const Bitboard PAWN_BLACK_ATTACK_H7 = 0x0000400000000000; // Bitboard of black pawn attacked squares when on square H7
+
 const Bitboard KNIGHT_MOVES_C3 = 0x0000000A1100110A; // Bitboard for possible moves of knight at Square C3
 const Bitboard KNIGHT_MOVES_B3 = 0x0000000508000805; // Bitboard for possible moves of knight at Square B3
 const Bitboard KNIGHT_MOVES_A3 = 0x0000000204000402; // Bitboard for possible moves of knight at Square A3
@@ -46,7 +53,16 @@ public:
 	Bitboard get_legal_file_moves(Square from, const Bitboard& occupied_squares) const;
 	Bitboard get_legal_diag_a1h8_moves(Square from, const Bitboard& occupied_squares) const;
 	Bitboard get_legal_diag_a8h1_moves(Square from, const Bitboard& occupied_squares) const;
-	
+
+	Bitboard get_legal_knight_moves(Square from) const;
+	Bitboard get_legal_king_moves(Square from) const;
+	Bitboard get_legal_pawn_white_attacking_moves(Square from) const;
+	Bitboard get_legal_pawn_black_attacking_moves(Square from) const;
+
+	Bitboard bitboard_transpose_to_bitboard(const Bitboard& board_transpose) const;
+	Bitboard bitboard_diag_a1h8_to_bitboard(const Bitboard& board_diag_a1h8) const;
+	Bitboard bitboard_diag_a8h1_to_bitboard(const Bitboard& board_diag_a8h1) const;
+
 //private member functions
 private:
 	Square square_to_square_transpose(Square sq) const;
@@ -62,10 +78,17 @@ private:
 	void init_move_pos_board_file();
 	void init_move_pos_board_a1h8();
 	void init_move_pos_board_a8h1();
+
+	void init_move_pos_board_knight();
+	void init_move_pos_board_king();
+	void init_attacking_pos_board_pawn_white();
+	void init_attacking_pos_board_pawn_black();
 	
 	Bitrank move_pos_rank(unsigned int position, Bitrank rank_occup) const;
 	int find_lsb_set(Bitrank rank) const;
 	int find_msb_set(Bitrank rank) const;
+	
+	Bitboard rotate_bitboard_right(const Bitboard& board, unsigned int num) const;
 
 // date members
 private:
@@ -80,6 +103,11 @@ private:
 	Bitboard _move_pos_board_file[NUMBER_OF_SQUARES][256];
 	Bitboard _move_pos_board_diag_a1h8[NUMBER_OF_SQUARES][256];
 	Bitboard _move_pos_board_diag_a8h1[NUMBER_OF_SQUARES][256];
+
+	Bitboard _move_pos_board_knight[NUMBER_OF_SQUARES];
+	Bitboard _move_pos_board_king[NUMBER_OF_SQUARES];
+	Bitboard _attacking_pos_board_pawn_white[NUMBER_OF_SQUARES];
+	Bitboard _attacking_pos_board_pawn_black[NUMBER_OF_SQUARES];
 
 
 };

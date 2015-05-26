@@ -325,36 +325,8 @@ bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 
 bool PositionState::knight_move_is_legal(const move_info& move) const
 {
-	switch (move.from % 8) {
-		case 0: 
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= A3 ? (KNIGHT_MOVES_A3 >> A3 - move.from) :
-			(KNIGHT_MOVES_A3 << move.from - A3))) {
-				return true;
-			}
-			break;
-		case 1:
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= B3 ? (KNIGHT_MOVES_B3 >> B3 - move.from) :
-			(KNIGHT_MOVES_B3 << move.from - B3))) {
-				return true; 	
-			}
-			break;
-		case 6:
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= G3 ? (KNIGHT_MOVES_G3 >> G3 - move.from) :
-			(KNIGHT_MOVES_G3 << move.from - G3))) {
-				return true;
-			}
-			break;
-		case 7:
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= H3 ? (KNIGHT_MOVES_H3 >> H3 - move.from) :
-			(KNIGHT_MOVES_H3 << move.from - H3))) {
-				return true;
-			}
-			break;
-		default:
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= C3 ? (KNIGHT_MOVES_C3 >> C3 - move.from) :
-			(KNIGHT_MOVES_C3 << move.from - C3))) {
-				return true;
-			}
+	if (_bitboard_impl->square_to_bitboard(move.to) & _bitboard_impl->get_legal_knight_moves(move.from)) {
+		return true;
 	}
 	return false;
 }
@@ -365,9 +337,7 @@ bool PositionState::bishop_move_is_legal(const move_info& move) const
 	|| (_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _bitboard_impl->get_legal_diag_a8h1_moves(move.from, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1))) {
 		return true;
 	}
-	else {
-		return false;
-	}
+	return false;
 }
 
 bool PositionState::rook_move_is_legal(const move_info& move) const
@@ -376,9 +346,7 @@ bool PositionState::rook_move_is_legal(const move_info& move) const
 	|| (_bitboard_impl->square_to_bitboard_transpose(move.to) & _bitboard_impl->get_legal_file_moves(move.from, _white_pieces_transpose | _black_pieces_transpose))) {
 		return true;
 	}
-	else {
-		return false;
-	}
+	return false;
 }
 
 bool PositionState::queen_move_is_legal(const move_info& move) const
@@ -389,31 +357,13 @@ bool PositionState::queen_move_is_legal(const move_info& move) const
 	|| (_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _bitboard_impl->get_legal_diag_a8h1_moves(move.from, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1))) {
 		return true;
 	}
-	else {
-		return false;
-	}
+	return false;
 }
 
 bool PositionState::king_move_is_legal(const move_info& move) const
 {
-	switch (move.from % 8) {
-		case 0: 
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= A2 ? (KING_MOVES_A2 >> A2 - move.from) :
-			(KING_MOVES_A2 << move.from - A2))) {
-				return true;
-			}
-			break;
-		case 7:
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= H2 ? (KING_MOVES_H2 >> H2 - move.from) :
-			(KING_MOVES_H2 << move.from - H2))) {
-				return true;
-			}
-			break;
-		default:
-			if (_bitboard_impl->square_to_bitboard(move.to) & (move.from <= B2 ? (KING_MOVES_B2 >> B2 - move.from) :
-			(KING_MOVES_B2 << move.from - B2))) {
-				return true;
-			}
+	if (_bitboard_impl->square_to_bitboard(move.to) & _bitboard_impl->get_legal_king_moves(move.from)) {
+		return true;
 	}
 	return false;
 }
@@ -421,6 +371,81 @@ bool PositionState::king_move_is_legal(const move_info& move) const
 bool PositionState::castling_is_legal(const move_info& move) const
 {
 	return true;
+}
+
+Bitboard PositionState::squares_under_attack(Color attacked_color) const
+{
+	Bitboard attacked_bitboard = 0;
+	Bitboard attacked_bitboard_transpose = 0;
+	Bitboard attacked_bitboard_diag_a1h8 = 0;
+	Bitboard attacked_bitboard_diag_a8h1 = 0;
+	if(attacked_color = BLACK) {
+		for (unsigned int sq = A1; sq <= H8; ++sq) {
+			switch(_board[sq / 8][sq % 8]) {
+				case PAWN_WHITE:
+					attacked_bitboard |= _bitboard_impl->get_legal_pawn_white_attacking_moves((Square) sq);
+					break;
+				case KNIGHT_WHITE:
+					attacked_bitboard |= _bitboard_impl->get_legal_knight_moves((Square) sq);
+					break;
+				case BISHOP_WHITE:
+					attacked_bitboard_diag_a1h8 |= _bitboard_impl->get_legal_diag_a1h8_moves((Square) sq, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+					attacked_bitboard_diag_a8h1 |= _bitboard_impl->get_legal_diag_a8h1_moves((Square) sq, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+					break;
+				case ROOK_WHITE:
+					attacked_bitboard |= _bitboard_impl->get_legal_rank_moves((Square) sq, _white_pieces | _black_pieces);
+					attacked_bitboard_transpose |= _bitboard_impl->get_legal_file_moves((Square) sq, _white_pieces_transpose | _black_pieces_transpose);
+					break;
+				case QUEEN_WHITE:
+					attacked_bitboard |= _bitboard_impl->get_legal_rank_moves((Square) sq, _white_pieces | _black_pieces);
+					attacked_bitboard_transpose |= _bitboard_impl->get_legal_file_moves((Square) sq, _white_pieces_transpose | _black_pieces_transpose);
+					attacked_bitboard_diag_a1h8 |= _bitboard_impl->get_legal_diag_a1h8_moves((Square) sq, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+					attacked_bitboard_diag_a8h1 |= _bitboard_impl->get_legal_diag_a8h1_moves((Square) sq, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+					break;
+				case KING_WHITE:	
+					attacked_bitboard |= _bitboard_impl->get_legal_king_moves((Square) sq);
+					break;
+			}
+		}
+	}
+	else {
+		for (unsigned int sq = A1; sq <= H8; ++sq) {
+			switch(_board[sq / 8][sq % 8]) {
+				case PAWN_BLACK:
+					attacked_bitboard |= _bitboard_impl->get_legal_pawn_black_attacking_moves((Square) sq);
+					break;
+				case KNIGHT_BLACK:
+					attacked_bitboard |= _bitboard_impl->get_legal_knight_moves((Square) sq);
+					break;
+				case BISHOP_BLACK:
+					attacked_bitboard_diag_a1h8 |= _bitboard_impl->get_legal_diag_a1h8_moves((Square) sq, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+					attacked_bitboard_diag_a8h1 |= _bitboard_impl->get_legal_diag_a8h1_moves((Square) sq, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+					break;
+				case ROOK_BLACK:
+					attacked_bitboard |= _bitboard_impl->get_legal_rank_moves((Square) sq, _white_pieces | _black_pieces);
+					attacked_bitboard_transpose |= _bitboard_impl->get_legal_file_moves((Square) sq, _white_pieces_transpose | _black_pieces_transpose);
+					break;
+				case QUEEN_BLACK:
+					attacked_bitboard |= _bitboard_impl->get_legal_rank_moves((Square) sq, _white_pieces | _black_pieces);
+					attacked_bitboard_transpose |= _bitboard_impl->get_legal_file_moves((Square) sq, _white_pieces_transpose | _black_pieces_transpose);
+					attacked_bitboard_diag_a1h8 |= _bitboard_impl->get_legal_diag_a1h8_moves((Square) sq, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+					attacked_bitboard_diag_a8h1 |= _bitboard_impl->get_legal_diag_a8h1_moves((Square) sq, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+					break;
+				case KING_BLACK:	
+					attacked_bitboard |= _bitboard_impl->get_legal_king_moves((Square) sq);
+					break;
+			}
+		}
+	}	
+
+	attacked_bitboard |= (_bitboard_impl->bitboard_transpose_to_bitboard(attacked_bitboard_transpose) | _bitboard_impl->bitboard_diag_a1h8_to_bitboard(attacked_bitboard_diag_a1h8) | _bitboard_impl->bitboard_diag_a8h1_to_bitboard(attacked_bitboard_diag_a8h1));
+
+	if (attacked_color == BLACK) {
+		return attacked_bitboard & (~_white_pieces);
+	}
+	else {
+		return attacked_bitboard & (~_black_pieces);
+	}
 }
 
 void PositionState::make_move(const move_info& move)

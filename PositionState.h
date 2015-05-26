@@ -64,6 +64,7 @@ private:
 	bool en_passant_capture_is_legal(const move_info& move) const;
 	bool castling_is_legal(const move_info& move) const;
 	
+	Bitboard squares_under_attack(Color attacked_color) const;
 
 	void make_normal_move(const move_info& move);
 	void make_castling_move(const move_info& move);

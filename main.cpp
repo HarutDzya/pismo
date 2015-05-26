@@ -2,9 +2,15 @@
 #include <map>
 #include "PositionState.h"
 
+void print_bitboard(const pismo::Bitboard& board);
+
 int main()
 {
 	using namespace pismo;
+	//BitboardImpl bimpl;
+	//print_bitboard(0xFFFF00000000FFFF);
+	//std::cout << std::endl;
+	//print_bitboard(bimpl.bitboard_diag_a8h1_to_bitboard(0xFFFF00000000FFFF));
 	std::map<std::string, Square> board_rep;
 	for (int i = 0; i < 8; ++i) {
 		for(int j = 0; j < 8; ++j) {
@@ -67,7 +73,8 @@ int main()
 		}
 		else {
 			std::cout << "Move is illegal" << std::endl;
-			pos.print_possible_moves(move.from);	
+			pos.print_possible_moves(move.from);
+			//print_bitboard(pos.squares_under_attack(BLACK));	
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
 	}
@@ -75,5 +82,22 @@ int main()
 	pos.print_board();
 	pos.print_white_pieces();
 	pos.print_black_pieces();
+}
+
+void print_bitboard(const pismo::Bitboard& board)
+{
+	for (int i = 7; i >= 0; --i) {
+		for (int j = 0; j < 8; ++j) {
+			if ((board >> (i * 8 + j)) & 1) {
+				std::cout << "1 ";
+			}
+			else {
+				std::cout << "0 ";
+			}
+			if (j == 7) {
+				std::cout << std::endl;
+			}
+		}
+	}
 }
 

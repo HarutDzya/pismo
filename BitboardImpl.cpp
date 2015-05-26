@@ -14,6 +14,11 @@ BitboardImpl::BitboardImpl()
 	init_move_pos_board_file();
 	init_move_pos_board_a1h8();
 	init_move_pos_board_a8h1();
+
+	init_move_pos_board_knight();
+	init_move_pos_board_king();
+	init_attacking_pos_board_pawn_white();
+	init_attacking_pos_board_pawn_black();
 }
 
 // Returns the bitboard with sq Square filled 
@@ -70,6 +75,69 @@ Bitboard BitboardImpl::get_legal_diag_a8h1_moves(Square from, const Bitboard& oc
 {
 	Bitrank diag_occup = occupied_squares >> (square_to_square_a8h1(from) / 8) * 8;
 	return _move_pos_board_diag_a8h1[from][diag_occup];
+}
+
+Bitboard BitboardImpl::get_legal_knight_moves(Square from) const 
+{
+	return _move_pos_board_knight[from];
+}
+
+Bitboard BitboardImpl::get_legal_king_moves(Square from) const
+{
+	return _move_pos_board_king[from];
+}
+
+Bitboard BitboardImpl::get_legal_pawn_white_attacking_moves(Square from) const
+{
+	return _attacking_pos_board_pawn_white[from];
+}
+
+Bitboard BitboardImpl::get_legal_pawn_black_attacking_moves(Square from) const
+{
+	return _attacking_pos_board_pawn_black[from];
+}
+
+// Returns the converted normal bitboard from transpose bitboard
+Bitboard BitboardImpl::bitboard_transpose_to_bitboard(const Bitboard& board_transpose) const
+{
+	Bitboard tmp;
+	Bitboard result = board_transpose;
+	const Bitboard mask1 = 0xF0F0F0F00F0F0F0F;
+	const Bitboard mask2 = 0xCCCC0000CCCC0000;
+	const Bitboard mask3 = 0xAA00AA00AA00AA00;
+	tmp = result ^ (result << 36);
+	result ^= mask1 & (tmp ^ (result >> 36));
+	tmp = mask2 & (result ^ (result << 18));
+	result ^= tmp ^ (tmp >> 18);
+	tmp = mask3 & (result ^ (result << 9));
+	result ^= tmp ^ (tmp >> 9);
+	return result;
+}
+
+// Returns the converted normal bitboard from diagonal a1h8 bitboard
+Bitboard BitboardImpl::bitboard_diag_a1h8_to_bitboard(const Bitboard& board_diag_a1h8) const
+{
+	Bitboard result = board_diag_a1h8;
+	const Bitboard mask1 = 0x5555555555555555;
+	const Bitboard mask2 = 0x3333333333333333;
+	const Bitboard mask3 = 0x0F0F0F0F0F0F0F0F;
+	result ^= mask1 & (result ^ rotate_bitboard_right(result, 8));
+	result ^= mask2 & (result ^ rotate_bitboard_right(result, 16));
+	result ^= mask3 & (result ^ rotate_bitboard_right(result, 32));
+	return rotate_bitboard_right(result, 8);
+}
+
+// Returns the converted normal bitboard from diagonal a8h1 bitboard
+Bitboard BitboardImpl::bitboard_diag_a8h1_to_bitboard(const Bitboard& board_diag_a8h1) const
+{
+	Bitboard result = board_diag_a8h1;
+	const Bitboard mask1 = 0xAAAAAAAAAAAAAAAA;
+	const Bitboard mask2 = 0xCCCCCCCCCCCCCCCC;
+	const Bitboard mask3 = 0xF0F0F0F0F0F0F0F0;
+	result ^= mask1 & (result ^ rotate_bitboard_right(result, 8));
+	result ^= mask2 & (result ^ rotate_bitboard_right(result, 16));
+	result ^= mask3 & (result ^ rotate_bitboard_right(result, 32));
+	return result;
 }
 
 // Normal Bitboard.                    Flipped Bitboard.
@@ -258,6 +326,82 @@ void BitboardImpl::init_move_pos_board_a8h1()
 		}
 	}
 }
+
+void BitboardImpl::init_move_pos_board_knight()
+{
+	for (unsigned int sq = A1; sq <= H8; ++sq) {
+		switch (sq % 8) {
+			case 0:
+				_move_pos_board_knight[sq] = (sq <= A3 ? (KNIGHT_MOVES_A3 >> A3 - sq) : (KNIGHT_MOVES_A3 << sq - A3));
+				break;
+			case 1:
+				_move_pos_board_knight[sq] = (sq <= B3 ? (KNIGHT_MOVES_B3 >> B3 - sq) : (KNIGHT_MOVES_B3 << sq - B3));
+				break;
+			case 6:
+				_move_pos_board_knight[sq] = (sq <= G3 ? (KNIGHT_MOVES_G3 >> G3 - sq) : (KNIGHT_MOVES_G3 << sq - G3));
+				break;
+			case 7:
+				_move_pos_board_knight[sq] = (sq <= H3 ? (KNIGHT_MOVES_H3 >> H3 - sq) : (KNIGHT_MOVES_H3 << sq - H3));
+				break;
+			default:
+				_move_pos_board_knight[sq] = (sq <= C3 ? (KNIGHT_MOVES_C3 >> C3 - sq) : (KNIGHT_MOVES_C3 << sq - C3));
+		}
+	}
+}
+
+void BitboardImpl::init_move_pos_board_king()
+{
+	for (unsigned int sq = A1; sq <= H8; ++sq) {
+		switch (sq % 8) {
+			case 0:
+				_move_pos_board_king[sq] = (sq <= A2 ? (KING_MOVES_A2 >> A2 - sq) : (KING_MOVES_A2 << sq - A2));
+				break;
+			case 7:
+				_move_pos_board_king[sq] = (sq <= H2 ? (KING_MOVES_H2 >> H2 - sq) : (KING_MOVES_H2 << sq - H2));
+				break;
+			default:
+				_move_pos_board_king[sq] = (sq <= B2 ? (KING_MOVES_B2 >> B2 - sq) : (KING_MOVES_B2 << sq - B2));
+		}
+	}
+}
+
+void BitboardImpl::init_attacking_pos_board_pawn_white()
+{
+	for (unsigned int sq = A1; sq <= H8; ++sq) {
+		if (sq / 8 == 0 || sq / 8 == 7) {
+			_attacking_pos_board_pawn_white[sq] = 0;
+		}
+		else if (sq % 8 == 0) {
+			_attacking_pos_board_pawn_white[sq] = (PAWN_WHITE_ATTACK_A2 << sq - A2);
+		}
+		else if (sq % 8 == 7) {
+			_attacking_pos_board_pawn_white[sq] = (PAWN_WHITE_ATTACK_H2 << sq - H2);
+		}
+		else {
+			_attacking_pos_board_pawn_white[sq] = (PAWN_WHITE_ATTACK_B2 << sq - B2);
+		}
+	}
+}
+
+void BitboardImpl::init_attacking_pos_board_pawn_black()
+{
+	for (unsigned int sq = A1; sq <= H8; ++sq) {
+		if (sq / 8 == 0 || sq / 8 == 7) {
+			_attacking_pos_board_pawn_black[sq] = 0;
+		}
+		else if (sq % 8 == 0) {
+			_attacking_pos_board_pawn_black[sq] = (PAWN_BLACK_ATTACK_A7 >> A7 - sq);
+		}
+		else if (sq % 8 == 7) {
+			_attacking_pos_board_pawn_black[sq] = (PAWN_BLACK_ATTACK_H7 >> H7 - sq);
+		}
+		else {
+			_attacking_pos_board_pawn_black[sq] = (PAWN_BLACK_ATTACK_G7 >> G7 - sq);
+		}
+	}
+}
+	
+
 // Returns Bitrank of possible moves for ranl_occup occupied bitrank when the piece is at position
 Bitrank BitboardImpl::move_pos_rank(unsigned int position, Bitrank rank_occup) const
 {
@@ -327,5 +471,10 @@ int BitboardImpl::find_msb_set(Bitrank rank) const
 	}
 	
 	return -1; 
+}
+
+Bitboard BitboardImpl::rotate_bitboard_right(const Bitboard& board, unsigned int num) const
+{
+	return ((board >> num) | (board << (64 - num)));
 }
 }
