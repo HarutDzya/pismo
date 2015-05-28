@@ -10,10 +10,14 @@ namespace pismo
 typedef uint64_t Bitboard;
 typedef uint8_t Bitrank;
 
-const Bitboard WHITE_RIGHT_CASTLING = 0x00000000000000F0; // Bitboard of squares involved in right castling of white
-const Bitboard WHITE_LEFT_CASTLING = 0x000000000000001D; // Bitboard of squares involved in left castling of white
-const Bitboard BLACK_RIGHT_CASTLING = 0xF000000000000000; // Bitboard of squares involved in right castling of black
-const Bitboard BLACK_LEFT_CASTLING =  0x1D00000000000000; // Bitboard of squares involved in left castling of black 
+const Bitboard WHITE_RIGHT_CASTLING_KING_SQUARES = 0x0000000000000070; // Bitboard of squares used by the king making right castling move for white
+const Bitboard WHITE_RIGHT_CASTLING_ETY_SQUARES = 0x0000000000000060; // Bitboard of squares which should be empty for right castling move for white
+const Bitboard WHITE_LEFT_CASTLING_KING_SQUARES = 0x000000000000001C; // Bitboard of squares used by the king making left castling move for white
+const Bitboard WHITE_LEFT_CASTLING_ETY_SQUARES = 0x000000000000000E; // Bitboard of squares which should be empty for left castling move for white
+const Bitboard BLACK_RIGHT_CASTLING_KING_SQUARES = 0x7000000000000000; // Bitboard of squares used by the king making right castling move for black
+const Bitboard BLACK_RIGHT_CASTLING_ETY_SQUARES = 0x6000000000000000; // Bitboard of squares which should be empty for right castling move for black
+const Bitboard BLACK_LEFT_CASTLING_KING_SQUARES = 0x1C00000000000000; // Bitboard of squares used by the king making left castling move for black
+const Bitboard BLACK_LEFT_CASTLING_ETY_SQUARES = 0x0E00000000000000; // Bitboard of squares which should be empty for left castling move for black
 
 const Bitboard PAWN_WHITE_INIT = 0x000000000000FF00; // Bitboard of white pawn initial position
 const Bitboard PAWN_BLACK_INIT = 0x00FF000000000000; // Bitboard of black pawn initial position

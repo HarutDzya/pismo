@@ -101,10 +101,11 @@ private:
 
 	//true - if white's move, false - black's move
 	bool _white_to_play;
-	//true - if the movers king is under attack
-	bool _king_under_attack;
 	// the file number of possible en_passant, -1 if none
 	int _en_passant_file;
+
+	Square _white_king_position;
+	Square _black_king_position;
 
 	// true if appropriate castling is allowed
 	bool _white_left_castling;

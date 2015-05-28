@@ -7,10 +7,6 @@ void print_bitboard(const pismo::Bitboard& board);
 int main()
 {
 	using namespace pismo;
-	//BitboardImpl bimpl;
-	//print_bitboard(0xFFFF00000000FFFF);
-	//std::cout << std::endl;
-	//print_bitboard(bimpl.bitboard_diag_a8h1_to_bitboard(0xFFFF00000000FFFF));
 	std::map<std::string, Square> board_rep;
 	for (int i = 0; i < 8; ++i) {
 		for(int j = 0; j < 8; ++j) {
@@ -74,7 +70,6 @@ int main()
 		else {
 			std::cout << "Move is illegal" << std::endl;
 			pos.print_possible_moves(move.from);
-			//print_bitboard(pos.squares_under_attack(BLACK));	
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
 	}

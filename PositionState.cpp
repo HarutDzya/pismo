@@ -17,8 +17,9 @@ _black_pieces_diag_a1h8(0),
 _black_pieces_diag_a8h1(0),
 _bitboard_impl(new BitboardImpl()),
 _white_to_play(true),
-_king_under_attack(false),
 _en_passant_file(-1),
+_white_king_position(E1),
+_black_king_position(E8),
 _white_left_castling(true),
 _white_right_castling(true),
 _black_left_castling(true),
@@ -45,9 +46,15 @@ void PositionState::set_piece(Square s, Piece p)
 	_board[s / 8][s % 8] = p;
 	Bitboard tmp = 1;
 	if (p <= KING_WHITE) {
+		if (p == KING_WHITE) {
+			_white_king_position = s;
+		}
 		add_piece_to_bitboards(s, WHITE);
 	}
 	else {
+		if (p == KING_BLACK) {
+			_black_king_position = s;
+		}
 		add_piece_to_bitboards(s, BLACK);
 	}
 }
@@ -139,17 +146,17 @@ bool PositionState::init_position_is_valid(const std::vector<std::pair<Square, P
 				}
 				break;
 			case QUEEN_WHITE:
-				white_promoted_pieces_sum += (pieces_count[piece] - 1) > 0 ? pieces_count[piece] - 1 : 0;
+				white_promoted_pieces_sum += ((int) pieces_count[piece] - 1) > 0 ? pieces_count[piece] - 1 : 0;
 				break;
 			case QUEEN_BLACK:
-				black_promoted_pieces_sum += (pieces_count[piece] - 1) > 0 ? pieces_count[piece] - 1 : 0;
+				black_promoted_pieces_sum += ((int) pieces_count[piece] - 1) > 0 ? pieces_count[piece] - 1 : 0;
 				break;
 			default:
 				if (piece < KING_WHITE) {
-					white_promoted_pieces_sum += (pieces_count[piece] - 2) > 0 ? pieces_count[piece] - 2 : 0;
+					white_promoted_pieces_sum += ((int) pieces_count[piece] - 2) > 0 ? pieces_count[piece] - 2 : 0;
 				}
 				else {
-				 	black_promoted_pieces_sum += (pieces_count[piece] - 2) > 0 ? pieces_count[piece] - 2 : 0;
+				 	black_promoted_pieces_sum += ((int) pieces_count[piece] - 2) > 0 ? pieces_count[piece] - 2 : 0;
 				}
 		}
 	}
@@ -169,6 +176,7 @@ bool PositionState::move_is_legal(const move_info& move) const
 		return false;
 	}
 
+	bool result;
 	if(_white_to_play) {
 		if((_bitboard_impl->square_to_bitboard(move.from) & _black_pieces) || (_bitboard_impl->square_to_bitboard(move.to) & _white_pieces)) {
 			return false;
@@ -176,25 +184,37 @@ bool PositionState::move_is_legal(const move_info& move) const
 		else {
 			switch(pfrom) {
 				case PAWN_WHITE: 
-					return pawn_move_is_legal(move);
+					result = pawn_move_is_legal(move);
+					break;
 				case KNIGHT_WHITE:
-					return knight_move_is_legal(move);
+					result = knight_move_is_legal(move);
+					break;
 				case BISHOP_WHITE:
-					return bishop_move_is_legal(move);
+					result = bishop_move_is_legal(move);
+					break;
 				case ROOK_WHITE:
-					return rook_move_is_legal(move);
+					result = rook_move_is_legal(move);
+					break;
 				case QUEEN_WHITE:
-					return queen_move_is_legal(move);
+					result = queen_move_is_legal(move);
+					break;
 				case KING_WHITE:
-					if (std::abs(move.from % 8 - move.to % 8) > 1) { 
+					if (std::abs(move.from % 8 - move.to % 8) > 1) {
 						return castling_is_legal(move);
 					}
 					else { 
-						return king_move_is_legal(move);
+						result = king_move_is_legal(move);
 					}
+					break;
 				default: 
-					return false;
+					assert(pfrom >= PAWN_WHITE && pfrom <= KING_WHITE);
 			}
+/*			
+			if (result) {
+				make_move(move);
+				result = !(_bitboard_impl->square_to_bitboard(_white_king_position) & _bitboard_impl->squares_under_attack(WHITE));
+				make_undo_move(move);
+			}*/
 		}
 	}
 	else {
@@ -204,33 +224,43 @@ bool PositionState::move_is_legal(const move_info& move) const
 		else {
 			switch(pfrom) {
 				case PAWN_BLACK: 
-					return pawn_move_is_legal(move);
+					result = pawn_move_is_legal(move);
+					break;
 				case KNIGHT_BLACK: 
-					return knight_move_is_legal(move);
+					result = knight_move_is_legal(move);
+					break;
 				case BISHOP_BLACK:
-					return bishop_move_is_legal(move);
+					result = bishop_move_is_legal(move);
+					break;
 				case ROOK_BLACK:
-					return rook_move_is_legal(move);
+					result = rook_move_is_legal(move);
 				case QUEEN_BLACK:
-					return queen_move_is_legal(move);
+					result = queen_move_is_legal(move);
 				case KING_BLACK:
 					if (std::abs(move.from % 8 - move.to % 8) > 1) { 
 						return castling_is_legal(move);
 					}
 					else { 
-						return king_move_is_legal(move);
+						result = king_move_is_legal(move);
 					}
+					break;
 				default: 
 					return false;
 			}
+/*			
+			if (result) {
+				make_move(move);
+				result = !(_bitboard_impl->square_to_bitboard(_black_king_position) & _bitboard_impl->squares_under_attack(BLACK));
+				make_undo_move(move);
+			}*/
 		}
 	}
 
+	return result;
 }
 
 bool PositionState::pawn_move_is_legal(const move_info& move) const
 {
-	bool result = false; 
 	if (_white_to_play) {
 		assert(move.from > H1);
 		// Checks for single square movement of the pawn
@@ -238,23 +268,22 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
-			result = true;
+			return true;
 		}
 		// Checks for the move of pawn from game starting position
 		else if (move.to - move.from == 16 && (_bitboard_impl->square_to_bitboard(move.from) & PAWN_WHITE_INIT) &&
 		!(_bitboard_impl->square_to_bitboard((Square)(move.from + 8)) & (_white_pieces | _black_pieces)) && !(_bitboard_impl->square_to_bitboard(move.to) & _black_pieces)) {
-			result = true;
+			return true;
 		}
-		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
-		else if ((move.to - move.from == 7 || move.to - move.from == 9) && (_bitboard_impl->square_to_bitboard(move.to) & _black_pieces)
-		&& (move.to / 8 - move.from / 8) == 1) {
+		// Checks for usual capture movement of the pawn
+		else if ((_bitboard_impl->square_to_bitboard(move.to) & _bitboard_impl->get_legal_pawn_white_attacking_moves(move.from)) && (_bitboard_impl->square_to_bitboard(move.to) & _black_pieces)) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
-			result = true;
+			return true;
 		}
-		else if (en_passant_capture_is_legal(move)) {
-			result = true;
+		else {
+			return en_passant_capture_is_legal(move);
 		}
 	}
 	else {
@@ -264,29 +293,25 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
-			result = true;
+			return true;
 		}
 		// Checks for the move of pawn from game starting position
 		else if (move.from - move.to == 16 && (_bitboard_impl->square_to_bitboard(move.from) & PAWN_BLACK_INIT) &&
 		!(_bitboard_impl->square_to_bitboard((Square)(move.from - 8)) & (_white_pieces | _black_pieces)) && !(_bitboard_impl->square_to_bitboard(move.to) & _white_pieces)) {
-			result = true;
+			return true;
 		}
-		// Checks for usual capture movement of the pawn, the last condition checks for edge capture
-		else if ((move.from - move.to == 7 || move.from - move.to == 9) && (_bitboard_impl->square_to_bitboard(move.to) & _white_pieces)
-		&& (move.from / 8 - move.to / 8) == 1) {
+		// Checks for usual capture movement of the pawn
+		else if ((_bitboard_impl->square_to_bitboard(move.to) & _bitboard_impl->get_legal_pawn_black_attacking_moves(move.from)) && (_bitboard_impl->square_to_bitboard(move.to) & _white_pieces)) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
-			result = true;
+			return true;
 		}
-		else if (en_passant_capture_is_legal(move)) {
-			result = true;
+		else {
+			return  en_passant_capture_is_legal(move);
 		}
 	}
-	// TODO: Check that after this move the king is not under attack
-	// and update result variable appropriately
-
-	return result;
+	return false;
 }
 
 bool PositionState::en_passant_capture_is_legal(const move_info& move) const
@@ -370,7 +395,34 @@ bool PositionState::king_move_is_legal(const move_info& move) const
 
 bool PositionState::castling_is_legal(const move_info& move) const
 {
-	return true;
+	if (_white_to_play) {
+		if (move.from == E1 && move.to == C1) {
+			if (_white_left_castling && !(WHITE_LEFT_CASTLING_ETY_SQUARES & (_white_pieces | _black_pieces)) && !(WHITE_LEFT_CASTLING_KING_SQUARES & squares_under_attack(WHITE))) {
+					return true;
+				}
+		}
+		else if (move.from == E1 && move.to == G1) {
+				if (_white_right_castling && !(WHITE_RIGHT_CASTLING_ETY_SQUARES & (_white_pieces | _black_pieces)) && !(WHITE_RIGHT_CASTLING_KING_SQUARES & squares_under_attack(WHITE))) {
+					return true;
+				}
+		}
+		
+		return false;
+	}
+	else {
+		if (move.from == E8 && move.to == C8) {
+			if (_black_left_castling && !(BLACK_LEFT_CASTLING_ETY_SQUARES & (_white_pieces | _black_pieces)) && !(BLACK_LEFT_CASTLING_KING_SQUARES & squares_under_attack(BLACK))) {
+					return true;
+				}
+		}
+		else if (move.from == E8 && move.to == G8) {
+				if (_black_right_castling && !(BLACK_RIGHT_CASTLING_ETY_SQUARES & (_white_pieces | _black_pieces)) && !(BLACK_RIGHT_CASTLING_KING_SQUARES & squares_under_attack(BLACK))) {
+					return true;
+				}
+		}
+		
+		return false;
+	}
 }
 
 Bitboard PositionState::squares_under_attack(Color attacked_color) const
@@ -379,7 +431,7 @@ Bitboard PositionState::squares_under_attack(Color attacked_color) const
 	Bitboard attacked_bitboard_transpose = 0;
 	Bitboard attacked_bitboard_diag_a1h8 = 0;
 	Bitboard attacked_bitboard_diag_a8h1 = 0;
-	if(attacked_color = BLACK) {
+	if(attacked_color == BLACK) {
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_WHITE:
@@ -490,6 +542,9 @@ void PositionState::make_normal_move(const move_info& move)
 			remove_piece_from_bitboards(move.to, BLACK);
 			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
 		}
+		if (pfrom == KING_WHITE) {
+			_white_king_position = move.to;
+		}
 	}
 	else {
 		remove_piece_from_bitboards(move.from, BLACK);
@@ -497,6 +552,9 @@ void PositionState::make_normal_move(const move_info& move)
 		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, WHITE);
 			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
+		}
+		if (pfrom == KING_BLACK) {
+			_black_king_position = move.to;
 		}
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
@@ -508,36 +566,54 @@ void PositionState::make_normal_move(const move_info& move)
 void PositionState::make_castling_move(const move_info& move)
 {
 	if (_white_to_play) {
-		if (move.from < move.to) {
-			_white_pieces ^= WHITE_RIGHT_CASTLING;	
+		assert(move.from == E1);
+		if (move.to == C1) {
+			remove_piece_from_bitboards(move.from, WHITE);
+			add_piece_to_bitboards(move.to, WHITE);
+			remove_piece_from_bitboards(A1, WHITE);
+			add_piece_to_bitboards(D1, WHITE);	
 			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 			_board[move.to / 8][move.to % 8] = KING_WHITE;
-			_board[move.to / 8][move.to % 8 + 1] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8 - 1] = ROOK_WHITE;
+			_board[A1 / 8][A1 % 8] = ETY_SQUARE;
+			_board[D1 / 8][D1 % 8] = ROOK_WHITE;
 		}	
 		else {
-			_white_pieces ^= WHITE_LEFT_CASTLING;	
+			assert(move.to == G1);
+			remove_piece_from_bitboards(move.from, WHITE);
+			add_piece_to_bitboards(move.to, WHITE);
+			remove_piece_from_bitboards(H1, WHITE);
+			add_piece_to_bitboards(F1, WHITE);	
 			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 			_board[move.to / 8][move.to % 8] = KING_WHITE;
-			_board[move.to / 8][move.to % 8 - 2] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8 + 1] = ROOK_WHITE;
+			_board[H1 / 8][H1 % 8] = ETY_SQUARE;
+			_board[F1 / 8][F1 % 8] = ROOK_WHITE;
 		}
+		_white_king_position = move.to;
 	}
 	else {
-		if (move.from < move.to) {
-			_black_pieces ^= BLACK_RIGHT_CASTLING;	
+		assert(move.from == E8);
+		if (move.to == C8) {
+			remove_piece_from_bitboards(move.from, BLACK);
+			add_piece_to_bitboards(move.to, BLACK);
+			remove_piece_from_bitboards(A8, BLACK);
+			add_piece_to_bitboards(D8, BLACK);	
 			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 			_board[move.to / 8][move.to % 8] = KING_BLACK;
-			_board[move.to / 8][move.to % 8 + 1] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8 - 1] = ROOK_BLACK;
+			_board[A8 / 8][A8 % 8] = ETY_SQUARE;
+			_board[D8 / 8][D8 % 8] = ROOK_BLACK;
 		}	
 		else {
-			_black_pieces ^= BLACK_LEFT_CASTLING;	
+			assert(move.to == G8);
+			remove_piece_from_bitboards(move.from, BLACK);
+			add_piece_to_bitboards(move.to, BLACK);
+			remove_piece_from_bitboards(H8, BLACK);
+			add_piece_to_bitboards(F8, BLACK);	
 			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 			_board[move.to / 8][move.to % 8] = KING_BLACK;
-			_board[move.to / 8][move.to % 8 - 2] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8 + 1] = ROOK_BLACK;
+			_board[H8 / 8][H8 % 8] = ETY_SQUARE;
+			_board[F8 / 8][F8 % 8] = ROOK_BLACK;
 		}
+		_black_king_position = move.to;
 	}
 }
 
