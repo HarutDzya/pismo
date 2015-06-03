@@ -2,19 +2,18 @@
 #define POSITIONSTATE_H_
 
 #include "utils.h"
-#include "BitboardImpl.h"
 #include <vector>
 
 namespace pismo
 {
+
+class BitboardImpl;
 
 class PositionState
 {
 public:
 	PositionState();
 	~PositionState();
-
-	void set_piece(Square s, Piece p);
 
 	void init_position(const std::vector<std::pair<Square, Piece> >& pieces); 
 	/*
@@ -54,8 +53,9 @@ public:
 
 //private member functions
 private:
+	void set_piece(Square s, Piece p);
 	bool init_position_is_valid(const std::vector<std::pair<Square, Piece> >& pieces) const;
-	bool pawn_move_is_legal(const move_info& move) const;
+	bool pawn_move_is_legal(const move_info& move, bool& is_en_passant_capture) const;
 	bool knight_move_is_legal(const move_info& move) const;
 	bool bishop_move_is_legal(const move_info& move) const;
 	bool rook_move_is_legal(const move_info& move) const;
@@ -66,6 +66,9 @@ private:
 	
 	Bitboard squares_under_attack(Color attacked_color) const;
 
+	void make_lazy_move(const move_info& move, bool is_en_passant_capture, Piece& captured_piece) const;
+	void undo_lazy_move(const move_info& move, bool is_en_passant_capture, Piece captured_piece) const;
+
 	void make_normal_move(const move_info& move);
 	void make_castling_move(const move_info& move);
 	void make_en_passant_move(const move_info& move);
@@ -74,17 +77,14 @@ private:
 
 	void update_castling_rights();
 
-	/*
-	First function adds a piece into all 4 bitboards in the
-	appropriate position, the second one removes the piece
-	*/
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);	
 
 //data members
 private:
 	Piece _board[8][8];
-
+	
+	// Occupation bitboards (4 for each color)
 	Bitboard _white_pieces;
 	Bitboard _white_pieces_transpose;
 	Bitboard _white_pieces_diag_a1h8;
@@ -94,6 +94,8 @@ private:
 	Bitboard _black_pieces_diag_a1h8;
 	Bitboard _black_pieces_diag_a8h1;
 
+	// Each memeber of the array shows the number of appropriate 
+	// piece available for the appropriate color
 	Count _white_pieces_count[PIECE_NB / 2];
 	Count _black_pieces_count[PIECE_NB / 2];
 
@@ -103,7 +105,8 @@ private:
 	bool _white_to_play;
 	// the file number of possible en_passant, -1 if none
 	int _en_passant_file;
-
+	
+	//Shows white and black king position after the move
 	Square _white_king_position;
 	Square _black_king_position;
 

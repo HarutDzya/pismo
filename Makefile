@@ -1,4 +1,4 @@
-run: PositionState.o BitboardImpl.o main.o
+all: PositionState.o BitboardImpl.o main.o
 	g++ -g main.o PositionState.o BitboardImpl.o 
 
 PositionState.o: PositionState.cpp 

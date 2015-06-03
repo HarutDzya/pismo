@@ -1,8 +1,11 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <stdint.h>
+
 namespace pismo
 {
+typedef uint64_t Bitboard;
 typedef unsigned int Count;
  
 enum Color { 

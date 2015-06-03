@@ -1,4 +1,5 @@
 #include "PositionState.h"
+#include "BitboardImpl.h"
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
@@ -176,15 +177,16 @@ bool PositionState::move_is_legal(const move_info& move) const
 		return false;
 	}
 
-	bool result;
+	bool result = false;
 	if(_white_to_play) {
 		if((_bitboard_impl->square_to_bitboard(move.from) & _black_pieces) || (_bitboard_impl->square_to_bitboard(move.to) & _white_pieces)) {
 			return false;
 		}
 		else {
+			bool is_en_passant_capture = false;
 			switch(pfrom) {
 				case PAWN_WHITE: 
-					result = pawn_move_is_legal(move);
+					result = pawn_move_is_legal(move, is_en_passant_capture);
 					break;
 				case KNIGHT_WHITE:
 					result = knight_move_is_legal(move);
@@ -209,12 +211,18 @@ bool PositionState::move_is_legal(const move_info& move) const
 				default: 
 					assert(pfrom >= PAWN_WHITE && pfrom <= KING_WHITE);
 			}
-/*			
+	
 			if (result) {
-				make_move(move);
-				result = !(_bitboard_impl->square_to_bitboard(_white_king_position) & _bitboard_impl->squares_under_attack(WHITE));
-				make_undo_move(move);
-			}*/
+				if(pfrom == KING_WHITE) {
+					result = !(_bitboard_impl->square_to_bitboard(move.to) & squares_under_attack(WHITE));
+				}
+				else {
+					Piece captured_piece;
+					make_lazy_move(move, is_en_passant_capture, captured_piece);
+					result = !(_bitboard_impl->square_to_bitboard(_white_king_position) & squares_under_attack(WHITE));
+					undo_lazy_move(move, is_en_passant_capture, captured_piece);
+				}
+			}
 		}
 	}
 	else {
@@ -222,9 +230,10 @@ bool PositionState::move_is_legal(const move_info& move) const
 			return false;
 		}
 		else {
+			bool is_en_passant_capture = false;
 			switch(pfrom) {
 				case PAWN_BLACK: 
-					result = pawn_move_is_legal(move);
+					result = pawn_move_is_legal(move, is_en_passant_capture);
 					break;
 				case KNIGHT_BLACK: 
 					result = knight_move_is_legal(move);
@@ -234,8 +243,10 @@ bool PositionState::move_is_legal(const move_info& move) const
 					break;
 				case ROOK_BLACK:
 					result = rook_move_is_legal(move);
+					break;
 				case QUEEN_BLACK:
 					result = queen_move_is_legal(move);
+					break;
 				case KING_BLACK:
 					if (std::abs(move.from % 8 - move.to % 8) > 1) { 
 						return castling_is_legal(move);
@@ -247,20 +258,27 @@ bool PositionState::move_is_legal(const move_info& move) const
 				default: 
 					return false;
 			}
-/*			
+		
 			if (result) {
-				make_move(move);
-				result = !(_bitboard_impl->square_to_bitboard(_black_king_position) & _bitboard_impl->squares_under_attack(BLACK));
-				make_undo_move(move);
-			}*/
+				if(pfrom == KING_BLACK) {
+					result = !(_bitboard_impl->square_to_bitboard(move.to) & squares_under_attack(BLACK));
+					}
+				else {
+					Piece captured_piece;
+					make_lazy_move(move, is_en_passant_capture, captured_piece);
+					result = !(_bitboard_impl->square_to_bitboard(_black_king_position) & squares_under_attack(BLACK));
+					undo_lazy_move(move, is_en_passant_capture, captured_piece);
+					}
+			}
 		}
 	}
 
 	return result;
 }
 
-bool PositionState::pawn_move_is_legal(const move_info& move) const
+bool PositionState::pawn_move_is_legal(const move_info& move, bool& is_en_passant_capture) const
 {
+	is_en_passant_capture = false;
 	if (_white_to_play) {
 		assert(move.from > H1);
 		// Checks for single square movement of the pawn
@@ -283,6 +301,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 			return true;
 		}
 		else {
+			is_en_passant_capture = true;
 			return en_passant_capture_is_legal(move);
 		}
 	}
@@ -308,6 +327,7 @@ bool PositionState::pawn_move_is_legal(const move_info& move) const
 			return true;
 		}
 		else {
+			is_en_passant_capture = true;
 			return  en_passant_capture_is_legal(move);
 		}
 	}
@@ -325,7 +345,7 @@ bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 			else if (_en_passant_file == 7 && move.from == G5 && move.to == H6) {
 				return true;
 			} 
-			else if ((move.from == 4 * 8 + _en_passant_file + 1) || (move.from == 4 * 8 + _en_passant_file - 1)
+			else if (((move.from == 4 * 8 + _en_passant_file + 1) || (move.from == 4 * 8 + _en_passant_file - 1))
 			&& move.to == 5 * 8 + _en_passant_file) {
 				return true;
 			}
@@ -338,7 +358,7 @@ bool PositionState::en_passant_capture_is_legal(const move_info& move) const
 			else if (_en_passant_file == 7 && move.from == G4 && move.to == H3) {
 				return true;
 			}
-			else if ((move.from == 3 * 8 + _en_passant_file + 1) || (move.from == 3 * 8 + _en_passant_file - 1)
+			else if (((move.from == 3 * 8 + _en_passant_file + 1) || (move.from == 3 * 8 + _en_passant_file - 1))
 			&& move.to == 2 * 8 + _en_passant_file) {
 				return true;
 			}
@@ -425,6 +445,8 @@ bool PositionState::castling_is_legal(const move_info& move) const
 	}
 }
 
+// Returns a bitboard with the bit set at the positions where the 
+// attacked_color pieces are under attack by opponent
 Bitboard PositionState::squares_under_attack(Color attacked_color) const
 {
 	Bitboard attacked_bitboard = 0;
@@ -500,6 +522,78 @@ Bitboard PositionState::squares_under_attack(Color attacked_color) const
 	}
 }
 
+// Makes move by only updating the occupation bitboards and _board array
+// Castling move and also promotion are not considered here,
+// therefore pawns can appear at the first and last ranks due to this move
+// This should be always used in conjunction with undo_lazy_move 
+void PositionState::make_lazy_move(const move_info& move, bool is_en_passant_capture, Piece& captured_piece) const
+{
+	PositionState * non_const_this = const_cast<PositionState *>(this);
+	captured_piece = _board[move.to / 8][move.to % 8];
+	if (_white_to_play) {
+		if (is_en_passant_capture) {
+			non_const_this->remove_piece_from_bitboards((Square) (move.to - 8), BLACK);
+			(non_const_this->_board)[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
+			}
+		else {
+			if(captured_piece != ETY_SQUARE) {
+				non_const_this->remove_piece_from_bitboards(move.to, BLACK);
+			}
+		}
+		non_const_this->remove_piece_from_bitboards(move.from, WHITE);
+		non_const_this->add_piece_to_bitboards(move.to, WHITE);
+	}
+	else {
+		if (is_en_passant_capture) {
+			non_const_this->remove_piece_from_bitboards((Square) (move.to + 8), WHITE);
+			(non_const_this->_board)[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
+			}
+		else {
+			if(captured_piece != ETY_SQUARE) {
+				non_const_this->remove_piece_from_bitboards(move.to, WHITE);
+			}
+		}
+		non_const_this->remove_piece_from_bitboards(move.from, BLACK);
+		non_const_this->add_piece_to_bitboards(move.to, BLACK);
+	}
+	(non_const_this->_board)[move.to / 8][move.to % 8] = _board[move.from / 8][move.from % 8];	
+	(non_const_this->_board)[move.from / 8][move.from % 8] = ETY_SQUARE;
+}
+
+// Reverses the lazy move done by make_lazy_move
+void PositionState::undo_lazy_move(const move_info& move, bool is_en_passant_capture, Piece captured_piece) const
+{
+	PositionState * non_const_this = const_cast<PositionState *>(this);
+	if (_white_to_play) {
+		if (is_en_passant_capture) {
+			non_const_this->add_piece_to_bitboards((Square) (move.to - 8), BLACK);
+			(non_const_this->_board)[move.to / 8 + 1][move.to % 8] = PAWN_BLACK;
+			}
+		else {
+			if(captured_piece != ETY_SQUARE) {
+				non_const_this->add_piece_to_bitboards(move.to, BLACK);
+			}
+		}
+		non_const_this->add_piece_to_bitboards(move.from, WHITE);
+		non_const_this->remove_piece_from_bitboards(move.to, WHITE);
+	}
+	else {
+		if (is_en_passant_capture) {
+			non_const_this->add_piece_to_bitboards((Square) (move.to + 8), WHITE);
+			(non_const_this->_board)[move.to / 8 + 1][move.to % 8] = PAWN_WHITE;
+			}
+		else {
+			if(captured_piece != ETY_SQUARE) {
+				non_const_this->add_piece_to_bitboards(move.to, WHITE);
+			}
+		}
+		non_const_this->add_piece_to_bitboards(move.from, BLACK);
+		non_const_this->remove_piece_from_bitboards(move.to, BLACK);
+	}
+	(non_const_this->_board)[move.from / 8][move.from % 8] = _board[move.to / 8][move.to % 8];
+	(non_const_this->_board)[move.to / 8][move.to % 8] = captured_piece;
+}
+
 void PositionState::make_move(const move_info& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
@@ -527,7 +621,7 @@ void PositionState::make_move(const move_info& move)
 
 	
 	update_castling_rights();
-	// todo : check if opponents king is under attack and update the variable accordingly
+	// TODO : check if opponents king is under attack and update the variable accordingly
 	
 	_white_to_play = !_white_to_play;
 }
@@ -685,6 +779,8 @@ void PositionState::make_promotion_move(const move_info& move)
 	_en_passant_file = -1;
 }
 
+// Updates castling variables by checking whether king and rooks 
+// are their designated positions after the move
 void PositionState::update_castling_rights()
 {
 	if (_white_to_play) {
@@ -721,6 +817,7 @@ void PositionState::update_castling_rights()
 	}
 }
 
+// Adds a piece into all 4 occupation bitboards in the appropriate position
 void PositionState::add_piece_to_bitboards(Square sq, Color clr)
 {
 	assert(clr == WHITE || clr == BLACK);
@@ -739,6 +836,7 @@ void PositionState::add_piece_to_bitboards(Square sq, Color clr)
 	
 }
 
+// Removes a piece from all 4 occupation bitboards in the appropriate position
 void PositionState::remove_piece_from_bitboards(Square sq, Color clr)
 {
 	assert(clr == WHITE || clr == BLACK);

@@ -2,12 +2,10 @@
 #define BITBOARDIMPL_H_
 
 #include "utils.h"
-#include <stdint.h>
 
 namespace pismo
 {
 
-typedef uint64_t Bitboard;
 typedef uint8_t Bitrank;
 
 const Bitboard WHITE_RIGHT_CASTLING_KING_SQUARES = 0x0000000000000070; // Bitboard of squares used by the king making right castling move for white
