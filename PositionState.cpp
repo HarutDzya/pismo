@@ -171,6 +171,7 @@ bool PositionState::init_position_is_valid(const std::vector<std::pair<Square, P
 
 bool PositionState::move_is_legal(const move_info& move) const
 {
+	assert(move.from != move.to);
 	Piece pfrom = _board[move.from  / 8][move.from % 8];
 	Piece pto = _board[move.to  / 8][move.to % 8];
 	if(pfrom == ETY_SQUARE) {
