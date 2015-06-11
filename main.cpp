@@ -1,8 +1,10 @@
 #include <iostream>
 #include <map>
 #include "PositionState.h"
+#include "MoveGenerator.h"
 
 void print_bitboard(const pismo::Bitboard& board);
+void print_generated_moves(const std::vector<pismo::move_info>& generated_moves);
 
 int main()
 {
@@ -44,6 +46,7 @@ int main()
 	std::string sqfrom;
 	std::string sqto;
 	std::string prom;
+	Color turn_to_play = WHITE;
 	while (std::cin >> sqfrom && sqfrom != "q" && std::cin >> sqto && std::getline(std::cin, prom)) {
 		move_info move;
 		if(prom == "QW") {
@@ -65,11 +68,23 @@ int main()
 		if (pos.move_is_legal(move)) {
 			pos.make_move(move);
 			pos.print_board();
+			if (turn_to_play == WHITE) {
+				turn_to_play = BLACK;
+			}
+			else {
+				turn_to_play = WHITE;
+			}
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
 		else {
 			std::cout << "Move is illegal" << std::endl;
-			pos.print_possible_moves(move.from);
+			//pos.print_possible_moves(move.from);
+			if (turn_to_play == WHITE) {
+				print_generated_moves(MoveGenerator::generate_white_moves(pos));
+			}
+			else {
+				print_generated_moves(MoveGenerator::generate_black_moves(pos));
+			}
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
 	}
@@ -95,4 +110,44 @@ void print_bitboard(const pismo::Bitboard& board)
 		}
 	}
 }
+
+void print_generated_moves(const std::vector<pismo::move_info>& generated_moves)
+{
+	std::cout << "Possible moves are the following" << std::endl; 
+	for (std::size_t move_count = 0; move_count < generated_moves.size(); ++move_count) {
+		pismo::move_info move = generated_moves[move_count];
+		std::cout << std::string(1, ('A' + move.from % 8)) + std::string(1, ('1' + move.from / 8)) << "	";
+		std::cout << std::string(1, ('A' + move.to % 8)) + std::string(1, ('1' + move.to / 8)) << "	";
+		switch(move.promoted) {
+			case pismo::ETY_SQUARE:
+				std::cout << "ES" << std::endl;
+				break;
+			case pismo::KNIGHT_WHITE:
+				std::cout << "NW" << std::endl;
+				break;
+			case pismo::BISHOP_WHITE:
+				std::cout << "BW" << std::endl;
+				break;
+			case pismo::ROOK_WHITE:
+				std::cout << "RW" << std::endl;
+				break;
+			case pismo::QUEEN_WHITE:
+				std::cout << "QW" << std::endl;
+				break;
+			case pismo::KNIGHT_BLACK:
+				std::cout << "NB" << std::endl;
+				break;
+			case pismo::BISHOP_BLACK:
+				std::cout << "BB" << std::endl;
+				break;
+			case pismo::ROOK_BLACK:
+				std::cout << "RB" << std::endl;
+			case pismo::QUEEN_BLACK:
+				std::cout << "QB" << std::endl;
+			default:
+				std::cout << "XP" << std::endl;
+		}
+	}
+}
+
 

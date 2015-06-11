@@ -8,6 +8,7 @@ namespace pismo
 {
 
 class BitboardImpl;
+class MovePosImpl;
 
 class PositionState
 {
@@ -27,6 +28,12 @@ public:
 	method
 	*/
 	void make_move(const move_info& move);
+
+	/*
+	Returnes generated moves for the color clr if it's right
+	to play, otherwise terminates the program
+	*/
+	std::vector<move_info> get_generated_moves(Color clr) const;
 	
 	/*
 	Prints board for white pieces using information from 
@@ -78,7 +85,15 @@ private:
 	void update_castling_rights();
 
 	void add_piece_to_bitboards(Square sq, Color clr);
-	void remove_piece_from_bitboards(Square sq, Color clr);	
+	void remove_piece_from_bitboards(Square sq, Color clr);
+
+	void generate_pawn_moves(Square from, Color clr) const;
+	void generate_knight_moves(Square from) const;
+	void generate_king_moves(Square from) const;
+	void generate_rank_moves(Square from) const;
+	void generate_file_moves(Square from) const;
+	void generate_diag_a1h8_moves(Square from) const;
+	void generate_diag_a8h1_moves(Square from) const;	
 
 //data members
 private:
@@ -100,6 +115,10 @@ private:
 	Count _black_pieces_count[PIECE_NB / 2];
 
 	const BitboardImpl* _bitboard_impl;
+	const MovePosImpl* _move_pos_impl;
+
+	// Container of the generated moves when calling get_generated_moves method
+	mutable std::vector<move_info> _generated_moves;
 
 	//true - if white's move, false - black's move
 	bool _white_to_play;
