@@ -87,13 +87,13 @@ private:
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
-	void generate_pawn_moves(Square from, Color clr) const;
-	void generate_knight_moves(Square from) const;
-	void generate_king_moves(Square from) const;
-	void generate_rank_moves(Square from) const;
-	void generate_file_moves(Square from) const;
-	void generate_diag_a1h8_moves(Square from) const;
-	void generate_diag_a8h1_moves(Square from) const;	
+	void generate_pawn_moves(Square from, Color clr, std::vector<move_info>& generated_moves) const;
+	void generate_knight_moves(Square from, std::vector<move_info>& generated_moves) const;
+	void generate_king_moves(Square from, std::vector<move_info>& generated_moves) const;
+	void generate_rank_moves(Square from, std::vector<move_info>& generated_moves) const;
+	void generate_file_moves(Square from, std::vector<move_info>& generated_moves) const;
+	void generate_diag_a1h8_moves(Square from, std::vector<move_info>& generated_moves) const;
+	void generate_diag_a8h1_moves(Square from, std::vector<move_info>& generated_moves) const;	
 
 //data members
 private:
@@ -116,9 +116,6 @@ private:
 
 	const BitboardImpl* _bitboard_impl;
 	const MovePosImpl* _move_pos_impl;
-
-	// Container of the generated moves when calling get_generated_moves method
-	mutable std::vector<move_info> _generated_moves;
 
 	//true - if white's move, false - black's move
 	bool _white_to_play;
