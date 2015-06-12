@@ -1,10 +1,9 @@
-#include "MovePosImpl.h"
+#include "PossibleMoves.h"
 
 namespace pismo
 {
 
-
-MovePosImpl::MovePosImpl()
+PossibleMoves::PossibleMoves()
 {
 	init_white_pawn_moves();
 	init_black_pawn_moves();
@@ -20,67 +19,67 @@ MovePosImpl::MovePosImpl()
 	init_down_diag_a8h1_moves();
 }
 
-const std::vector<Square>& MovePosImpl::possible_white_pawn_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_white_pawn_moves(Square from) const
 {
 	return _white_pawn_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_black_pawn_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_black_pawn_moves(Square from) const
 {
 	return _black_pawn_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_knight_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_knight_moves(Square from) const
 {
 	return _knight_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_king_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_king_moves(Square from) const
 {
 	return _king_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_left_rank_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_left_rank_moves(Square from) const
 {
 	return _left_rank_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_right_rank_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_right_rank_moves(Square from) const
 {
 	return _right_rank_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_up_file_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_up_file_moves(Square from) const
 {
 	return _up_file_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_down_file_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_down_file_moves(Square from) const
 {
 	return _down_file_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_up_diag_a1h8_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_up_diag_a1h8_moves(Square from) const
 {
 	return _up_diag_a1h8_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_down_diag_a1h8_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_down_diag_a1h8_moves(Square from) const
 {
 	return _down_diag_a1h8_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_up_diag_a8h1_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_up_diag_a8h1_moves(Square from) const
 {
 	return _up_diag_a8h1_moves_list[from];
 }
 
-const std::vector<Square>& MovePosImpl::possible_down_diag_a8h1_moves(Square from) const
+const std::vector<Square>& PossibleMoves::possible_down_diag_a8h1_moves(Square from) const
 {
 	return _down_diag_a8h1_moves_list[from];
 }
 
-void MovePosImpl::init_white_pawn_moves()
+void PossibleMoves::init_white_pawn_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		if (sq <= H1 || sq >= A8) {
@@ -103,7 +102,7 @@ void MovePosImpl::init_white_pawn_moves()
 	}
 }
 
-void MovePosImpl::init_black_pawn_moves()
+void PossibleMoves::init_black_pawn_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		if (sq <= H1 || sq >= A8) {
@@ -126,7 +125,7 @@ void MovePosImpl::init_black_pawn_moves()
 	}
 }
 
-void MovePosImpl::init_knight_moves()
+void PossibleMoves::init_knight_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> knight_moves_square;
@@ -158,7 +157,7 @@ void MovePosImpl::init_knight_moves()
 	}
 }
 
-void MovePosImpl::init_king_moves()
+void PossibleMoves::init_king_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> king_moves_square;
@@ -200,7 +199,7 @@ void MovePosImpl::init_king_moves()
 
 // The left rank moves are initialized starting from one left of the current square 
 // position until the left end of the rank  
-void MovePosImpl::init_left_rank_moves()
+void PossibleMoves::init_left_rank_moves()
 {
 	for (int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> left_rank_moves_square;
@@ -213,7 +212,7 @@ void MovePosImpl::init_left_rank_moves()
 
 // The right rank moves are initialized starting from one right of the current square 
 // position until the right end of the rank  
-void MovePosImpl::init_right_rank_moves()
+void PossibleMoves::init_right_rank_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> right_rank_moves_square;
@@ -226,7 +225,7 @@ void MovePosImpl::init_right_rank_moves()
 
 // The up file moves are initialized starting from one square up of the current
 // square position until the end of the file
-void MovePosImpl::init_up_file_moves()
+void PossibleMoves::init_up_file_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> up_file_moves_square;
@@ -239,7 +238,7 @@ void MovePosImpl::init_up_file_moves()
 
 // The down file moves are initialized starting from one square down of the current
 // square position until the end of the file
-void MovePosImpl::init_down_file_moves()
+void PossibleMoves::init_down_file_moves()
 {
 	for (int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> down_file_moves_square;
@@ -252,7 +251,7 @@ void MovePosImpl::init_down_file_moves()
 
 // The up diagonal A1H8 moves are initialized starting from one square up 
 // on diagonal of the current square position until the end of diagonal  
-void MovePosImpl::init_up_diag_a1h8_moves()
+void PossibleMoves::init_up_diag_a1h8_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> up_diag_a1h8_moves_square;
@@ -265,7 +264,7 @@ void MovePosImpl::init_up_diag_a1h8_moves()
 
 // The down diagonal A1H8 moves are initialized starting from one square 
 // down on diagonal of the current square position until the end of diagonal
-void MovePosImpl::init_down_diag_a1h8_moves()
+void PossibleMoves::init_down_diag_a1h8_moves()
 {
 	for (int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> down_diag_a1h8_moves_square;
@@ -278,7 +277,7 @@ void MovePosImpl::init_down_diag_a1h8_moves()
 
 // The up diagonal A8H1 moves are initialized starting from one square up
 // on diagonal of the current square position until the end of diagonal
-void MovePosImpl::init_up_diag_a8h1_moves()
+void PossibleMoves::init_up_diag_a8h1_moves()
 {
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> up_diag_a8h1_moves_square;
@@ -291,7 +290,7 @@ void MovePosImpl::init_up_diag_a8h1_moves()
 
 // The down diagonal A8H1 moves are initialized starting from one square
 // down on diagonal of the current square position until the end of diagonal
-void MovePosImpl::init_down_diag_a8h1_moves()
+void PossibleMoves::init_down_diag_a8h1_moves()
 {
 	for (int sq = A1; sq <= H8; ++sq) {
 		std::vector<Square> down_diag_a8h1_moves_square;

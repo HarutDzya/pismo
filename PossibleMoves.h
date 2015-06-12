@@ -1,5 +1,5 @@
-#ifndef MOVEPOSIMPL_H_
-#define MOVEPOSIMPL_H_
+#ifndef _POSSIBLE_MOVES_H_
+#define _POSSIBLE_MOVES_H_
 
 #include "utils.h"
 #include <vector>
@@ -7,10 +7,10 @@
 namespace pismo
 {
 
-class MovePosImpl
+class PossibleMoves
 {
 public:
-	MovePosImpl();
+	PossibleMoves();
 
 	const std::vector<Square>& possible_white_pawn_moves(Square from) const;
 	const std::vector<Square>& possible_black_pawn_moves(Square from) const;

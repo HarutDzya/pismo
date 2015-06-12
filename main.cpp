@@ -80,10 +80,10 @@ int main()
 			std::cout << "Move is illegal" << std::endl;
 			//pos.print_possible_moves(move.from);
 			if (turn_to_play == WHITE) {
-				print_generated_moves(MoveGenerator::generate_white_moves(pos));
+				print_generated_moves(MoveGenerator::instance()->generate_white_moves(pos));
 			}
 			else {
-				print_generated_moves(MoveGenerator::generate_black_moves(pos));
+				print_generated_moves(MoveGenerator::instance()->generate_black_moves(pos));
 			}
 			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
