@@ -21,12 +21,12 @@ PossibleMoves::PossibleMoves()
 
 const std::vector<Square>& PossibleMoves::possible_white_pawn_moves(Square from) const
 {
-	return _white_pawn_moves_list[from];
+	return _white_pawn_moves_list[from - A2];
 }
 
 const std::vector<Square>& PossibleMoves::possible_black_pawn_moves(Square from) const
 {
-	return _black_pawn_moves_list[from];
+	return _black_pawn_moves_list[from - A2];
 }
 
 const std::vector<Square>& PossibleMoves::possible_knight_moves(Square from) const
@@ -81,47 +81,37 @@ const std::vector<Square>& PossibleMoves::possible_down_diag_a8h1_moves(Square f
 
 void PossibleMoves::init_white_pawn_moves()
 {
-	for (unsigned int sq = A1; sq <= H8; ++sq) {
-		if (sq <= H1 || sq >= A8) {
-			_white_pawn_moves_list.push_back(std::vector<Square>());
+	for (unsigned int sq = A2; sq <= H7; ++sq) {
+		std::vector<Square> pawn_moves_square;
+		pawn_moves_square.push_back((Square) (sq + 8));
+		if ((sq % 8) > (A1 % 8)) { 
+			pawn_moves_square.push_back((Square) (sq + 7));
 		}
-		else {
-			std::vector<Square> pawn_moves_square;
-			pawn_moves_square.push_back((Square) (sq + 8));
-			if ((sq % 8) > (A1 % 8)) { 
-				pawn_moves_square.push_back((Square) (sq + 7));
-			}
-			if ((sq % 8) < (H1 % 8)) {
-				pawn_moves_square.push_back((Square) (sq + 9));
-			}
-			if (sq >= A2 && sq <= H2) {
-				pawn_moves_square.push_back((Square) (sq + 16));
-			}
-			_white_pawn_moves_list.push_back(pawn_moves_square);
+		if ((sq % 8) < (H1 % 8)) {
+			pawn_moves_square.push_back((Square) (sq + 9));
 		}
+		if (sq >= A2 && sq <= H2) {
+			pawn_moves_square.push_back((Square) (sq + 16));
+		}
+		_white_pawn_moves_list.push_back(pawn_moves_square);
 	}
 }
 
 void PossibleMoves::init_black_pawn_moves()
 {
-	for (unsigned int sq = A1; sq <= H8; ++sq) {
-		if (sq <= H1 || sq >= A8) {
-			_black_pawn_moves_list.push_back(std::vector<Square>());
+	for (unsigned int sq = A2; sq <= H7; ++sq) {
+		std::vector<Square> pawn_moves_square;
+		pawn_moves_square.push_back((Square) (sq - 8));
+		if ((sq % 8) < (H1 % 8)) {
+			pawn_moves_square.push_back((Square) (sq - 7));
 		}
-		else {
-			std::vector<Square> pawn_moves_square;
-			pawn_moves_square.push_back((Square) (sq - 8));
-			if ((sq % 8) < (H1 % 8)) {
-				pawn_moves_square.push_back((Square) (sq - 7));
-			}
-			if ((sq % 8) > (A1 % 8)) { 
-				pawn_moves_square.push_back((Square) (sq - 9));
-			}
-			if (sq >= A7 && sq <= H7) {
-				pawn_moves_square.push_back((Square) (sq - 16));
-			}
-			_black_pawn_moves_list.push_back(pawn_moves_square);
+		if ((sq % 8) > (A1 % 8)) { 
+			pawn_moves_square.push_back((Square) (sq - 9));
 		}
+		if (sq >= A7 && sq <= H7) {
+			pawn_moves_square.push_back((Square) (sq - 16));
+		}
+		_black_pawn_moves_list.push_back(pawn_moves_square);
 	}
 }
 

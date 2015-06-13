@@ -108,8 +108,8 @@ private:
 
 	Bitboard _move_pos_board_knight[NUMBER_OF_SQUARES];
 	Bitboard _move_pos_board_king[NUMBER_OF_SQUARES];
-	Bitboard _attacking_pos_board_pawn_white[NUMBER_OF_SQUARES];
-	Bitboard _attacking_pos_board_pawn_black[NUMBER_OF_SQUARES];
+	Bitboard _attacking_pos_board_pawn_white[NUMBER_OF_SQUARES - 16];
+	Bitboard _attacking_pos_board_pawn_black[NUMBER_OF_SQUARES - 16];
 
 
 };

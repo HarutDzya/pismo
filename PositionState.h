@@ -8,7 +8,6 @@ namespace pismo
 {
 
 class BitboardImpl;
-class MovePosImpl;
 
 class PositionState
 {
@@ -58,7 +57,7 @@ public:
 	*/
 	void print_possible_moves(Square from) const;
 
-	Piece const (&getBoard()const)[8][8] {return _board;}
+	Piece const (&get_board()const)[8][8] {return _board;}
 
 	bool white_to_play() const {return _white_to_play;}
 

@@ -89,12 +89,12 @@ Bitboard BitboardImpl::get_legal_king_moves(Square from) const
 
 Bitboard BitboardImpl::get_legal_pawn_white_attacking_moves(Square from) const
 {
-	return _attacking_pos_board_pawn_white[from];
+	return _attacking_pos_board_pawn_white[from - A2];
 }
 
 Bitboard BitboardImpl::get_legal_pawn_black_attacking_moves(Square from) const
 {
-	return _attacking_pos_board_pawn_black[from];
+	return _attacking_pos_board_pawn_black[from - A2];
 }
 
 // Returns the converted normal bitboard from transpose bitboard
@@ -367,36 +367,30 @@ void BitboardImpl::init_move_pos_board_king()
 
 void BitboardImpl::init_attacking_pos_board_pawn_white()
 {
-	for (unsigned int sq = A1; sq <= H8; ++sq) {
-		if (sq / 8 == 0 || sq / 8 == 7) {
-			_attacking_pos_board_pawn_white[sq] = 0;
-		}
-		else if (sq % 8 == 0) {
-			_attacking_pos_board_pawn_white[sq] = (PAWN_WHITE_ATTACK_A2 << sq - A2);
+	for (unsigned int sq = A2; sq <= H7; ++sq) {
+		if (sq % 8 == 0) {
+			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_A2 << sq - A2);
 		}
 		else if (sq % 8 == 7) {
-			_attacking_pos_board_pawn_white[sq] = (PAWN_WHITE_ATTACK_H2 << sq - H2);
+			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_H2 << sq - H2);
 		}
 		else {
-			_attacking_pos_board_pawn_white[sq] = (PAWN_WHITE_ATTACK_B2 << sq - B2);
+			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_B2 << sq - B2);
 		}
 	}
 }
 
 void BitboardImpl::init_attacking_pos_board_pawn_black()
 {
-	for (unsigned int sq = A1; sq <= H8; ++sq) {
-		if (sq / 8 == 0 || sq / 8 == 7) {
-			_attacking_pos_board_pawn_black[sq] = 0;
-		}
-		else if (sq % 8 == 0) {
-			_attacking_pos_board_pawn_black[sq] = (PAWN_BLACK_ATTACK_A7 >> A7 - sq);
+	for (unsigned int sq = A2; sq <= H7; ++sq) {
+		if (sq % 8 == 0) {
+			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_A7 >> A7 - sq);
 		}
 		else if (sq % 8 == 7) {
-			_attacking_pos_board_pawn_black[sq] = (PAWN_BLACK_ATTACK_H7 >> H7 - sq);
+			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_H7 >> H7 - sq);
 		}
 		else {
-			_attacking_pos_board_pawn_black[sq] = (PAWN_BLACK_ATTACK_G7 >> G7 - sq);
+			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_G7 >> G7 - sq);
 		}
 	}
 }
