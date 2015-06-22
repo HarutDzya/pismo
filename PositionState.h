@@ -8,6 +8,7 @@ namespace pismo
 {
 
 class BitboardImpl;
+class ZobKeyImpl;
 
 class PositionState
 {
@@ -56,6 +57,8 @@ public:
 	Prints possible moves from Square from on the board
 	*/
 	void print_possible_moves(Square from) const;
+
+	ZobKey get_state_zob_key() const {return _zob_key;}
 
 	Piece const (&get_board()const)[8][8] {return _board;}
 
@@ -110,6 +113,7 @@ private:
 	Count _black_pieces_count[PIECE_NB / 2];
 
 	const BitboardImpl* _bitboard_impl;
+	const ZobKeyImpl* _zob_key_impl;
 
 	//true - if white's move, false - black's move
 	bool _white_to_play;
@@ -125,6 +129,9 @@ private:
 	bool _white_right_castling;
 	bool _black_left_castling;
 	bool _black_right_castling;
+
+	// Zobrist key for the state of the game
+	ZobKey _zob_key;
 };
 
 }

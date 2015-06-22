@@ -1,5 +1,5 @@
-all: PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o main.o
-	g++ -g main.o PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o
+all: PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o main.o
+	g++ -g main.o PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o
 
 PositionState.o: PositionState.cpp 
 	g++ -g -c PositionState.cpp -o PositionState.o
@@ -13,8 +13,11 @@ BitboardImpl.o: BitboardImpl.cpp
 PossibleMoves.o: PossibleMoves.cpp
 	g++ -g -c PossibleMoves.cpp -o PossibleMoves.o
 
+ZobKeyImpl.o: ZobKeyImpl.cpp
+	g++ -g -c ZobKeyImpl.cpp -o ZobKeyImpl.o
+
 main.o: main.cpp 
 	g++ -g -c main.cpp -o main.o
 
 clean:
-	rm -rf main.o PositionState.o  MoveGenerator.o BitboardImpl.o PossibleMoves.o a.out a.exe
+	rm -rf main.o PositionState.o  MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o a.out a.exe

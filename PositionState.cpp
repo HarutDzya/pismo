@@ -1,5 +1,6 @@
 #include "PositionState.h"
 #include "BitboardImpl.h"
+#include "ZobKeyImpl.h"
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
@@ -17,6 +18,7 @@ _black_pieces_transpose(0),
 _black_pieces_diag_a1h8(0),
 _black_pieces_diag_a8h1(0),
 _bitboard_impl(new BitboardImpl()),
+_zob_key_impl(new ZobKeyImpl()),
 _white_to_play(true),
 _en_passant_file(-1),
 _white_king_position(E1),
@@ -24,7 +26,8 @@ _black_king_position(E8),
 _white_left_castling(true),
 _white_right_castling(true),
 _black_left_castling(true),
-_black_right_castling(true)
+_black_right_castling(true),
+_zob_key(0)
 {
 	for (int i = 0; i < 8; ++i) {
 		for (int j = 0; j < 8; ++j) {
@@ -35,17 +38,21 @@ _black_right_castling(true)
 		_white_pieces_count[i] = 0;
 		_black_pieces_count[i] = 0;
 	} 
+	_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+	_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+	_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+	_zob_key ^= _zob_key_impl->get_black_right_castling_key();
 }
 
 PositionState::~PositionState()
 {
 	delete _bitboard_impl;
+	delete _zob_key_impl;
 }
 
 void PositionState::set_piece(Square s, Piece p)
 {
 	_board[s / 8][s % 8] = p;
-	Bitboard tmp = 1;
 	if (p <= KING_WHITE) {
 		if (p == KING_WHITE) {
 			_white_king_position = s;
@@ -58,6 +65,7 @@ void PositionState::set_piece(Square s, Piece p)
 		}
 		add_piece_to_bitboards(s, BLACK);
 	}
+	_zob_key ^=  _zob_key_impl->get_piece_at_square_key(p, s);
 }
 
 void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& pieces)
@@ -625,17 +633,20 @@ void PositionState::make_move(const move_info& move)
 	// TODO : check if opponents king is under attack and update the variable accordingly
 	
 	_white_to_play = !_white_to_play;
+	_zob_key ^= _zob_key_impl->get_if_black_to_play_key();
 }
 
 void PositionState::make_normal_move(const move_info& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
+	Piece pto = _board[move.to / 8][move.to % 8];
 	if (_white_to_play) {			
 		remove_piece_from_bitboards(move.from, WHITE);
 		add_piece_to_bitboards(move.to, WHITE);
-		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
+		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, BLACK);
-			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
+			--(_black_pieces_count[pto % (PIECE_NB / 2)]);
 		}
 		if (pfrom == KING_WHITE) {
 			_white_king_position = move.to;
@@ -644,9 +655,10 @@ void PositionState::make_normal_move(const move_info& move)
 	else {
 		remove_piece_from_bitboards(move.from, BLACK);
 		add_piece_to_bitboards(move.to, BLACK);
-		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
+		if (pto = ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, WHITE);
-			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
+			--(_white_pieces_count[pto]);
 		}
 		if (pfrom == KING_BLACK) {
 			_black_king_position = move.to;
@@ -654,7 +666,12 @@ void PositionState::make_normal_move(const move_info& move)
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
-	_en_passant_file = -1;				
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.to);
+	if (_en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+		_en_passant_file = -1;				
+	}	
 }
 
 //Castling is assumed to be King's move
@@ -662,54 +679,63 @@ void PositionState::make_castling_move(const move_info& move)
 {
 	if (_white_to_play) {
 		assert(move.from == E1);
+		remove_piece_from_bitboards(move.from, WHITE);
+		add_piece_to_bitboards(move.to, WHITE);
+		_board[move.from / 8][move.from % 8] = ETY_SQUARE;
+		_board[move.to / 8][move.to % 8] = KING_WHITE;
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_WHITE, move.from);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_WHITE, move.to);
+		_white_king_position = move.to;
 		if (move.to == C1) {
-			remove_piece_from_bitboards(move.from, WHITE);
-			add_piece_to_bitboards(move.to, WHITE);
 			remove_piece_from_bitboards(A1, WHITE);
 			add_piece_to_bitboards(D1, WHITE);	
-			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8] = KING_WHITE;
 			_board[A1 / 8][A1 % 8] = ETY_SQUARE;
 			_board[D1 / 8][D1 % 8] = ROOK_WHITE;
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, A1);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, D1);
 		}	
 		else {
 			assert(move.to == G1);
-			remove_piece_from_bitboards(move.from, WHITE);
-			add_piece_to_bitboards(move.to, WHITE);
 			remove_piece_from_bitboards(H1, WHITE);
 			add_piece_to_bitboards(F1, WHITE);	
-			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8] = KING_WHITE;
 			_board[H1 / 8][H1 % 8] = ETY_SQUARE;
 			_board[F1 / 8][F1 % 8] = ROOK_WHITE;
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, H1);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, F1);
+
 		}
-		_white_king_position = move.to;
 	}
 	else {
 		assert(move.from == E8);
+		remove_piece_from_bitboards(move.from, BLACK);
+		add_piece_to_bitboards(move.to, BLACK);
+		_board[move.from / 8][move.from % 8] = ETY_SQUARE;
+		_board[move.to / 8][move.to % 8] = KING_BLACK;
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_BLACK, move.from);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_BLACK, move.to);
+		_black_king_position = move.to;
 		if (move.to == C8) {
-			remove_piece_from_bitboards(move.from, BLACK);
-			add_piece_to_bitboards(move.to, BLACK);
 			remove_piece_from_bitboards(A8, BLACK);
 			add_piece_to_bitboards(D8, BLACK);	
-			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8] = KING_BLACK;
 			_board[A8 / 8][A8 % 8] = ETY_SQUARE;
 			_board[D8 / 8][D8 % 8] = ROOK_BLACK;
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, A8);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, D8);
 		}	
 		else {
 			assert(move.to == G8);
-			remove_piece_from_bitboards(move.from, BLACK);
-			add_piece_to_bitboards(move.to, BLACK);
 			remove_piece_from_bitboards(H8, BLACK);
 			add_piece_to_bitboards(F8, BLACK);	
-			_board[move.from / 8][move.from % 8] = ETY_SQUARE;
-			_board[move.to / 8][move.to % 8] = KING_BLACK;
 			_board[H8 / 8][H8 % 8] = ETY_SQUARE;
 			_board[F8 / 8][F8 % 8] = ROOK_BLACK;
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, H8);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, F8);
 		}
-		_black_king_position = move.to;
 	}
+	if (_en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+		_en_passant_file = -1;	
+	}	
 }
 
 void PositionState::make_en_passant_move(const move_info& move)
@@ -725,7 +751,13 @@ void PositionState::make_en_passant_move(const move_info& move)
 	}	
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
-	_en_passant_file = move.from % 8;					
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.to);
+	if (_en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+	}
+	_en_passant_file = move.from % 8;
+	_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
 }
 
 void PositionState::make_en_passant_capture(const move_info& move)
@@ -737,6 +769,7 @@ void PositionState::make_en_passant_capture(const move_info& move)
 		remove_piece_from_bitboards((Square) (move.to - 8), BLACK);
 		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
 		_board[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_BLACK,(Square) (move.to - 8));
 	}
 	else {
 		remove_piece_from_bitboards(move.from, BLACK);
@@ -744,40 +777,55 @@ void PositionState::make_en_passant_capture(const move_info& move)
 		remove_piece_from_bitboards((Square) (move.to + 8), WHITE);
 		--(_white_pieces_count[PAWN_WHITE]);
 		_board[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
-		
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_WHITE,(Square) (move.to + 8));
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
-	_en_passant_file = -1;
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.to);
+	if (_en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+		_en_passant_file = -1;				
+	}
 }
 
 void PositionState::make_promotion_move(const move_info& move)
 {
-	Bitboard tmp = 1;
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	Piece pto = _board[move.to / 8][move.to % 8];
 	if (_white_to_play) {
+		assert(move.from >= A7 && move.from <= H7);
 		remove_piece_from_bitboards(move.from, WHITE);
 		add_piece_to_bitboards(move.to, WHITE);
-		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
+		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, BLACK);
-			--(_black_pieces_count[_board[move.to / 8][move.to % 8] % (PIECE_NB / 2)]);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
+			--(_black_pieces_count[pto % (PIECE_NB / 2)]);
 		}
 		--(_white_pieces_count[PAWN_WHITE]);
 		++(_white_pieces_count[move.promoted]);
 	}
 	else {
+		assert(move.from >= A2 && move.from <= H2);
 		remove_piece_from_bitboards(move.from, BLACK);
 		add_piece_to_bitboards(move.to, BLACK);
-		if (_board[move.to / 8][move.to % 8] != ETY_SQUARE) {
-			remove_piece_from_bitboards(move.to, WHITE);	
-			--(_white_pieces_count[_board[move.to / 8][move.to % 8]]);
+		if (pto != ETY_SQUARE) {
+			remove_piece_from_bitboards(move.to, WHITE);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);	
+			--(_white_pieces_count[pto]);
 		}
 		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
 		++(_black_pieces_count[move.promoted % (PIECE_NB / 2)]);
 		
-		}
+	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = move.promoted;
-	_en_passant_file = -1;
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.promoted, move.to);
+	if (_en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+		_en_passant_file = -1;
+	}
 }
 
 // Updates castling variables by checking whether king and rooks 
@@ -787,15 +835,23 @@ void PositionState::update_castling_rights()
 	if (_white_to_play) {
 		if (_white_left_castling || _white_right_castling) {
 			if (_board[E1 / 8][E1 % 8] != KING_WHITE){
-				_white_left_castling = false;
-				_white_right_castling = false;
+				if (_white_left_castling) {
+					_white_left_castling = false;
+					_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+				}
+				if (_white_right_castling) {
+					_white_right_castling = false;
+					_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+				}
 			}
 			else {
-				if (_board[A1 / 8][A1 % 8] != ROOK_WHITE) {
+				if (_white_left_castling && _board[A1 / 8][A1 % 8] != ROOK_WHITE) {
 					_white_left_castling = false;
+					_zob_key ^= _zob_key_impl->get_white_left_castling_key();
 				}
-				if (_board[H1 / 8][H1 % 8] != ROOK_WHITE) {
+				if (_white_right_castling && _board[H1 / 8][H1 % 8] != ROOK_WHITE) {
 					_white_right_castling = false;
+					_zob_key ^= _zob_key_impl->get_white_right_castling_key();
 				}
 			}
 		}
@@ -803,15 +859,23 @@ void PositionState::update_castling_rights()
 	else {
 		if (_black_left_castling || _black_right_castling) {
 			if (_board[E8 / 8][E8 % 8] != KING_BLACK){
-				_black_left_castling = false;
-				_black_right_castling = false;
+				if(_black_left_castling) {
+					_black_left_castling = false;
+					_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+				}
+				if(_black_right_castling) {
+					_black_right_castling = false;
+					_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+				}
 			}
 			else {
-				if (_board[A8 / 8][A8 % 8] != ROOK_BLACK) {
+				if (_black_left_castling && _board[A8 / 8][A8 % 8] != ROOK_BLACK) {
 					_black_left_castling = false;
+					_zob_key ^= _zob_key_impl->get_black_left_castling_key();
 				}
-				if (_board[H8 / 8][H8 % 8] != ROOK_BLACK) {
+				if (_black_right_castling && _board[H8 / 8][H8 % 8] != ROOK_BLACK) {
 					_black_right_castling = false;
+					_zob_key ^= _zob_key_impl->get_black_right_castling_key();
 				}
 			}
 		}
