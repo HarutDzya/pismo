@@ -29,6 +29,11 @@ void TranspositionTable::push(const EvalInfo& eval_info)
 	}
 }
 
+void TranspositionTable::forcePush(const EvalInfo& eval_info)
+{
+  _hash[hash_function(eval_info.zob_key)] = eval_info;
+}
+
 Count TranspositionTable::hash_function(const ZobKey& zob_key) const
 {
 	return (zob_key % HASH_TABLE_SIZE);

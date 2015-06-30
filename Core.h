@@ -7,6 +7,9 @@
 namespace pismo
 {
 
+class PositionEvaluation;
+class TranspositionTable;
+
 class Core
 {
 public:
@@ -27,6 +30,9 @@ private:
      * It implements naive minimax algorithm (later add alpha-beta pruning)
      */
     float minimax(PositionState& pos, uint16_t depth, bool white_to_play);
+
+    const PositionEvaluation* _pos_eval;
+    TranspositionTable* _trans_table;
 
     const Core& Core(const Core&); //non copy constructable
     const Core& operator=(const Core&); // non assignable

@@ -12,6 +12,13 @@ struct EvalInfo
 	float pos_value;
 	ZobKey zob_key;
 	Count depth;
+  EvalInfo(float v, ZobKey z, Count d)
+  : pos_value(v),
+    zob_key(z),
+    depth(d)
+  {
+  }
+
 	//TODO:Add later best move
 };
 
@@ -24,7 +31,14 @@ public:
 	
 	bool contains(const PositionState& pos, EvalInfo& eval_info) const;
 	
+  /**
+   * override existing eval value if position is different,
+   * or position is the same but the depth is bigger
+   */
 	void push(const EvalInfo& eval_info);
+
+
+	void forcePush(const EvalInfo& eval_info);
 
 private:
 	Count hash_function(const ZobKey& zob_key) const;
