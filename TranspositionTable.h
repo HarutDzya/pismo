@@ -9,10 +9,10 @@ namespace pismo
 class PositionState;
 struct EvalInfo
 {
-	float pos_value;
+	int16_t pos_value;
 	ZobKey zob_key;
 	Count depth;
-  EvalInfo(float v, ZobKey z, Count d)
+  EvalInfo(int16_t v, ZobKey z, Count d)
   : pos_value(v),
     zob_key(z),
     depth(d)

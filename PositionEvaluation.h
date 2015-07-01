@@ -13,35 +13,38 @@ class PositionEvaluation
 public:
 
   /**
-  *
+  * Centi pawn (100 cp = 1 pawn) is choosen as a position evaluation granularity.
   * Intuition says light evaluation should be better choice, but everything will be clear later ...
   * For now lets only consider folowing three features:
+  * - piece square table
   * - Material
   * - Mobility
   * - king safety ( hold it for later releases ?)
   *
-  * TODO: Piece-Square Tables (TODO: later releases)
-  * 
-  *
-  * return value (_posValue):
-  * _posValue == -1000                - black wins (mate?)
-  * _posValue is in (-50, 0) range    - the smaller _posValue the better black postion is
-  * _posValue < -5                    - 99% GMs can win playing with black pieces
-  * _posValue == 0                    - position is equal
-  * _posValue > 5                     - 99% GMs can win playing with black pieces
-  * _posValue is in (50, 0) range     - the bigger _posValue the better white postion is
-  * _posValue == 1000                 - black wins (mate?)
+  * returns value in centi pawns.
+  * (_posValue) / 100:
+  *        == -100                 - black wins (mate?)
+  *        is in (-50, 0) range    - the smaller _posValue the better black postion is
+  *        < -5                    - 99% GMs can win playing with black pieces (advantage of more than 5 pawns)
+  *        == 0                    - position is equal
+  *        > 5                     - 99% GMs can win playing with black pieces (advantage of more than 5 pawns)
+  *        is in (50, 0) range     - the bigger _posValue the better white postion is
+  *        == 100                  - black wins (mate?)
   */
 
   
 
-  float evaluate(const PositionState& pos);
+  int16_t evaluate(const PositionState& pos);
   {
+    evalPieceSquare();
+
     evalMaterial();
 
     evalMobility();
 
     //king_safety();
+
+    return _posValue;
   }
 
 private:
@@ -49,7 +52,8 @@ private:
   
   void evalMobility();
 
-  float _posValue;
+  //position value in centi pawns
+  int16_t _posValue;
 };
 
 }

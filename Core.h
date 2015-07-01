@@ -29,7 +29,7 @@ private:
     /*
      * It implements naive minimax algorithm (later add alpha-beta pruning)
      */
-    float minimax(PositionState& pos, uint16_t depth, bool white_to_play);
+    int16_t minimax(PositionState& pos, uint16_t depth, bool white_to_play);
 
     const PositionEvaluation* _pos_eval;
     TranspositionTable* _trans_table;

@@ -19,7 +19,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
   }
 
   move_info move = possibleMoves[0];
-  float score = -MAX_SCORE;
+  int16_t score = -MAX_SCORE;
   if (possibleMoves.size() == 1) return move;
 
   if (white_to_play)
@@ -27,7 +27,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
     for (uint16_t i = 0; i < possibleMoves.size(); ++i)
     {
       pos.make_move(possibleMoves[i]);
-      float s = minimax(pos, depth - 1, !white_to_play);
+      int16_t s = minimax(pos, depth - 1, !white_to_play);
       pos.undo_move();
       if (s > score)
       {
@@ -42,7 +42,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
     for (uint16_t i = 0; i < possibleMoves.size(); ++i)
     {
       pos.make_move(possibleMoves[i]);
-      float s = minimax(pos, depth - 1, !white_to_play);
+      int16_t s = minimax(pos, depth - 1, !white_to_play);
       pos.undo_move();
       if (s < score)
       {
@@ -58,7 +58,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
   return move;
 }
 
-float Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
+int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 {
   if (depth = 0)
   {
@@ -68,7 +68,7 @@ float Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
       return eval.pos_value;
     }
 
-    float val = _pos_eval->eval(pos);
+    int16_t val = _pos_eval->eval(pos);
     eval.pos_value = val;
     eval.depth = 0;
     eval.zob_key = pos.get_state_sob_key();
@@ -85,11 +85,11 @@ float Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 
   if (white_to_play)
   {
-    float score = -MAX_SCORE;
+    int16_t score = -MAX_SCORE;
     for (uint16_t i = 0; i < possibleMoves.size(); ++i)
     {
       pos.make_move(possibleMoves[i]);
-      float s = minimax(pos, depth - 1, !white_to_play);
+      int16_t s = minimax(pos, depth - 1, !white_to_play);
       pos.undo_move();
       if (s > score) score = s;
     }
@@ -101,11 +101,11 @@ float Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
   }
   else
   {
-    float score = MAX_SCORE;
+    int16_t score = MAX_SCORE;
     for (uint16_t i = 0; i < possibleMoves.size(); ++i)
     {
       pos.make_move(possibleMoves[i]);
-      float s = minimax(pos, depth - 1, !white_to_play);
+      int16_t s = minimax(pos, depth - 1, !white_to_play);
       pos.undo_move();
       if (s < score) score = s;
     }
