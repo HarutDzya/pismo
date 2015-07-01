@@ -62,6 +62,10 @@ public:
 
 	Piece const (&get_board()const)[8][8] {return _board;}
 
+	Count const (&get_white_pieces_count() const) [PIECE_NB / 2] {return _white_pieces_count:}
+
+	Count const (&get_black_pieces_count() const) [PIECE_NB / 2] {return _black_pieces_count;}
+
 	bool white_to_play() const {return _white_to_play;}
 
 //private member functions

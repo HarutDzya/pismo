@@ -11,11 +11,11 @@ struct EvalInfo
 {
 	float pos_value;
 	ZobKey zob_key;
-	Count depth;
+	unsigned int depth;
 	//TODO:Add later best move
 };
 
-const Count HASH_TABLE_SIZE = 1000000;
+const unsigned int HASH_TABLE_SIZE = 1000000;
 
 class TranspositionTable
 {
@@ -27,7 +27,7 @@ public:
 	void push(const EvalInfo& eval_info);
 
 private:
-	Count hash_function(const ZobKey& zob_key) const;
+	unsigned int hash_function(const ZobKey& zob_key) const;
 
 private:
 	std::vector<EvalInfo> _hash; 

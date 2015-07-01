@@ -83,6 +83,7 @@ void ZobKeyImpl::init_castling_keys()
 
 ZobKey ZobKeyImpl::get_random_number() const
 {
+	//TODO: Implement our own generator in future
 	ZobKey tmp = std::rand();
 	return ((tmp << 32) | std::rand());
 }
