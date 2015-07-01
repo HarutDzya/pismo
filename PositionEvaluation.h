@@ -46,18 +46,6 @@ public:
 
   float evaluate(const PositionState& pos);
   {
-    if (_transpositionTable.contains(pos, _posValue)) 
-    {
-      return _posValue;
-    }
-    
-    doEvaluation();
-    _transpositionTable.push(pos, _posValue);
-
-  }
-  
-  void doEvaluation()
-  {
     evalMaterial();
 
     evalMobility();

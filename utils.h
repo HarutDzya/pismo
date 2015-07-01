@@ -39,6 +39,8 @@ struct move_info {
 	Piece promoted;
 };
 
+#define MAX_SCORE = 1000; //white has 100% winning position (-MAX_SCORE black wins)
+
 }
 
 #endif //UTILS_H_
