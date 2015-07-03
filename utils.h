@@ -40,7 +40,7 @@ struct move_info {
 
 struct EvalInfo
 {
-	float pos_value;
+	int16_t pos_value;
 	ZobKey zob_key;
 	uint16_t depth;
 	
