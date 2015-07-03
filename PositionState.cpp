@@ -1,6 +1,7 @@
 #include "PositionState.h"
 #include "BitboardImpl.h"
 #include "ZobKeyImpl.h"
+#include "PieceSquareTable.h"
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
@@ -27,16 +28,18 @@ _white_left_castling(true),
 _white_right_castling(true),
 _black_left_castling(true),
 _black_right_castling(true),
-_zob_key(0)
+_is_middle_game(true);
+_zob_key(0),
+_material_value(0),
+_pst_value(0)
 {
-	for (int i = 0; i < 8; ++i) {
-		for (int j = 0; j < 8; ++j) {
+	for (unsigned int i = 0; i < 8; ++i) {
+		for (unsigned int j = 0; j < 8; ++j) {
 			_board[i][j] = ETY_SQUARE;
 		}
 	}
-	for (int i = 0; i < PIECE_NB / 2; ++i) {
-		_white_pieces_count[i] = 0;
-		_black_pieces_count[i] = 0;
+	for (unsigned int i = 0; i < PIECE_NB; ++i) {
+		_piece_count[i] = 0;
 	} 
 	_zob_key ^= _zob_key_impl->get_white_left_castling_key();
 	_zob_key ^= _zob_key_impl->get_white_right_castling_key();
@@ -65,6 +68,9 @@ void PositionState::set_piece(Square s, Piece p)
 		}
 		add_piece_to_bitboards(s, BLACK);
 	}
+	++_piece_count[p];
+	_material_value += PIECE_VALUES[p];
+	_pst_value += calculate_pst_value(p, s);
 	_zob_key ^=  _zob_key_impl->get_piece_at_square_key(p, s);
 }
 
@@ -73,12 +79,6 @@ void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& 
 	if (init_position_is_valid(pieces)) {
 		for (std::size_t i = 0; i < pieces.size(); ++i) {
 			set_piece(pieces[i].first, pieces[i].second);
-			if (pieces[i].second <= KING_WHITE) {
-				++(_white_pieces_count[pieces[i].second]);
-			}
-			else {
-				++(_black_pieces_count[pieces[i].second % (PIECE_NB / 2)]);
-			}
 		}
 	}
 }
@@ -96,9 +96,9 @@ bool PositionState::init_position_is_valid(const std::vector<std::pair<Square, P
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
 		board[sq] = ETY_SQUARE;
 	} 
-	Count pieces_count[PIECE_NB] = {};
-	Count white_pieces_sum = 0;
-	Count black_pieces_sum = 0;
+	unsigned int pieces_count[PIECE_NB] = {};
+	unsigned int white_pieces_sum = 0;
+	unsigned int black_pieces_sum = 0;
 	for (std::size_t i = 0; i < pieces.size(); ++i) {
 		assert(pieces[i].first >= A1 && pieces[i].first <= H8);
 		assert(pieces[i].second >= PAWN_WHITE && pieces[i].second <= KING_BLACK);
@@ -129,8 +129,8 @@ bool PositionState::init_position_is_valid(const std::vector<std::pair<Square, P
 		return false;
 	}
 
-	Count white_promoted_pieces_sum = 0;
-	Count black_promoted_pieces_sum = 0;
+	unsigned int white_promoted_pieces_sum = 0;
+	unsigned int black_promoted_pieces_sum = 0;
 
 	for (unsigned int piece = PAWN_WHITE; piece <= KING_BLACK; ++piece) {
 		switch(piece) {
@@ -630,6 +630,7 @@ void PositionState::make_move(const move_info& move)
 
 	
 	update_castling_rights();
+	update_game_status();
 	// TODO : check if opponents king is under attack and update the variable accordingly
 	
 	_white_to_play = !_white_to_play;
@@ -645,8 +646,10 @@ void PositionState::make_normal_move(const move_info& move)
 		add_piece_to_bitboards(move.to, WHITE);
 		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, BLACK);
+			_material_value -= PIECE_VALUES[pto];
+			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			--(_black_pieces_count[pto % (PIECE_NB / 2)]);
+			--_piece_count[pto];
 		}
 		if (pfrom == KING_WHITE) {
 			_white_king_position = move.to;
@@ -657,8 +660,10 @@ void PositionState::make_normal_move(const move_info& move)
 		add_piece_to_bitboards(move.to, BLACK);
 		if (pto = ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, WHITE);
+			_material_value -= PIECE_VALUES[pto];
+			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			--(_white_pieces_count[pto]);
+			--_piece_count[pto];
 		}
 		if (pfrom == KING_BLACK) {
 			_black_king_position = move.to;
@@ -666,6 +671,8 @@ void PositionState::make_normal_move(const move_info& move)
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
+	_pst_value -= calculate_pst_value(pfrom, move.from);
+	_pst_value += calculate_pst_value(pfrom, move.to);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.to);
 	if (_en_passant_file != -1) {
@@ -683,6 +690,8 @@ void PositionState::make_castling_move(const move_info& move)
 		add_piece_to_bitboards(move.to, WHITE);
 		_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 		_board[move.to / 8][move.to % 8] = KING_WHITE;
+		_pst_value -= calculate_pst_value(KING_WHITE, move.from);
+		_pst_value += calculate_pst_value(KING_WHITE, move.to);
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_WHITE, move.from);
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_WHITE, move.to);
 		_white_king_position = move.to;
@@ -691,6 +700,8 @@ void PositionState::make_castling_move(const move_info& move)
 			add_piece_to_bitboards(D1, WHITE);	
 			_board[A1 / 8][A1 % 8] = ETY_SQUARE;
 			_board[D1 / 8][D1 % 8] = ROOK_WHITE;
+			_pst_value -= calculate_pst_value(ROOK_WHITE, A1);
+			_pst_value += calculate_pst_value(ROOK_WHITE, D1);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, A1);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, D1);
 		}	
@@ -700,6 +711,8 @@ void PositionState::make_castling_move(const move_info& move)
 			add_piece_to_bitboards(F1, WHITE);	
 			_board[H1 / 8][H1 % 8] = ETY_SQUARE;
 			_board[F1 / 8][F1 % 8] = ROOK_WHITE;
+			_pst_value -= calculate_pst_value(ROOK_WHITE, H1);
+			_pst_value += calculate_pst_value(ROOK_WHITE, F1);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, H1);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, F1);
 
@@ -711,6 +724,8 @@ void PositionState::make_castling_move(const move_info& move)
 		add_piece_to_bitboards(move.to, BLACK);
 		_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 		_board[move.to / 8][move.to % 8] = KING_BLACK;
+		_pst_value -= calculate_pst_value(KING_BLACK, move.from);
+		_pst_value += calculate_pst_value(KING_BLACK, move.to);
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_BLACK, move.from);
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_BLACK, move.to);
 		_black_king_position = move.to;
@@ -719,6 +734,8 @@ void PositionState::make_castling_move(const move_info& move)
 			add_piece_to_bitboards(D8, BLACK);	
 			_board[A8 / 8][A8 % 8] = ETY_SQUARE;
 			_board[D8 / 8][D8 % 8] = ROOK_BLACK;
+			_pst_value -= calculate_pst_value(ROOK_BLACK, A8);
+			_pst_value += calculate_pst_value(ROOK_BLACK, D8);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, A8);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, D8);
 		}	
@@ -728,6 +745,8 @@ void PositionState::make_castling_move(const move_info& move)
 			add_piece_to_bitboards(F8, BLACK);	
 			_board[H8 / 8][H8 % 8] = ETY_SQUARE;
 			_board[F8 / 8][F8 % 8] = ROOK_BLACK;
+			_pst_value -= calculate_pst_value(ROOK_BLACK, H8);
+			_pst_value += calculate_pst_value(ROOK_BLACK, F8);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, H8);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, F8);
 		}
@@ -751,6 +770,8 @@ void PositionState::make_en_passant_move(const move_info& move)
 	}	
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
+	_pst_value -= calculate_pst_value(pfrom, move.from);
+	_pst_value += calculate_pst_value(pfrom, move.to);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.to);
 	if (_en_passant_file != -1) {
@@ -767,20 +788,26 @@ void PositionState::make_en_passant_capture(const move_info& move)
 		remove_piece_from_bitboards(move.from, WHITE);
 		add_piece_to_bitboards(move.to, WHITE);
 		remove_piece_from_bitboards((Square) (move.to - 8), BLACK);
-		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
+		--_piece_count[PAWN_BLACK];
 		_board[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
+		_material_value -= PIECE_VALUES[PAWN_BLACK];
+		_pst_value -= calculate_pst_value(PAWN_BLACK, (Square) (move.to - 8));
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_BLACK,(Square) (move.to - 8));
 	}
 	else {
 		remove_piece_from_bitboards(move.from, BLACK);
 		add_piece_to_bitboards(move.to, BLACK);
 		remove_piece_from_bitboards((Square) (move.to + 8), WHITE);
-		--(_white_pieces_count[PAWN_WHITE]);
+		--_piece_count[PAWN_WHITE];
 		_board[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
+		_material_value -= PIECE_VALUES[PAWN_WHITE];
+		_pst_value -= calculate_pst_value(PAWN_WHITE, (Square) (move.to + 8));
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_WHITE,(Square) (move.to + 8));
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
+	_pst_value -= calculate_pst_value(pfrom, move.from);
+	_pst_value += calculate_pst_value(pfrom, move.to);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.to);
 	if (_en_passant_file != -1) {
@@ -799,11 +826,11 @@ void PositionState::make_promotion_move(const move_info& move)
 		add_piece_to_bitboards(move.to, WHITE);
 		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, BLACK);
+			_material_value -= PIECE_VALUES[pto];
+			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			--(_black_pieces_count[pto % (PIECE_NB / 2)]);
+			--_piece_count[pto];
 		}
-		--(_white_pieces_count[PAWN_WHITE]);
-		++(_white_pieces_count[move.promoted]);
 	}
 	else {
 		assert(move.from >= A2 && move.from <= H2);
@@ -811,15 +838,20 @@ void PositionState::make_promotion_move(const move_info& move)
 		add_piece_to_bitboards(move.to, BLACK);
 		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, WHITE);
+			_material_value -= PIECE_VALUES[pto];
+			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);	
-			--(_white_pieces_count[pto]);
+			--_piece_count[pto];
 		}
-		--(_black_pieces_count[PAWN_BLACK % (PIECE_NB / 2)]);
-		++(_black_pieces_count[move.promoted % (PIECE_NB / 2)]);
-		
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = move.promoted;
+	--_piece_count[pfrom];
+	++_piece_count[move.promoted];
+	_material_value -= PIECE_VALUES[pfrom];
+	_material_value += PIECE_VALUES[move.promoted];
+	_pst_value -= calculate_pst_value(pfrom, move.from);
+	_pst_value += calculate_pst_value(move.promoted, move.to);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.promoted, move.to);
 	if (_en_passant_file != -1) {
@@ -918,6 +950,26 @@ void PositionState::remove_piece_from_bitboards(Square sq, Color clr)
 		_black_pieces_diag_a8h1 ^= _bitboard_impl->square_to_bitboard_diag_a8h1(sq);
 	}
 	
+}
+
+int calculate_pst_value(Piece p, Square s) const
+{
+	if (_is_middle_game) {
+		return PST_MIDDLE_VALUE[p][s];
+	}
+	else {
+		return PST_END_VALUE[p][s];
+	}
+}
+
+// Updates the status of the game by setting 
+// is_middle_game variable true or false
+// TODO: Needs improvement on classifing middle and end game
+void update_game_status()
+{
+	if (_piece_count[QUEEN_WHITE] == 0 && _piece_count[QUEEN_BLACK] == 0) {
+		is_middle_game = false;
+	}
 }
 
 

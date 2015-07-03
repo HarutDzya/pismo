@@ -30,12 +30,6 @@ public:
 	void make_move(const move_info& move);
 
 	/*
-	Returnes generated moves for the color clr if it's right
-	to play, otherwise terminates the program
-	*/
-	std::vector<move_info> get_generated_moves(Color clr) const;
-	
-	/*
 	Prints board for white pieces using information from 
 	_white_pieces Bitboard
 	*/
@@ -58,13 +52,15 @@ public:
 	*/
 	void print_possible_moves(Square from) const;
 
-	ZobKey get_state_zob_key() const {return _zob_key;}
+	ZobKey get_zob_key() const {return _zob_key;}
 
 	Piece const (&get_board()const)[8][8] {return _board;}
 
-	Count const (&get_white_pieces_count() const) [PIECE_NB / 2] {return _white_pieces_count:}
+	unsigned int get_piece_count(Piece p) const {return piece_count[p];}
 
-	Count const (&get_black_pieces_count() const) [PIECE_NB / 2] {return _black_pieces_count;}
+	int get_material_value() const {return _material_value;}
+
+	int get_pst_value() const {return _pst_value;}
 
 	bool white_to_play() const {return _white_to_play;}
 
@@ -97,6 +93,9 @@ private:
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
+	int calculate_pst_value(Piece p, Square s) const;
+	void update_game_status();
+
 //data members
 private:
 	Piece _board[8][8];
@@ -112,9 +111,8 @@ private:
 	Bitboard _black_pieces_diag_a8h1;
 
 	// Each memeber of the array shows the number of appropriate 
-	// piece available for the appropriate color
-	Count _white_pieces_count[PIECE_NB / 2];
-	Count _black_pieces_count[PIECE_NB / 2];
+	// piece available 
+	unsigned int _piece_count[PIECE_NB];
 
 	const BitboardImpl* _bitboard_impl;
 	const ZobKeyImpl* _zob_key_impl;
@@ -134,8 +132,17 @@ private:
 	bool _black_left_castling;
 	bool _black_right_castling;
 
+	// true if it is a middle game
+	bool _is_middle_game;
+
 	// Zobrist key for the state of the game
 	ZobKey _zob_key;
+	
+	// Material value for the state of the game
+	int _material_value;
+
+	// Piece Square Table value for the state of the game
+	int _pst_value;
 };
 
 }

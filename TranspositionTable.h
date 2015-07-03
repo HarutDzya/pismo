@@ -7,22 +7,6 @@
 namespace pismo
 {
 class PositionState;
-struct EvalInfo
-{
-	float pos_value;
-	ZobKey zob_key;
-	unsigned int depth;
-	
-	EvalInfo(float v, ZobKey z, unsigned int d)
-  	: pos_value(v),
-    	zob_key(z),
-    	depth(d)
-  	{
-  	}
-
-	//TODO:Add later best move
-};
-
 const unsigned int HASH_TABLE_SIZE = 1000000;
 
 class TranspositionTable

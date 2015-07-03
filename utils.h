@@ -6,7 +6,6 @@
 namespace pismo
 {
 typedef uint64_t Bitboard;
-typedef unsigned int Count;
 typedef uint64_t ZobKey;
  
 enum Color { 
@@ -38,6 +37,27 @@ struct move_info {
 	Square to;
 	Piece promoted;
 };
+
+struct EvalInfo
+{
+	float pos_value;
+	ZobKey zob_key;
+	uint16_t depth;
+	
+	EvalInfo(float v, ZobKey z, uint16_t d)
+  	: pos_value(v),
+    	zob_key(z),
+    	depth(d)
+  	{
+  	}
+
+	//TODO:Add later best move
+};
+
+// Material Piece values according to enum Piece 
+const int PIECE_VALUES[PIECE_NB] = 
+	{100,  320,  330,  500,  900,  20000,
+	-100, -320, -330, -500, -900, -20000};
 
 #define MAX_SCORE = 1000; //white has 100% winning position (-MAX_SCORE black wins)
 
