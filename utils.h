@@ -38,13 +38,13 @@ struct move_info {
 	Piece promoted;
 };
 
-struct EvalInfo
+struct eval_info
 {
 	int16_t pos_value;
 	ZobKey zob_key;
 	uint16_t depth;
 	
-	EvalInfo(float v, ZobKey z, uint16_t d)
+	eval_info(int16_t v = 0, ZobKey z = 0, uint16_t d = 0)
   	: pos_value(v),
     	zob_key(z),
     	depth(d)
@@ -59,7 +59,7 @@ const int PIECE_VALUES[PIECE_NB] =
 	{100,  320,  330,  500,  900,  20000,
 	-100, -320, -330, -500, -900, -20000};
 
-#define MAX_SCORE = 1000; //white has 100% winning position (-MAX_SCORE black wins)
+const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE black wins)
 
 }
 

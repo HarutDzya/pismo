@@ -30,6 +30,12 @@ public:
 	void make_move(const move_info& move);
 
 	/*
+	Makes an undo move of the last made move, by reverting all
+	state variables to the previous state
+	*/
+	void undo_move();
+
+	/*
 	Prints board for white pieces using information from 
 	_white_pieces Bitboard
 	*/
@@ -56,9 +62,9 @@ public:
 
 	Piece const (&get_board()const)[8][8] {return _board;}
 
-	unsigned int get_piece_count(Piece p) const {return piece_count[p];}
+	unsigned int get_piece_count(Piece p) const {return _piece_count[p];}
 
-	int get_material_value() const {return _material_value;}
+	int get_material_zob_key() const {return _material_zob_key;}
 
 	int get_pst_value() const {return _pst_value;}
 
@@ -138,8 +144,8 @@ private:
 	// Zobrist key for the state of the game
 	ZobKey _zob_key;
 	
-	// Material value for the state of the game
-	int _material_value;
+	// Zobrist key for material of the game
+	ZobKey _material_zob_key;
 
 	// Piece Square Table value for the state of the game
 	int _pst_value;
