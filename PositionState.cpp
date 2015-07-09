@@ -45,6 +45,10 @@ _pst_value(0)
 	_zob_key ^= _zob_key_impl->get_white_right_castling_key();
 	_zob_key ^= _zob_key_impl->get_black_left_castling_key();
 	_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+
+	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
+		_material_zob_key ^= _zob_key_impl->get_material_key((Piece)(piece), 0);
+	}
 }
 
 PositionState::~PositionState()
@@ -71,6 +75,8 @@ void PositionState::set_piece(Square s, Piece p)
 	++_piece_count[p];
 	_pst_value += calculate_pst_value(p, s);
 	_zob_key ^=  _zob_key_impl->get_piece_at_square_key(p, s);
+
+	_material_zob_key ^= _zob_key_impl->get_material_key(p, _piece_count[p]);
 }
 
 void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& pieces)
@@ -79,7 +85,6 @@ void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& 
 		for (std::size_t i = 0; i < pieces.size(); ++i) {
 			set_piece(pieces[i].first, pieces[i].second);
 		}
-		_material_zob_key ^= _zob_key;
 	}
 }
 /* Checks for the following conditions for initial position validty:
@@ -647,9 +652,9 @@ void PositionState::make_normal_move(const move_info& move)
 		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, BLACK);
 			_pst_value -= calculate_pst_value(pto, move.to);
-			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
 			--_piece_count[pto];
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
+			_material_zob_key ^= _zob_key_impl->get_material_key(pto, _piece_count[pto] + 1);
 		}
 		if (pfrom == KING_WHITE) {
 			_white_king_position = move.to;
@@ -661,9 +666,9 @@ void PositionState::make_normal_move(const move_info& move)
 		if (pto = ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, WHITE);
 			_pst_value -= calculate_pst_value(pto, move.to);
-			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
 			--_piece_count[pto];
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
+			_material_zob_key ^= _zob_key_impl->get_material_key(pto, _piece_count[pto] + 1);
 		}
 		if (pfrom == KING_BLACK) {
 			_black_king_position = move.to;
@@ -792,7 +797,7 @@ void PositionState::make_en_passant_capture(const move_info& move)
 		_board[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
 		_pst_value -= calculate_pst_value(PAWN_BLACK, (Square) (move.to - 8));
 		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_BLACK, (Square) (move.to - 8));
-		_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_BLACK, (Square) (move.to - 8));
+		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_BLACK, _piece_count[PAWN_BLACK] + 1);
 	}
 	else {
 		remove_piece_from_bitboards(move.from, BLACK);
@@ -801,8 +806,7 @@ void PositionState::make_en_passant_capture(const move_info& move)
 		--_piece_count[PAWN_WHITE];
 		_board[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
 		_pst_value -= calculate_pst_value(PAWN_WHITE, (Square) (move.to + 8));
-		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_WHITE, (Square) (move.to + 8));
-		_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_WHITE, (Square) (move.to + 8));
+		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_WHITE, _piece_count[PAWN_WHITE] + 1);
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
@@ -828,8 +832,8 @@ void PositionState::make_promotion_move(const move_info& move)
 			remove_piece_from_bitboards(move.to, BLACK);
 			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
 			--_piece_count[pto];
+			_material_zob_key ^= _zob_key_impl->get_material_key(pto, _piece_count[pto] + 1);
 		}
 	}
 	else {
@@ -840,8 +844,8 @@ void PositionState::make_promotion_move(const move_info& move)
 			remove_piece_from_bitboards(move.to, WHITE);
 			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
-			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
 			--_piece_count[pto];
+			_material_zob_key ^= _zob_key_impl->get_material_key(pto, _piece_count[pto] + 1);
 		}
 	}
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
@@ -850,10 +854,12 @@ void PositionState::make_promotion_move(const move_info& move)
 	++_piece_count[move.promoted];
 	_pst_value -= calculate_pst_value(pfrom, move.from);
 	_pst_value += calculate_pst_value(move.promoted, move.to);
+
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.promoted, move.to);
-	_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(pfrom, move.from);
-	_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.promoted, move.to);
+	_material_zob_key ^= _zob_key_impl->get_material_key(pfrom, _piece_count[pfrom] + 1);
+	_material_zob_key ^= _zob_key_impl->get_material_key(move.promoted, _piece_count[move.promoted]);
+
 	if (_en_passant_file != -1) {
 		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
 		_en_passant_file = -1;

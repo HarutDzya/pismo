@@ -11,6 +11,9 @@ ZobKeyImpl::ZobKeyImpl()
 	init_black_to_play_key();
 	init_en_passant_keys();
 	init_castling_keys();
+
+	//for _material_zob_key
+	init_material_keys();
 }
 
 ZobKey ZobKeyImpl::get_piece_at_square_key(Piece piece, Square sq) const
@@ -50,6 +53,11 @@ ZobKey ZobKeyImpl::get_black_right_castling_key() const
 	return _black_right_castling_key;
 }
 
+ZobKey ZobKeyImpl::get_material_key(Piece piece, unsigned int count) const
+{
+      return _material_keys[piece][count];
+}
+
 void ZobKeyImpl::init_piece_at_square_keys()
 {
 	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
@@ -81,10 +89,22 @@ void ZobKeyImpl::init_castling_keys()
 	_black_right_castling_key = get_random_number();
 }
 
+void ZobKeyImpl::init_material_keys()
+{
+	//for kings it doesn't make sense to generate all values, but we did it to reduce code size
+	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
+		for (unsigned int count = 0; count <= POSSIBLE_SAME_PIECES; ++count) {
+			_material_keys[piece][count] = get_random_number();
+		}
+	}
+}
+
+
 ZobKey ZobKeyImpl::get_random_number() const
 {
 	//TODO: Implement our own generator in future
 	ZobKey tmp = std::rand();
 	return ((tmp << 32) | std::rand());
 }
+
 }
