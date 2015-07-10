@@ -658,7 +658,7 @@ void PositionState::make_normal_move(const move_info& move)
 	else {
 		remove_piece_from_bitboards(move.from, BLACK);
 		add_piece_to_bitboards(move.to, BLACK);
-		if (pto = ETY_SQUARE) {
+		if (pto != ETY_SQUARE) {
 			remove_piece_from_bitboards(move.to, WHITE);
 			_pst_value -= calculate_pst_value(pto, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(pto, move.to);
@@ -975,6 +975,162 @@ void PositionState::update_game_status()
 
 void PositionState::undo_move()
 {
+	undo_move_info move = _move_stack.pop();
+
+}
+
+void PositionState::undo_normal_move(const undo_move_info& move)
+{
+	if (_white_to_play) {			
+		remove_piece_from_bitboards(move.to, BLACK);
+		add_piece_to_bitboards(move.from, BLACK);
+		if (move.captured_piece != ETY_SQUARE) {
+			add_piece_to_bitboards(move.to, WHITE);
+			_pst_value += calculate_pst_value(move.captured_piece, move.to);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
+			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
+			++_piece_count[move.captured_piece];
+		}
+		if (move.moved_piece == KING_BLACK) {
+			_black_king_position = move.from;
+		}
+	}
+	else {
+		remove_piece_from_bitboards(move.to, WHITE);
+		add_piece_to_bitboards(move.from, WHITE);
+		if (move.captured_piece != ETY_SQUARE) {
+			add_piece_to_bitboards(move.to, BLACK);
+			_pst_value += calculate_pst_value(move.captured_piece, move.to);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
+			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
+			++_piece_count[move.captured_piece];
+		}
+		if (move.moved_piece == KING_WHITE) {
+			_white_king_position = move.from;
+		}
+	}
+	_board[move.from / 8][move.from % 8] = move.moved_piece;
+	_board[move.to / 8][move.to % 8] = move.captured_piece;
+	_pst_value -= calculate_pst_value(move.moved_piece, move.to);
+	_pst_value += calculate_pst_value(move.moved_piece, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.to);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.from);
+	if (move.en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(move.en_passant_file);
+	}
+	_en_passant_file = move.en_passant_file;
+}
+
+void PositionState::undo_castling_move(const undo_move_info& move)
+{
+	if (_white_to_play) {
+		assert(move.from == E8);
+		assert(move.moved_piece == KING_BLACK);
+		remove_piece_from_bitboards(move.to, BLACK);
+		add_piece_to_bitboards(move.from, BLACK);
+		_board[move.from / 8][move.from % 8] = KING_BLACK;
+		_board[move.to / 8][move.to % 8] = ETY_SQUARE;
+		_pst_value -= calculate_pst_value(KING_BLACK, move.to);
+		_pst_value += calculate_pst_value(KING_BLACK, move.from);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_BLACK, move.to);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_BLACK, move.from);
+		_black_king_position = move.from;
+		if (move.to == C8) {
+			remove_piece_from_bitboards(D8, BLACK);
+			add_piece_to_bitboards(A8, BLACK);	
+			_board[D8 / 8][D8 % 8] = ETY_SQUARE;
+			_board[A8 / 8][A8 % 8] = ROOK_BLACK;
+			_pst_value -= calculate_pst_value(ROOK_BLACK, D8);
+			_pst_value += calculate_pst_value(ROOK_BLACK, A8);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, D8);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, A8);
+		}	
+		else {
+			assert(move.to == G8);
+			remove_piece_from_bitboards(F8, BLACK);
+			add_piece_to_bitboards(H8, BLACK);	
+			_board[F8 / 8][F8 % 8] = ETY_SQUARE;
+			_board[H8 / 8][H8 % 8] = ROOK_BLACK;
+			_pst_value -= calculate_pst_value(ROOK_BLACK, F8);
+			_pst_value += calculate_pst_value(ROOK_BLACK, H8);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, F8);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_BLACK, H8);
+		}
+	}
+	else {
+		assert(move.from == E1);
+		assert(move.moved_piece == KING_WHITE); 
+		remove_piece_from_bitboards(move.to, WHITE);
+		add_piece_to_bitboards(move.from, WHITE);
+		_board[move.to / 8][move.to % 8] = ETY_SQUARE;
+		_board[move.from / 8][move.from % 8] = KING_WHITE;
+		_pst_value -= calculate_pst_value(KING_WHITE, move.to);
+		_pst_value += calculate_pst_value(KING_WHITE, move.from);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_WHITE, move.to);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(KING_WHITE, move.from);
+		_white_king_position = move.from;
+		if (move.to == C1) {
+			remove_piece_from_bitboards(D1, WHITE);
+			add_piece_to_bitboards(A1, WHITE);	
+			_board[D1 / 8][D1 % 8] = ETY_SQUARE;
+			_board[A1 / 8][A1 % 8] = ROOK_WHITE;
+			_pst_value -= calculate_pst_value(ROOK_WHITE, D1);
+			_pst_value += calculate_pst_value(ROOK_WHITE, A1);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, D1);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, A1);
+		}	
+		else {
+			assert(move.to == G1);
+			remove_piece_from_bitboards(F1, WHITE);
+			add_piece_to_bitboards(H1, WHITE);	
+			_board[F1 / 8][F1 % 8] = ETY_SQUARE;
+			_board[H1 / 8][H1 % 8] = ROOK_WHITE;
+			_pst_value -= calculate_pst_value(ROOK_WHITE, F1);
+			_pst_value += calculate_pst_value(ROOK_WHITE, H1);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, F1);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(ROOK_WHITE, H1);
+
+		}
+	}
+	if (move.en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(move.en_passant_file);
+		_en_passant_file = move.en_passant_file;	
+	}	
+}
+
+
+PositionState::MoveStack::MoveStack() :
+_first(0),
+_stack_size(0)
+{
+}
+
+bool PositionState::MoveStack::isEmpty() const
+{
+	return _stack_size == 0;
+}
+
+uint32_t PositionState::MoveStack::get_size() const
+{
+	return _stack_size;
+}
+
+void PositionState::MoveStack::push(const undo_move_info& move)
+{
+	node* oldfirst = _first;
+	_first = new node(move, oldfirst);
+	++_stack_size;
+}
+
+PositionState::undo_move_info PositionState::MoveStack::pop()
+{
+	assert(!isEmpty());
+	node* oldfirst = _first;
+	_first = _first->next;
+	undo_move_info move = oldfirst->move;
+	delete oldfirst;
+	--_stack_size;
+	return move;
 }
 
 

@@ -102,6 +102,48 @@ private:
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();
 
+	void undo_normal_move(const undo_move_info& move);
+	void undo_castling_move(const undo_move_info& move);
+	void undo_en_passant_move(const undo_move_info& move);
+	void undo_en_passant_capture(const undo_move_info& move);
+	void undo_promotion_move(const undo_move_info& move);
+
+	struct undo_move_info {
+		Square from;
+		Square to;
+		Piece moved_piece;
+		Piece captured_piece;
+		int8_t en_passant_file;
+		uint8_t castling_rights;
+		bool is_en_pass_capture;
+	};
+
+
+	class MoveStack {
+		public:
+			MoveStack();
+			void push(const undo_move_info& move);
+			undo_move_info pop();
+			bool isEmpty() const;
+			uint32_t get_size() const;
+		
+		private:
+			struct node {
+				undo_move_info move;
+				node* next;
+
+				node(const undo_move_info& m, node* const nt = 0)
+				: move(m),
+				next(nt)
+				{
+				}
+			};
+
+			node* _first;
+			uint32_t _stack_size;
+	};
+
+
 //data members
 private:
 	Piece _board[8][8];
@@ -149,6 +191,8 @@ private:
 
 	// Piece Square Table value for the state of the game
 	int _pst_value;
+
+	MoveStack _move_stack;
 };
 
 }
