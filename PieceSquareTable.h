@@ -51,7 +51,7 @@ const int PST_MIDDLE_VALUE[PIECE_NB][NUMBER_OF_SQUARES] =
 	-10,   0,    5,   5,   5,   5,   0,   -10,
 	-10,   0,    0,   0,   0,   0,   0,   -10,
 	-20,   0,    0,   0,   0,   0,   0,   -20,
-	-30,  -5,    0,   0,   0,   0,  -5,  --30,
+	-30,  -5,    0,   0,   0,   0,  -5,   -30,
 },
 	// QUEEN_WHITE VALUES
 {
@@ -280,7 +280,7 @@ const int PST_END_VALUE[PIECE_NB][NUMBER_OF_SQUARES] =
 	  0,   0,    0,   0,   0,   0,   0,    0
 },
 
-}
+};
 
 }
 
