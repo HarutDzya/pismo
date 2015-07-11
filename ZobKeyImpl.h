@@ -21,8 +21,8 @@ public:
 	ZobKey get_black_left_castling_key() const;
 	ZobKey get_black_right_castling_key() const;
 
-  //material table
-  ZobKey get_material_key(Piece piece, unsigned int count) const;
+	//material table
+	ZobKey get_material_key(Piece piece, unsigned int count) const;
 
 private:
 	void init_piece_at_square_keys();
@@ -42,7 +42,7 @@ private:
 	ZobKey _black_left_castling_key;
 	ZobKey _black_right_castling_key;
 
-  ZobKey _material_keys[PIECE_NB][POSSIBLE_SAME_PIECES + 1];
+	ZobKey _material_keys[PIECE_NB][POSSIBLE_SAME_PIECES + 1];
 };
 
 }

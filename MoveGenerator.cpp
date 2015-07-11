@@ -58,6 +58,8 @@ const std::vector<move_info>& MoveGenerator::generate_white_moves(const Position
 				break;
 			case KING_WHITE:
 				generate_king_moves((Square) from, pos);
+			default:
+				break;
 		}
 	}
 	return _generated_moves;
@@ -91,6 +93,8 @@ const std::vector<move_info>& MoveGenerator::generate_black_moves(const Position
 				break;
 			case KING_BLACK:
 				generate_king_moves((Square) from, pos);
+			default:
+				break;
 		}
 	}
 	return _generated_moves;

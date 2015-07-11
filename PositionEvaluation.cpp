@@ -12,6 +12,7 @@ PositionEvaluation::PositionEvaluation():
 
 int16_t PositionEvaluation::evaluate(const PositionState& pos)
 {
+	_pos_value = 0;
 	eval_material(pos);
 	eval_piece_square(pos);
 	eval_mobility(pos);

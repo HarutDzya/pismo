@@ -64,7 +64,7 @@ public:
 
 	unsigned int get_piece_count(Piece p) const {return _piece_count[p];}
 
-	int get_material_zob_key() const {return _material_zob_key;}
+	ZobKey get_material_zob_key() const {return _material_zob_key;}
 
 	int get_pst_value() const {return _pst_value;}
 
@@ -95,19 +95,14 @@ private:
 	void make_promotion_move(const move_info& move);
 
 	void update_castling_rights();
+	uint8_t convert_castling_rights_int() const;
 
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();
-
-	void undo_normal_move(const undo_move_info& move);
-	void undo_castling_move(const undo_move_info& move);
-	void undo_en_passant_move(const undo_move_info& move);
-	void undo_en_passant_capture(const undo_move_info& move);
-	void undo_promotion_move(const undo_move_info& move);
-
+	
 	struct undo_move_info {
 		Square from;
 		Square to;
@@ -118,6 +113,13 @@ private:
 		bool is_en_pass_capture;
 	};
 
+	void undo_normal_move(const undo_move_info& move);
+	void undo_castling_move(const undo_move_info& move);
+	void undo_en_passant_move(const undo_move_info& move);
+	void undo_en_passant_capture(const undo_move_info& move);
+	void undo_promotion_move(const undo_move_info& move);
+
+	void revert_castling_rights(const undo_move_info& move);
 
 	class MoveStack {
 		public:
@@ -192,6 +194,7 @@ private:
 	// Piece Square Table value for the state of the game
 	int _pst_value;
 
+	// Stack of the moves to be used by undo_move
 	MoveStack _move_stack;
 };
 

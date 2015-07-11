@@ -38,6 +38,8 @@ struct move_info {
 	Piece promoted;
 };
 
+const move_info MATE_MOVE = {NUMBER_OF_SQUARES, NUMBER_OF_SQUARES, ETY_SQUARE};
+
 struct eval_info
 {
 	int16_t pos_value;

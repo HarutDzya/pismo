@@ -42,51 +42,60 @@ int main()
 
 	pos.init_position(pcs);
 	pos.print_board();
-	std::cout << "Please enter next move (q to stop the game)" << std::endl;
-	std::string sqfrom;
-	std::string sqto;
-	std::string prom;
-	Color turn_to_play = WHITE;
-	while (std::cin >> sqfrom && sqfrom != "q" && std::cin >> sqto && std::getline(std::cin, prom)) {
-		move_info move;
-		if(prom == "QW") {
-			move.from = board_rep[sqfrom];
-			move.to = board_rep[sqto];
-			move.promoted = QUEEN_WHITE;
-		}
-		else if (prom == "QB") {
-			move.from = board_rep[sqfrom];
-			move.to = board_rep[sqto];
-			move.promoted = QUEEN_BLACK;
-		}
-		else {
-			move.from = board_rep[sqfrom];
-			move.to = board_rep[sqto];
-			move.promoted = ETY_SQUARE;
-		}
+	std::cout << "Please enter n to make next move, u to undo the move and q to stop the game)" << std::endl;
+	std::string choice;
+	while(std::cin >> choice && choice != "q") {
+		if (choice == "n") {
+			std::string sqfrom;
+			std::string sqto;
+			std::string prom;
+			Color turn_to_play = WHITE;
+			std::cout << "Please enter the move" << std::endl;
+			std::cin >> sqfrom >> sqto;
+			std::getline(std::cin, prom);
+			move_info move;
+			if(prom == "QW") {
+				move.from = board_rep[sqfrom];
+				move.to = board_rep[sqto];
+				move.promoted = QUEEN_WHITE;
+			}
+			else if (prom == "QB") {
+				move.from = board_rep[sqfrom];
+				move.to = board_rep[sqto];
+				move.promoted = QUEEN_BLACK;
+			}
+			else {
+				move.from = board_rep[sqfrom];
+				move.to = board_rep[sqto];
+				move.promoted = ETY_SQUARE;
+			}
   		
-		if (pos.move_is_legal(move)) {
-			pos.make_move(move);
+			if (pos.move_is_legal(move)) {
+				pos.make_move(move);
+				pos.print_board();
+				if (turn_to_play == WHITE) {
+					turn_to_play = BLACK;
+				}
+				else {
+					turn_to_play = WHITE;
+				}
+			}
+			else {
+				std::cout << "Move is illegal" << std::endl;
+				//pos.print_possible_moves(move.from);
+				if (turn_to_play == WHITE) {
+					print_generated_moves(MoveGenerator::instance()->generate_white_moves(pos));
+				}
+				else {
+					print_generated_moves(MoveGenerator::instance()->generate_black_moves(pos));
+				}
+			}
+		}
+		else if (choice == "u") {
+			pos.undo_move();
 			pos.print_board();
-			if (turn_to_play == WHITE) {
-				turn_to_play = BLACK;
-			}
-			else {
-				turn_to_play = WHITE;
-			}
-			std::cout << "Please enter next move (q to stop the game)" << std::endl;
 		}
-		else {
-			std::cout << "Move is illegal" << std::endl;
-			//pos.print_possible_moves(move.from);
-			if (turn_to_play == WHITE) {
-				print_generated_moves(MoveGenerator::instance()->generate_white_moves(pos));
-			}
-			else {
-				print_generated_moves(MoveGenerator::instance()->generate_black_moves(pos));
-			}
-			std::cout << "Please enter next move (q to stop the game)" << std::endl;
-		}
+		std::cout << "Please enter n to make next move, u to undo the move and q to stop the game)" << std::endl;
 	}
 	
 	pos.print_board();

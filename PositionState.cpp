@@ -31,7 +31,8 @@ _black_right_castling(true),
 _is_middle_game(true),
 _zob_key(0),
 _material_zob_key(0),
-_pst_value(0)
+_pst_value(0),
+_move_stack()
 {
 	for (unsigned int i = 0; i < 8; ++i) {
 		for (unsigned int j = 0; j < 8; ++j) {
@@ -186,7 +187,6 @@ bool PositionState::move_is_legal(const move_info& move) const
 {
 	assert(move.from != move.to);
 	Piece pfrom = _board[move.from  / 8][move.from % 8];
-	Piece pto = _board[move.to  / 8][move.to % 8];
 	if(pfrom == ETY_SQUARE) {
 		return false;
 	}
@@ -493,6 +493,8 @@ Bitboard PositionState::squares_under_attack(Color attacked_color) const
 				case KING_WHITE:	
 					attacked_bitboard |= _bitboard_impl->get_legal_king_moves((Square) sq);
 					break;
+				default:
+					break;
 			}
 		}
 	}
@@ -521,6 +523,8 @@ Bitboard PositionState::squares_under_attack(Color attacked_color) const
 					break;
 				case KING_BLACK:	
 					attacked_bitboard |= _bitboard_impl->get_legal_king_moves((Square) sq);
+					break;
+				default:
 					break;
 			}
 		}
@@ -612,6 +616,14 @@ void PositionState::make_move(const move_info& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	Piece pto = _board[move.to / 8][move.to % 8];
+	undo_move_info undo_move;
+	undo_move.from = move.from;
+	undo_move.to = move.to;
+	undo_move.moved_piece = pfrom;
+	undo_move.captured_piece = pto;
+	undo_move.en_passant_file = _en_passant_file;
+	undo_move.castling_rights = convert_castling_rights_int();
+	undo_move.is_en_pass_capture = false;
 	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
 		if(move.to >= A8 || move.to <= H1) {
 			make_promotion_move(move);
@@ -621,6 +633,7 @@ void PositionState::make_move(const move_info& move)
 		}
 		else if (((move.to - move.from) % 8) && pto == ETY_SQUARE) {
 			make_en_passant_capture(move);
+			undo_move.is_en_pass_capture = true;
 		}
 		else {
 			make_normal_move(move);
@@ -633,6 +646,7 @@ void PositionState::make_move(const move_info& move)
 		make_normal_move(move);
 	}
 
+	_move_stack.push(undo_move);
 	
 	update_castling_rights();
 	update_game_status();
@@ -920,6 +934,16 @@ void PositionState::update_castling_rights()
 	}
 }
 
+// Converts four castling rights into one integer with following rules
+// first bit set for _white_left_castling
+// second bit set for _white_right_castling
+// third bit set for _black_left_castling
+// fourth bit set for _black_right_castling
+uint8_t PositionState::convert_castling_rights_int() const
+{
+	return _black_right_castling * 8 + _black_left_castling * 4 + _white_right_castling * 2 + _white_left_castling;
+}
+
 // Adds a piece into all 4 occupation bitboards in the appropriate position
 void PositionState::add_piece_to_bitboards(Square sq, Color clr)
 {
@@ -982,7 +1006,33 @@ void PositionState::update_game_status()
 void PositionState::undo_move()
 {
 	undo_move_info move = _move_stack.pop();
+	if (move.moved_piece == PAWN_WHITE || move.moved_piece == PAWN_BLACK) {
+		if(move.to >= A8 || move.to <= H1) {
+			undo_promotion_move(move);
+		}
+		else if (std::abs(move.from - move.to) == 16) {
+			undo_en_passant_move(move);
+		}
+		else if (move.is_en_pass_capture) {
+			undo_en_passant_capture(move);
+		}
+		else {
+			undo_normal_move(move);
+		}
+	}
+	else if ((move.moved_piece == KING_WHITE || move.moved_piece == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
+		undo_castling_move(move);
+	}		
+	else {
+		undo_normal_move(move);
+	}
 
+	
+	revert_castling_rights(move);
+	update_game_status();
+	
+	_white_to_play = !_white_to_play;
+	_zob_key ^= _zob_key_impl->get_if_black_to_play_key();
 }
 
 void PositionState::undo_normal_move(const undo_move_info& move)
@@ -992,10 +1042,10 @@ void PositionState::undo_normal_move(const undo_move_info& move)
 		add_piece_to_bitboards(move.from, BLACK);
 		if (move.captured_piece != ETY_SQUARE) {
 			add_piece_to_bitboards(move.to, WHITE);
+			++_piece_count[move.captured_piece];
 			_pst_value += calculate_pst_value(move.captured_piece, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
-			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
-			++_piece_count[move.captured_piece];
+			_material_zob_key ^= _zob_key_impl->get_material_key(move.captured_piece, _piece_count[move.captured_piece]);
 		}
 		if (move.moved_piece == KING_BLACK) {
 			_black_king_position = move.from;
@@ -1006,10 +1056,10 @@ void PositionState::undo_normal_move(const undo_move_info& move)
 		add_piece_to_bitboards(move.from, WHITE);
 		if (move.captured_piece != ETY_SQUARE) {
 			add_piece_to_bitboards(move.to, BLACK);
+			++_piece_count[move.captured_piece];
 			_pst_value += calculate_pst_value(move.captured_piece, move.to);
 			_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
-			_material_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
-			++_piece_count[move.captured_piece];
+			_material_zob_key ^= _zob_key_impl->get_material_key(move.captured_piece, _piece_count[move.captured_piece]);
 		}
 		if (move.moved_piece == KING_WHITE) {
 			_white_king_position = move.from;
@@ -1023,8 +1073,8 @@ void PositionState::undo_normal_move(const undo_move_info& move)
 	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.from);
 	if (move.en_passant_file != -1) {
 		_zob_key ^= _zob_key_impl->get_en_passant_key(move.en_passant_file);
+		_en_passant_file = move.en_passant_file;
 	}
-	_en_passant_file = move.en_passant_file;
 }
 
 void PositionState::undo_castling_move(const undo_move_info& move)
@@ -1104,7 +1154,131 @@ void PositionState::undo_castling_move(const undo_move_info& move)
 	}	
 }
 
+void PositionState::undo_en_passant_move(const undo_move_info& move)
+{
+	if (_white_to_play) {
+		remove_piece_from_bitboards(move.to, BLACK);
+		add_piece_to_bitboards(move.from, BLACK);
+	}
+	else {
+		remove_piece_from_bitboards(move.to, WHITE);
+		add_piece_to_bitboards(move.from, WHITE);
+	}	
+	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
+	_board[move.from / 8][move.from % 8] = move.moved_piece;
+	_pst_value -= calculate_pst_value(move.moved_piece, move.to);
+	_pst_value += calculate_pst_value(move.moved_piece, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.to);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.from);
+	_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+	if (move.en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(move.en_passant_file);
+	}
+	_en_passant_file = move.en_passant_file;
+}
 
+void PositionState::undo_en_passant_capture(const undo_move_info& move)
+{
+	if (_white_to_play) {
+		remove_piece_from_bitboards(move.to, BLACK);
+		add_piece_to_bitboards(move.from, BLACK);
+		add_piece_to_bitboards((Square) (move.to + 8), WHITE);
+		++_piece_count[PAWN_WHITE];
+		_board[move.to / 8 + 1][move.to % 8] = PAWN_WHITE;
+		_pst_value += calculate_pst_value(PAWN_WHITE, (Square) (move.to + 8));
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_WHITE, (Square) (move.to + 8));
+		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_WHITE, _piece_count[PAWN_WHITE]);
+	}
+	else {
+		remove_piece_from_bitboards(move.to, WHITE);
+		add_piece_to_bitboards(move.from, WHITE);
+		add_piece_to_bitboards((Square) (move.to - 8), BLACK);
+		++_piece_count[PAWN_BLACK];
+		_board[move.to / 8 - 1][move.to % 8] = PAWN_BLACK;
+		_pst_value += calculate_pst_value(PAWN_BLACK, (Square) (move.to - 8));
+		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_BLACK, _piece_count[PAWN_WHITE]);
+	}
+	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
+	_board[move.from / 8][move.from % 8] = move.moved_piece;
+	_pst_value -= calculate_pst_value(move.moved_piece, move.to);
+	_pst_value += calculate_pst_value(move.moved_piece, move.from);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.to);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.from);
+	if (move.en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(move.en_passant_file);
+		_en_passant_file = move.en_passant_file;				
+	}
+}
+
+void PositionState::undo_promotion_move(const undo_move_info& move)
+{
+	if (_white_to_play) {
+		assert(move.from >= A2 && move.from <= H2);
+		remove_piece_from_bitboards(move.to, BLACK);
+		add_piece_to_bitboards(move.from, BLACK);
+		if (move.captured_piece != ETY_SQUARE) {
+			add_piece_to_bitboards(move.to, WHITE);
+			_pst_value += calculate_pst_value(move.captured_piece, move.to);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
+			++_piece_count[move.captured_piece];
+			_material_zob_key ^= _zob_key_impl->get_material_key(move.captured_piece, _piece_count[move.captured_piece]);
+		}
+	}
+	else {
+		assert(move.from >= A7 && move.from <= H7);
+		remove_piece_from_bitboards(move.to, WHITE);
+		add_piece_to_bitboards(move.from, WHITE);
+		if (move.captured_piece != ETY_SQUARE) {
+			add_piece_to_bitboards(move.to, BLACK);
+			_pst_value += calculate_pst_value(move.captured_piece, move.to);
+			_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.captured_piece, move.to);
+			++_piece_count[move.captured_piece];
+			_material_zob_key ^= _zob_key_impl->get_material_key(move.captured_piece, _piece_count[move.captured_piece]);
+		}
+	}
+	Piece promoted = _board[move.to / 8][move.to % 8];
+	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
+	_board[move.from / 8][move.from % 8] = move.moved_piece;
+	--_piece_count[promoted];
+	++_piece_count[move.moved_piece];
+	_pst_value -= calculate_pst_value(promoted, move.to);
+	_pst_value += calculate_pst_value(move.moved_piece, move.from);
+
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(promoted, move.to);
+	_zob_key ^= _zob_key_impl->get_piece_at_square_key(move.moved_piece, move.from);
+	_material_zob_key ^= _zob_key_impl->get_material_key(promoted, _piece_count[promoted] + 1);
+	_material_zob_key ^= _zob_key_impl->get_material_key(move.moved_piece, _piece_count[move.moved_piece]);
+
+	if (move.en_passant_file != -1) {
+		_zob_key ^= _zob_key_impl->get_en_passant_key(move.en_passant_file);
+		_en_passant_file = move.en_passant_file;
+	}
+}
+
+void PositionState::revert_castling_rights(const undo_move_info& move)
+{
+	// In move.castling_rights first bit set corresponds to _white_left_castling
+	// second bit set to _white_right_castling
+	// third bit set to _black_left_castling
+	// fourth bit set to _black_right_castling 
+	if (!_white_left_castling && (move.castling_rights & 1)) {
+		_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+		_white_left_castling = true;
+	}
+	if (!_white_right_castling && ((move.castling_rights >> 1) & 1)) {
+		_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+		_white_right_castling = true;
+	}
+	if (!_black_left_castling && ((move.castling_rights >> 2) & 1)) {
+		_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+		_black_left_castling = true;
+	}
+	if (!_black_right_castling && ((move.castling_rights >> 3) & 1)) {
+		_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+		_black_right_castling = true;
+	}
+}
+	 
 PositionState::MoveStack::MoveStack() :
 _first(0),
 _stack_size(0)

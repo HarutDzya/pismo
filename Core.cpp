@@ -15,7 +15,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 		MoveGenerator::instance()->generate_white_moves(pos) : MoveGenerator::instance()->generate_black_moves(pos); 
 
 	if (possibleMoves.empty()) {
-		return move_info(); //mate
+		return MATE_MOVE; 
 	}
 
 	move_info move = possibleMoves[0];
@@ -56,12 +56,12 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 
 int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 {
+	eval_info eval;
+	if(_trans_table->contains(pos, eval) && eval.depth >= depth) {
+		return eval.pos_value;
+	}
+	
 	if (depth == 0) {
-		eval_info eval;
-		if (_trans_table->contains(pos, eval)) {
-			return eval.pos_value;
-		}
-
 		int16_t val = _pos_eval->evaluate(pos);
 		eval.pos_value = val;
 		eval.depth = 0;
@@ -88,7 +88,7 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 		}
 
 		eval_info eval(score, pos.get_zob_key(), depth);
-		_trans_table->push(eval);
+		_trans_table->force_push(eval);
 
 		return score;
 	}
@@ -104,7 +104,7 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 		}
 
 		eval_info eval(score, pos.get_zob_key(), depth);
-		_trans_table->push(eval);
+		_trans_table->force_push(eval);
 
 		return score;
 	}

@@ -332,19 +332,19 @@ void BitboardImpl::init_move_pos_board_knight()
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		switch (sq % 8) {
 			case 0:
-				_move_pos_board_knight[sq] = (sq <= A3 ? (KNIGHT_MOVES_A3 >> A3 - sq) : (KNIGHT_MOVES_A3 << sq - A3));
+				_move_pos_board_knight[sq] = (sq <= A3 ? (KNIGHT_MOVES_A3 >> (A3 - sq)) : (KNIGHT_MOVES_A3 << (sq - A3)));
 				break;
 			case 1:
-				_move_pos_board_knight[sq] = (sq <= B3 ? (KNIGHT_MOVES_B3 >> B3 - sq) : (KNIGHT_MOVES_B3 << sq - B3));
+				_move_pos_board_knight[sq] = (sq <= B3 ? (KNIGHT_MOVES_B3 >> (B3 - sq)) : (KNIGHT_MOVES_B3 << (sq - B3)));
 				break;
 			case 6:
-				_move_pos_board_knight[sq] = (sq <= G3 ? (KNIGHT_MOVES_G3 >> G3 - sq) : (KNIGHT_MOVES_G3 << sq - G3));
+				_move_pos_board_knight[sq] = (sq <= G3 ? (KNIGHT_MOVES_G3 >> (G3 - sq)) : (KNIGHT_MOVES_G3 << (sq - G3)));
 				break;
 			case 7:
-				_move_pos_board_knight[sq] = (sq <= H3 ? (KNIGHT_MOVES_H3 >> H3 - sq) : (KNIGHT_MOVES_H3 << sq - H3));
+				_move_pos_board_knight[sq] = (sq <= H3 ? (KNIGHT_MOVES_H3 >> (H3 - sq)) : (KNIGHT_MOVES_H3 << (sq - H3)));
 				break;
 			default:
-				_move_pos_board_knight[sq] = (sq <= C3 ? (KNIGHT_MOVES_C3 >> C3 - sq) : (KNIGHT_MOVES_C3 << sq - C3));
+				_move_pos_board_knight[sq] = (sq <= C3 ? (KNIGHT_MOVES_C3 >> (C3 - sq)) : (KNIGHT_MOVES_C3 << (sq - C3)));
 		}
 	}
 }
@@ -354,13 +354,13 @@ void BitboardImpl::init_move_pos_board_king()
 	for (unsigned int sq = A1; sq <= H8; ++sq) {
 		switch (sq % 8) {
 			case 0:
-				_move_pos_board_king[sq] = (sq <= A2 ? (KING_MOVES_A2 >> A2 - sq) : (KING_MOVES_A2 << sq - A2));
+				_move_pos_board_king[sq] = (sq <= A2 ? (KING_MOVES_A2 >> (A2 - sq)) : (KING_MOVES_A2 << (sq - A2)));
 				break;
 			case 7:
-				_move_pos_board_king[sq] = (sq <= H2 ? (KING_MOVES_H2 >> H2 - sq) : (KING_MOVES_H2 << sq - H2));
+				_move_pos_board_king[sq] = (sq <= H2 ? (KING_MOVES_H2 >> (H2 - sq)) : (KING_MOVES_H2 << (sq - H2)));
 				break;
 			default:
-				_move_pos_board_king[sq] = (sq <= B2 ? (KING_MOVES_B2 >> B2 - sq) : (KING_MOVES_B2 << sq - B2));
+				_move_pos_board_king[sq] = (sq <= B2 ? (KING_MOVES_B2 >> (B2 - sq)) : (KING_MOVES_B2 << (sq - B2)));
 		}
 	}
 }
@@ -369,13 +369,13 @@ void BitboardImpl::init_attacking_pos_board_pawn_white()
 {
 	for (unsigned int sq = A2; sq <= H7; ++sq) {
 		if (sq % 8 == 0) {
-			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_A2 << sq - A2);
+			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_A2 << (sq - A2));
 		}
 		else if (sq % 8 == 7) {
-			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_H2 << sq - H2);
+			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_H2 << (sq - H2));
 		}
 		else {
-			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_B2 << sq - B2);
+			_attacking_pos_board_pawn_white[sq - A2] = (PAWN_WHITE_ATTACK_B2 << (sq - B2));
 		}
 	}
 }
@@ -384,13 +384,13 @@ void BitboardImpl::init_attacking_pos_board_pawn_black()
 {
 	for (unsigned int sq = A2; sq <= H7; ++sq) {
 		if (sq % 8 == 0) {
-			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_A7 >> A7 - sq);
+			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_A7 >> (A7 - sq));
 		}
 		else if (sq % 8 == 7) {
-			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_H7 >> H7 - sq);
+			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_H7 >> (H7 - sq));
 		}
 		else {
-			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_G7 >> G7 - sq);
+			_attacking_pos_board_pawn_black[sq - A2] = (PAWN_BLACK_ATTACK_G7 >> (G7 - sq));
 		}
 	}
 }
