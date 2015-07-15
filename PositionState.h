@@ -10,6 +10,8 @@ namespace pismo
 class BitboardImpl;
 class ZobKeyImpl;
 
+const unsigned int MOVE_STACK_CAPACITY = 20;
+
 class PositionState
 {
 public:
@@ -95,7 +97,6 @@ private:
 	void make_promotion_move(const move_info& move);
 
 	void update_castling_rights();
-	uint8_t convert_castling_rights_int() const;
 
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
@@ -108,9 +109,12 @@ private:
 		Square to;
 		Piece moved_piece;
 		Piece captured_piece;
+		MoveType move_type;
 		int8_t en_passant_file;
-		uint8_t castling_rights;
-		bool is_en_pass_capture;
+		bool white_left_castling;
+		bool white_right_castling;
+		bool black_left_castling;
+		bool black_right_castling;
 	};
 
 	void undo_normal_move(const undo_move_info& move);
@@ -130,18 +134,7 @@ private:
 			uint32_t get_size() const;
 		
 		private:
-			struct node {
-				undo_move_info move;
-				node* next;
-
-				node(const undo_move_info& m, node* const nt = 0)
-				: move(m),
-				next(nt)
-				{
-				}
-			};
-
-			node* _first;
+			undo_move_info _move_stack[MOVE_STACK_CAPACITY];
 			uint32_t _stack_size;
 	};
 

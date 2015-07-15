@@ -622,28 +622,35 @@ void PositionState::make_move(const move_info& move)
 	undo_move.moved_piece = pfrom;
 	undo_move.captured_piece = pto;
 	undo_move.en_passant_file = _en_passant_file;
-	undo_move.castling_rights = convert_castling_rights_int();
-	undo_move.is_en_pass_capture = false;
+	undo_move.white_left_castling = _white_left_castling;
+	undo_move.white_right_castling = _white_right_castling;
+	undo_move.black_left_castling = _black_left_castling;
+	undo_move.black_right_castling = _black_right_castling;
 	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
 		if(move.to >= A8 || move.to <= H1) {
 			make_promotion_move(move);
+			undo_move.move_type = PROMOTION_MOVE;
 		}
 		else if (std::abs(move.from - move.to) == 16) {
 			make_en_passant_move(move);
+			undo_move.move_type = EN_PASSANT_MOVE;
 		}
 		else if (((move.to - move.from) % 8) && pto == ETY_SQUARE) {
 			make_en_passant_capture(move);
-			undo_move.is_en_pass_capture = true;
+			undo_move.move_type = EN_PASSANT_CAPTURE;
 		}
 		else {
 			make_normal_move(move);
+			undo_move.move_type = NORMAL_MOVE;
 		}
 	}
 	else if ((pfrom == KING_WHITE || pfrom == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
 		make_castling_move(move);
+		undo_move.move_type = CASTLING_MOVE;
 	}		
 	else {
 		make_normal_move(move);
+		undo_move.move_type = NORMAL_MOVE;
 	}
 
 	_move_stack.push(undo_move);
@@ -934,15 +941,7 @@ void PositionState::update_castling_rights()
 	}
 }
 
-// Converts four castling rights into one integer with following rules
-// first bit set for _white_left_castling
-// second bit set for _white_right_castling
-// third bit set for _black_left_castling
-// fourth bit set for _black_right_castling
-uint8_t PositionState::convert_castling_rights_int() const
-{
-	return _black_right_castling * 8 + _black_left_castling * 4 + _white_right_castling * 2 + _white_left_castling;
-}
+
 
 // Adds a piece into all 4 occupation bitboards in the appropriate position
 void PositionState::add_piece_to_bitboards(Square sq, Color clr)
@@ -1006,28 +1005,27 @@ void PositionState::update_game_status()
 void PositionState::undo_move()
 {
 	undo_move_info move = _move_stack.pop();
-	if (move.moved_piece == PAWN_WHITE || move.moved_piece == PAWN_BLACK) {
-		if(move.to >= A8 || move.to <= H1) {
-			undo_promotion_move(move);
-		}
-		else if (std::abs(move.from - move.to) == 16) {
-			undo_en_passant_move(move);
-		}
-		else if (move.is_en_pass_capture) {
-			undo_en_passant_capture(move);
-		}
-		else {
+	switch(move.move_type) {
+		case NORMAL_MOVE: 
 			undo_normal_move(move);
-		}
-	}
-	else if ((move.moved_piece == KING_WHITE || move.moved_piece == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
-		undo_castling_move(move);
-	}		
-	else {
-		undo_normal_move(move);
+			break;
+		case PROMOTION_MOVE:
+			undo_promotion_move(move);
+			break;
+		case CASTLING_MOVE:
+			undo_castling_move(move);
+			break;
+		case EN_PASSANT_MOVE:
+			undo_en_passant_move(move);
+			break;
+		case EN_PASSANT_CAPTURE:
+			undo_en_passant_capture(move);
+			break;
+		default:
+			assert(move.move_type >= NORMAL_MOVE && move.move_type <= EN_PASSANT_CAPTURE);
+			break;
 	}
 
-	
 	revert_castling_rights(move);
 	update_game_status();
 	
@@ -1257,30 +1255,26 @@ void PositionState::undo_promotion_move(const undo_move_info& move)
 
 void PositionState::revert_castling_rights(const undo_move_info& move)
 {
-	// In move.castling_rights first bit set corresponds to _white_left_castling
-	// second bit set to _white_right_castling
-	// third bit set to _black_left_castling
-	// fourth bit set to _black_right_castling 
-	if (!_white_left_castling && (move.castling_rights & 1)) {
+
+	if (!_white_left_castling && move.white_left_castling) {
 		_zob_key ^= _zob_key_impl->get_white_left_castling_key();
 		_white_left_castling = true;
 	}
-	if (!_white_right_castling && ((move.castling_rights >> 1) & 1)) {
+	if (!_white_right_castling && move.white_right_castling) {
 		_zob_key ^= _zob_key_impl->get_white_right_castling_key();
 		_white_right_castling = true;
 	}
-	if (!_black_left_castling && ((move.castling_rights >> 2) & 1)) {
+	if (!_black_left_castling && move.black_left_castling) {
 		_zob_key ^= _zob_key_impl->get_black_left_castling_key();
 		_black_left_castling = true;
 	}
-	if (!_black_right_castling && ((move.castling_rights >> 3) & 1)) {
+	if (!_black_right_castling && move.black_right_castling) {
 		_zob_key ^= _zob_key_impl->get_black_right_castling_key();
 		_black_right_castling = true;
 	}
 }
 	 
 PositionState::MoveStack::MoveStack() :
-_first(0),
 _stack_size(0)
 {
 }
@@ -1297,20 +1291,14 @@ uint32_t PositionState::MoveStack::get_size() const
 
 void PositionState::MoveStack::push(const undo_move_info& move)
 {
-	node* oldfirst = _first;
-	_first = new node(move, oldfirst);
-	++_stack_size;
+	assert(_stack_size != MOVE_STACK_CAPACITY); 
+	_move_stack[_stack_size++] = move;
 }
 
 PositionState::undo_move_info PositionState::MoveStack::pop()
 {
 	assert(!isEmpty());
-	node* oldfirst = _first;
-	_first = _first->next;
-	undo_move_info move = oldfirst->move;
-	delete oldfirst;
-	--_stack_size;
-	return move;
+	return _move_stack[--_stack_size];
 }
 
 

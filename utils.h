@@ -32,6 +32,11 @@ enum Square {
 	NUMBER_OF_SQUARES // = 64
 };
 
+enum MoveType {
+	NORMAL_MOVE = 0, PROMOTION_MOVE, CASTLING_MOVE,
+        EN_PASSANT_MOVE, EN_PASSANT_CAPTURE
+};	
+
 struct move_info {
 	Square from;
 	Square to;
