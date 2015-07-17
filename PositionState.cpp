@@ -616,41 +616,41 @@ void PositionState::make_move(const move_info& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	Piece pto = _board[move.to / 8][move.to % 8];
-	undo_move_info undo_move;
-	undo_move.from = move.from;
-	undo_move.to = move.to;
-	undo_move.moved_piece = pfrom;
-	undo_move.captured_piece = pto;
-	undo_move.en_passant_file = _en_passant_file;
-	undo_move.white_left_castling = _white_left_castling;
-	undo_move.white_right_castling = _white_right_castling;
-	undo_move.black_left_castling = _black_left_castling;
-	undo_move.black_right_castling = _black_right_castling;
+	undo_move_info* undo_move = _move_stack.get_next_item();
+	undo_move->from = move.from;
+	undo_move->to = move.to;
+	undo_move->moved_piece = pfrom;
+	undo_move->captured_piece = pto;
+	undo_move->en_passant_file = _en_passant_file;
+	undo_move->white_left_castling = _white_left_castling;
+	undo_move->white_right_castling = _white_right_castling;
+	undo_move->black_left_castling = _black_left_castling;
+	undo_move->black_right_castling = _black_right_castling;
 	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
 		if(move.to >= A8 || move.to <= H1) {
 			make_promotion_move(move);
-			undo_move.move_type = PROMOTION_MOVE;
+			undo_move->move_type = PROMOTION_MOVE;
 		}
 		else if (std::abs(move.from - move.to) == 16) {
 			make_en_passant_move(move);
-			undo_move.move_type = EN_PASSANT_MOVE;
+			undo_move->move_type = EN_PASSANT_MOVE;
 		}
 		else if (((move.to - move.from) % 8) && pto == ETY_SQUARE) {
 			make_en_passant_capture(move);
-			undo_move.move_type = EN_PASSANT_CAPTURE;
+			undo_move->move_type = EN_PASSANT_CAPTURE;
 		}
 		else {
 			make_normal_move(move);
-			undo_move.move_type = NORMAL_MOVE;
+			undo_move->move_type = NORMAL_MOVE;
 		}
 	}
 	else if ((pfrom == KING_WHITE || pfrom == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
 		make_castling_move(move);
-		undo_move.move_type = CASTLING_MOVE;
+		undo_move->move_type = CASTLING_MOVE;
 	}		
 	else {
 		make_normal_move(move);
-		undo_move.move_type = NORMAL_MOVE;
+		undo_move->move_type = NORMAL_MOVE;
 	}
 
 	_move_stack.push(undo_move);
@@ -1004,29 +1004,29 @@ void PositionState::update_game_status()
 
 void PositionState::undo_move()
 {
-	undo_move_info move = _move_stack.pop();
-	switch(move.move_type) {
+	const undo_move_info* move = _move_stack.pop();
+	switch(move->move_type) {
 		case NORMAL_MOVE: 
-			undo_normal_move(move);
+			undo_normal_move(*move);
 			break;
 		case PROMOTION_MOVE:
-			undo_promotion_move(move);
+			undo_promotion_move(*move);
 			break;
 		case CASTLING_MOVE:
-			undo_castling_move(move);
+			undo_castling_move(*move);
 			break;
 		case EN_PASSANT_MOVE:
-			undo_en_passant_move(move);
+			undo_en_passant_move(*move);
 			break;
 		case EN_PASSANT_CAPTURE:
-			undo_en_passant_capture(move);
+			undo_en_passant_capture(*move);
 			break;
 		default:
-			assert(move.move_type >= NORMAL_MOVE && move.move_type <= EN_PASSANT_CAPTURE);
+			assert(move->move_type >= NORMAL_MOVE && move->move_type <= EN_PASSANT_CAPTURE);
 			break;
 	}
 
-	revert_castling_rights(move);
+	revert_castling_rights(*move);
 	update_game_status();
 	
 	_white_to_play = !_white_to_play;
@@ -1289,16 +1289,27 @@ uint32_t PositionState::MoveStack::get_size() const
 	return _stack_size;
 }
 
-void PositionState::MoveStack::push(const undo_move_info& move)
+// Returns the pointer to the next item which should be updated
+// and then pushed into stack
+// The value held in the variable to which the pointer points to is undefined  
+PositionState::undo_move_info* PositionState::MoveStack::get_next_item()
 {
-	assert(_stack_size != MOVE_STACK_CAPACITY); 
-	_move_stack[_stack_size++] = move;
+	assert(_stack_size != MOVE_STACK_CAPACITY);
+	return _move_stack + _stack_size;
 }
 
-PositionState::undo_move_info PositionState::MoveStack::pop()
+void PositionState::MoveStack::push(const undo_move_info* move)
+{
+	assert(_stack_size != MOVE_STACK_CAPACITY);
+	if ((_move_stack + _stack_size) == move) {
+		++_stack_size;
+	}	
+}
+
+const PositionState::undo_move_info* PositionState::MoveStack::pop()
 {
 	assert(!isEmpty());
-	return _move_stack[--_stack_size];
+	return _move_stack + (--_stack_size);
 }
 
 

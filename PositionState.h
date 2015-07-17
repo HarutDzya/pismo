@@ -128,8 +128,9 @@ private:
 	class MoveStack {
 		public:
 			MoveStack();
-			void push(const undo_move_info& move);
-			undo_move_info pop();
+			undo_move_info* get_next_item();
+			void push(const undo_move_info* move);
+			const undo_move_info* pop();
 			bool isEmpty() const;
 			uint32_t get_size() const;
 		
