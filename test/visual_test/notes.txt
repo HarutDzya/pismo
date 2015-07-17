@@ -1,0 +1,5 @@
+to run this 
+
+1. python -m SimpleHTTPServer 8888
+2. from brawser go to localhost:8888
+3. select this folder
