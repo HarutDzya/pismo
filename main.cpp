@@ -2,6 +2,7 @@
 #include <map>
 #include "PositionState.h"
 #include "MoveGenerator.h"
+#include "Core.h"
 
 void print_bitboard(const pismo::Bitboard& board);
 void print_generated_moves(const std::vector<pismo::move_info>& generated_moves);
@@ -44,6 +45,10 @@ int main()
 	pos.print_board();
 	std::cout << "Please enter n to make next move, u to undo the move and q to stop the game)" << std::endl;
 	std::string choice;
+
+  Core* p = new Core();
+  move_info info = p->think(pos, 4, true );
+
 	while(std::cin >> choice && choice != "q") {
 		if (choice == "n") {
 			std::string sqfrom;

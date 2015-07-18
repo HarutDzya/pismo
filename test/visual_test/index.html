@@ -25,8 +25,14 @@
 }
 
 </style>
+
 <body>
-<script src="d3.min.js"></script>
+
+<h3><p id="my_id"> "My Web" </p></h3> 
+
+<script src="js/d3.min.js"></script>
+<script src="js/jquery-1.10.1.js"></script>
+<script src="js/jquery-ui.js"></script>
 <script>
 
 var width = 1000;
@@ -60,21 +66,19 @@ d3.json("flare.json", function(error, json) {
       .data(nodes)
     .enter().append("g")
       .attr("class", "node")
+      .attr("id", "node_id")
       .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
 
   node.append("circle")
     .attr("r", 3.5).style("fill", function(d, i) { 
         if (d.name == "DataUtil") return "green";
          return i % 2 ? "red" : "blue"; 
-}).on("click", function(d) {
+    }).on("click", function(d) {
 
-var w =  window.open("/board.html", "Position", "left = 500, top = 500, width = 400, height=400");
-  w.left = 1000;
+    var w =  window.open("/board.html", "Position", "left = 500, top = 500, width = 400, height=400");
+      w.left = 1000;
 
-});
-
-//    .attr("r", 3.5).style("fill", function(d, i) { return d["name"] == "DataUtil" ? "red", "blue";});
-      //.attr("r", 3.5).style("stroke", "red").style("stroke-width", "1.5px");
+    });
 
   node.append("text")
       .attr("dx", function(d) { return d.children ? -8 : 8; })
@@ -82,9 +86,22 @@ var w =  window.open("/board.html", "Position", "left = 500, top = 500, width = 
       .attr("text-anchor", function(d) { return d.children ? "end" : "start"; })
       .text(function(d) { return d.name; });
 
-  //node.append(style("colort", "blue");
-
-  //node.style("color", function(d, i) { return i % 2 ? "#fff" : "#eee"; });
+    $( document ).tooltip({
+      items: "#my_id, #node_id",
+      content: function() {
+        var element = $( this );
+        if ( element.is( "#my_id" ) ) {
+          var text = element.text();
+          return "<h3><p id=\"my_id2\"> \"My Web\" </p></h3>";
+        }
+        if (element.is("#node_id") ) {
+         return "<img class='map' alt='" + "Yerevan" +
+           "' src='http://maps.google.com/maps/api/staticmap?" +
+           "zoom=11&size=350x350&maptype=terrain&sensor=false&center=" +
+           "Yerevan" + "'>";
+        }
+      }
+    });
 
 });
 
