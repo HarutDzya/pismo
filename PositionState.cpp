@@ -653,8 +653,6 @@ void PositionState::make_move(const move_info& move)
 		undo_move->move_type = NORMAL_MOVE;
 	}
 
-	_move_stack.push(undo_move);
-	
 	update_castling_rights();
 	update_game_status();
 	// TODO : check if opponents king is under attack and update the variable accordingly
@@ -1295,15 +1293,7 @@ uint32_t PositionState::MoveStack::get_size() const
 PositionState::undo_move_info* PositionState::MoveStack::get_next_item()
 {
 	assert(_stack_size != MOVE_STACK_CAPACITY);
-	return _move_stack + _stack_size;
-}
-
-void PositionState::MoveStack::push(const undo_move_info* move)
-{
-	assert(_stack_size != MOVE_STACK_CAPACITY);
-	if ((_move_stack + _stack_size) == move) {
-		++_stack_size;
-	}	
+	return _move_stack + (_stack_size++);
 }
 
 const PositionState::undo_move_info* PositionState::MoveStack::pop()
