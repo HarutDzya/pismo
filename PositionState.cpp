@@ -34,8 +34,7 @@ _material_zob_key(0),
 _pst_value(0),
 _move_stack(),
 _halfmove_clock(0),
-_fullmove_count(1),
-_state_FEN()
+_fullmove_count(1)
 {
 	for (unsigned int i = 0; i < 8; ++i) {
 		for (unsigned int j = 0; j < 8; ++j) {
@@ -207,7 +206,6 @@ void PositionState::init_position_FEN(const std::string& fen)
 	init_move_count_FEN(fen, char_count);
 	
 	update_game_status();
-	_state_FEN = fen;
 	assert(char_count == fen.size());
 }
 
@@ -356,9 +354,9 @@ void PositionState::init_en_passant_file_FEN(const std::string& fen, unsigned in
 		_en_passant_file = -1;
 		++char_count;
 	}
-	else {
-		++char_count;	
-		_en_passant_file = std::atoi(&fen[char_count++]) - 1;
+	else {	
+		_en_passant_file = fen[char_count] - 'a';
+		++char_count;
 		assert(_en_passant_file >= 0 && _en_passant_file < 8);
 		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
 	}
@@ -994,6 +992,7 @@ void PositionState::make_en_passant_move(const move_info& move)
 	if (_en_passant_file != -1) {
 		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
 	}
+	
 	_en_passant_file = move.from % 8;
 	_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
 }
@@ -1494,6 +1493,154 @@ const PositionState::undo_move_info* PositionState::MoveStack::pop()
 	assert(!isEmpty());
 	return _move_stack + (--_stack_size);
 }
+
+const std::string PositionState::get_state_FEN() const
+{
+	std::string fen;
+	construct_material_FEN(fen);
+	fen.push_back(' ');
+	construct_right_to_play_FEN(fen);
+	fen.push_back(' ');
+	construct_castling_rights_FEN(fen);
+	fen.push_back(' ');
+	construct_en_passant_file_FEN(fen);
+	fen.push_back(' ');
+	construct_move_count_FEN(fen);
+
+	return fen;
+}
+
+void PositionState::construct_material_FEN(std::string& fen) const
+{
+	for (int rank = 7; rank >= 0; --rank) {
+		unsigned int ety_square_count  = 0;
+		for (unsigned int file = 0; file < 8; ++file) {
+			Piece p = _board[rank][file];
+			if(p != ETY_SQUARE) {
+				if (ety_square_count != 0) {
+					fen.push_back('0' + ety_square_count);
+					ety_square_count = 0;
+				}
+				switch(p) {
+					case PAWN_WHITE:
+						fen.push_back('P');
+						break;
+					case KNIGHT_WHITE:
+						fen.push_back('K');
+						break;
+					case BISHOP_WHITE:
+						fen.push_back('B');
+						break;
+					case ROOK_WHITE:
+						fen.push_back('R');
+						break;
+					case QUEEN_WHITE:
+						fen.push_back('Q');
+						break;
+					case KING_WHITE:
+						fen.push_back('K');
+						break;
+					case PAWN_BLACK:
+						fen.push_back('p');
+						break;
+					case KNIGHT_BLACK:
+						fen.push_back('k');
+						break;
+					case BISHOP_BLACK:
+						fen.push_back('b');
+						break;
+					case ROOK_BLACK:
+						fen.push_back('r');
+						break;
+					case QUEEN_BLACK:
+						fen.push_back('q');
+						break;
+					case KING_BLACK:
+						fen.push_back('k');
+						break;
+					default:
+						assert(false);
+				}
+			}
+			else {
+				++ety_square_count;
+			}
+		}
+		
+		if (ety_square_count != 0) {
+			fen.push_back('0' + ety_square_count);
+			ety_square_count = 0;
+		}
+		if (rank != 0) {
+			fen.push_back('/');
+		}
+	}
+}
+
+void PositionState::construct_right_to_play_FEN(std::string& fen) const
+{
+	if (_white_to_play) {
+		fen.push_back('w');
+	}
+	else {
+		fen.push_back('b');
+	}
+}
+
+void PositionState::construct_castling_rights_FEN(std::string& fen) const
+{
+	bool is_any_right = false;
+	if (_white_right_castling) {
+		fen.push_back('K');
+		is_any_right = true;
+	}
+	if (_white_left_castling) {
+		fen.push_back('Q');
+		is_any_right = true;
+	}
+	if (_black_right_castling) {
+		fen.push_back('k');
+		is_any_right = true;
+	}
+	if (_black_left_castling) {
+		fen.push_back('q');
+		is_any_right = true;
+	}
+	if (!is_any_right) {
+		fen.push_back('-');
+	}
+}
+
+void PositionState::construct_en_passant_file_FEN(std::string& fen) const
+{
+	if(_en_passant_file == -1) {
+		fen.push_back('-');
+	}
+	else {
+		fen.push_back('a' + _en_passant_file);
+		if (_white_to_play) {
+			fen.push_back('6');
+		}
+		else {
+			fen.push_back('3');
+		}
+	}
+}
+
+void PositionState::construct_move_count_FEN(std::string& fen) const
+{
+	unsigned int halfmove_count = _halfmove_clock;
+	do {
+		fen.push_back('0' + halfmove_count % 10);
+		halfmove_count /= 10;
+	} while (halfmove_count != 0);
+	fen.push_back(' ');
+	unsigned int fullmove_count = _fullmove_count;
+	do {
+		fen.push_back('0' + fullmove_count % 10);
+		fullmove_count /= 10;
+	} while (fullmove_count != 0);
+}	
 
 
 void PositionState::print_white_pieces() const

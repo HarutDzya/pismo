@@ -61,6 +61,11 @@ public:
 	*/
 	void print_board() const;
 
+	/* Constructs state Forsyth-Edwards notation
+	 * and returns as a string
+	 */
+	const std::string get_state_FEN() const;
+
 	/*
 	Prints possible moves from Square from on the board
 	*/
@@ -115,6 +120,13 @@ private:
 
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();
+
+
+	void construct_material_FEN(std::string& fen) const;
+	void construct_right_to_play_FEN(std::string& fen) const;
+	void construct_castling_rights_FEN(std::string& fen) const;
+	void construct_en_passant_file_FEN(std::string& fen) const;
+	void construct_move_count_FEN(std::string& fen) const;
 	
 	struct undo_move_info {
 		Square from;
@@ -207,10 +219,6 @@ private:
 
 	// Full move count of the game
 	uint16_t _fullmove_count;
-
-	// Forsyth-Edwards notation of the state
-	std::string _state_FEN;
-
 
 };
 

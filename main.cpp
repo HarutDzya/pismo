@@ -103,7 +103,8 @@ int main()
 		}
 		std::cout << "Please enter n to make next move, u to undo the move and q to stop the game)" << std::endl;
 	}
-	
+
+	std::cout << pos.get_state_FEN() << std::endl;	
 	pos.print_board();
 	pos.print_white_pieces();
 	pos.print_black_pieces();
