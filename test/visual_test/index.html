@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="css/chessboard-0.3.0.css" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 <style>
 
 /*.node circle {
@@ -26,17 +29,21 @@
 
 </style>
 
+</head>
 <body>
 
-<h3><p id="my_id"> "My Web" </p></h3> 
+<div id="board" style="width: 300px"></div>
 
 <script src="js/d3.min.js"></script>
 <script src="js/jquery-1.10.1.js"></script>
 <script src="js/jquery-ui.js"></script>
+<script src="js/json3.min.js"></script>
+<script src="js/chessboard-0.3.0.js"></script>
 <script>
 
 var width = 1000;
-var height = 18000;
+var height = 180;
+//var height = 1800;
 
 var tree = d3.layout.tree()
     .size([height, width - 560]);
@@ -50,7 +57,11 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(100,0)");
 
-d3.json("flare.json", function(error, json) {
+d3.json("search.json", tmp); 
+//d3.json("flare.json", tmp); 
+
+function tmp(error, json)
+{
   if (error) throw error;
 
   var nodes = tree.nodes(json),
@@ -73,11 +84,6 @@ d3.json("flare.json", function(error, json) {
     .attr("r", 3.5).style("fill", function(d, i) { 
         if (d.name == "DataUtil") return "green";
          return i % 2 ? "red" : "blue"; 
-    }).on("click", function(d) {
-
-    var w =  window.open("/board.html", "Position", "left = 500, top = 500, width = 400, height=400");
-      w.left = 1000;
-
     });
 
   node.append("text")
@@ -86,25 +92,25 @@ d3.json("flare.json", function(error, json) {
       .attr("text-anchor", function(d) { return d.children ? "end" : "start"; })
       .text(function(d) { return d.name; });
 
-    $( document ).tooltip({
-      items: "#my_id, #node_id",
-      content: function() {
-        var element = $( this );
-        if ( element.is( "#my_id" ) ) {
-          var text = element.text();
-          return "<h3><p id=\"my_id2\"> \"My Web\" </p></h3>";
-        }
-        if (element.is("#node_id") ) {
-         return "<img class='map' alt='" + "Yerevan" +
-           "' src='http://maps.google.com/maps/api/staticmap?" +
-           "zoom=11&size=350x350&maptype=terrain&sensor=false&center=" +
-           "Yerevan" + "'>";
-        }
-      }
-    });
 
-});
+    d3.selectAll(".node").on("mouseenter", function (d) {
+        $("#board").show();
+        var div = document.getElementById("board");
+        div.style.position = "absolute";
+        div.style.top = d3.event.pageY + "px";
+        div.style.left= d3.event.pageX + "px";
+        //var ruyLopez = 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R';
+        ChessBoard('board', d.fen);
+    })
+
+    d3.selectAll(".node").on("mouseleave", function (d) {
+        var div = document.getElementById("board");
+        $("#board").hide();
+    })
+}
+
 
 d3.select(self.frameElement).style("height", height + "px");
+
 
 </script>
