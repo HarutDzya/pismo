@@ -1,0 +1,29 @@
+{
+  "name": "o",
+  "score": "+0.1",
+  "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+  "children": [
+  {
+    "name": "E4",
+    "score": "+0.2",
+    "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR",
+    "children": [
+    {
+      "name": "Kf6",
+      "score": "+0.3",
+      "fen": "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR"
+    },
+    {
+      "name": "c5",
+      "score": "+0.1",
+      "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR"
+    }
+    ]
+  },   
+  {
+    "name": "D4",
+    "score": "+0.1",
+    "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR"
+  }
+  ]
+}
