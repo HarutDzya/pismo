@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include <vector>
+#include <string>
 
 namespace pismo
 {
@@ -19,6 +20,11 @@ public:
 	~PositionState();
 
 	void init_position(const std::vector<std::pair<Square, Piece> >& pieces); 
+
+	// Initializes the state using Forsyth-Edwards notation string as an input
+	// the FEN should have 6 fields separated by whitespaces
+	void init_position_FEN(const std::string& fen);
+
 	/*
 	Checks all the rules of the game for legality of the move
 	even if it involves capture of the opponent piece
@@ -76,6 +82,12 @@ public:
 private:
 	void set_piece(Square s, Piece p);
 	bool init_position_is_valid(const std::vector<std::pair<Square, Piece> >& pieces) const;
+	void init_material_FEN(const std::string& fen, unsigned int& char_count);
+	void init_right_to_play_FEN(const std::string& fen, unsigned int& char_count);
+	void init_castling_rights_FEN(const std::string& fen, unsigned int& char_count);
+	void init_en_passant_file_FEN(const std::string& fen, unsigned int& char_count);
+	void init_move_count_FEN(const std::string& fen, unsigned int& char_count);
+
 	bool pawn_move_is_legal(const move_info& move, bool& is_en_passant_capture) const;
 	bool knight_move_is_legal(const move_info& move) const;
 	bool bishop_move_is_legal(const move_info& move) const;
@@ -189,6 +201,17 @@ private:
 
 	// Stack of the moves to be used by undo_move
 	MoveStack _move_stack;
+
+	// Halfmove count for fifty move rule
+	uint16_t _halfmove_clock;
+
+	// Full move count of the game
+	uint16_t _fullmove_count;
+
+	// Forsyth-Edwards notation of the state
+	std::string _state_FEN;
+
+
 };
 
 }

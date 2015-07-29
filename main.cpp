@@ -18,7 +18,7 @@ int main()
 	} 
 	
 	PositionState pos;
-	std::vector<std::pair<Square, Piece> > pcs;
+	/*std::vector<std::pair<Square, Piece> > pcs;
 	for (int i = 0; i < 8; ++i) {
 		pcs.push_back(std::pair<Square, Piece>((Square)(8 + i), PAWN_WHITE));
 		pcs.push_back(std::pair<Square, Piece>((Square)(6 * 8 + i), PAWN_BLACK));
@@ -39,15 +39,16 @@ int main()
 	pcs.push_back(std::pair<Square, Piece>(F8, BISHOP_BLACK));
 	pcs.push_back(std::pair<Square, Piece>(D1, QUEEN_WHITE));
 	pcs.push_back(std::pair<Square, Piece>(D8, QUEEN_BLACK));
+	*/
 
-
-	pos.init_position(pcs);
+	//pos.init_position(pcs);
+	pos.init_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	pos.print_board();
 	std::cout << "Please enter n to make next move, u to undo the move and q to stop the game)" << std::endl;
 	std::string choice;
 
-  Core* p = new Core();
-  move_info info = p->think(pos, 4, true );
+ 	Core* p = new Core();
+  	move_info info = p->think(pos, 4, true );
 
 	while(std::cin >> choice && choice != "q") {
 		if (choice == "n") {

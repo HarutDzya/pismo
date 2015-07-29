@@ -24,15 +24,18 @@ _white_to_play(true),
 _en_passant_file(-1),
 _white_king_position(E1),
 _black_king_position(E8),
-_white_left_castling(true),
-_white_right_castling(true),
-_black_left_castling(true),
-_black_right_castling(true),
+_white_left_castling(false),
+_white_right_castling(false),
+_black_left_castling(false),
+_black_right_castling(false),
 _is_middle_game(true),
 _zob_key(0),
 _material_zob_key(0),
 _pst_value(0),
-_move_stack()
+_move_stack(),
+_halfmove_clock(0),
+_fullmove_count(1),
+_state_FEN()
 {
 	for (unsigned int i = 0; i < 8; ++i) {
 		for (unsigned int j = 0; j < 8; ++j) {
@@ -42,11 +45,7 @@ _move_stack()
 	for (unsigned int i = 0; i < PIECE_NB; ++i) {
 		_piece_count[i] = 0;
 	} 
-	_zob_key ^= _zob_key_impl->get_white_left_castling_key();
-	_zob_key ^= _zob_key_impl->get_white_right_castling_key();
-	_zob_key ^= _zob_key_impl->get_black_left_castling_key();
-	_zob_key ^= _zob_key_impl->get_black_right_castling_key();
-
+	
 	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
 		_material_zob_key ^= _zob_key_impl->get_material_key((Piece)(piece), 0);
 	}
@@ -86,6 +85,17 @@ void PositionState::init_position(const std::vector<std::pair<Square, Piece> >& 
 		for (std::size_t i = 0; i < pieces.size(); ++i) {
 			set_piece(pieces[i].first, pieces[i].second);
 		}
+	
+		_white_left_castling = true;
+		_white_right_castling = true;
+		_black_left_castling = true;
+		_black_right_castling = true;
+		_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+		_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+		_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+		_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+
+		update_game_status();
 	}
 }
 /* Checks for the following conditions for initial position validty:
@@ -181,6 +191,189 @@ bool PositionState::init_position_is_valid(const std::vector<std::pair<Square, P
 	}
 	
 	return true; 
+}
+
+void PositionState::init_position_FEN(const std::string& fen)
+{
+	unsigned int char_count = 0;
+	init_material_FEN(fen, char_count);
+	++char_count;
+	init_right_to_play_FEN(fen, char_count);
+	++char_count;
+	init_castling_rights_FEN(fen, char_count);
+	++char_count;
+	init_en_passant_file_FEN(fen, char_count);
+	++char_count;
+	init_move_count_FEN(fen, char_count);
+	
+	update_game_status();
+	_state_FEN = fen;
+	assert(char_count == fen.size());
+}
+
+
+void PositionState::init_material_FEN(const std::string& fen, unsigned int& char_count)
+{
+	std::vector<std::pair<Square, Piece> > pieces;
+	unsigned int rank = 7;
+	unsigned int file = 0;
+	while(fen[char_count] != ' ') {
+		switch(fen[char_count]) {
+			case 'P':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), PAWN_WHITE));
+				++file;
+				break;
+			case 'N':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), KNIGHT_WHITE));
+				++file;
+				break;
+			case 'B':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), BISHOP_WHITE));
+				++file;
+				break;
+			case 'R':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), ROOK_WHITE));
+				++file;
+				break;
+			case 'Q':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), QUEEN_WHITE));
+				++file;
+				break;
+			case 'K':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), KING_WHITE));
+				++file;
+				break;
+			case 'p':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), PAWN_BLACK));
+				++file;
+				break;
+			case 'n':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), KNIGHT_BLACK));
+				++file;
+				break;
+			case 'b':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), BISHOP_BLACK));
+				++file;
+				break;
+			case 'r':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), ROOK_BLACK));
+				++file;
+				break;
+			case 'q':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), QUEEN_BLACK));
+				++file;
+				break;
+			case 'k':
+				pieces.push_back(std::pair<Square, Piece>((Square) (rank * 8 + file), KING_BLACK));
+				++file;
+				break;
+			case '1':
+				file += 1;
+				break;
+			case '2':
+				file += 2;
+			 	break;
+			case '3':
+				file += 3;
+				break;
+			case '4':
+				file += 4;
+				break;
+			case '5':
+				file += 5;
+				break;
+			case '6':
+				file += 6;
+				break;
+			case '7':
+				file += 7;
+				break;
+			case '8':
+				// file is updated directly in case '/'
+				break;
+			case '/':
+				--rank;
+				file = 0;
+				break;
+			default:
+				assert(false);
+		}
+		
+		++char_count;
+	}
+
+	if (init_position_is_valid(pieces)) {
+		for (std::size_t i = 0; i < pieces.size(); ++i) {
+			set_piece(pieces[i].first, pieces[i].second);
+		}
+	}
+}
+
+void PositionState::init_right_to_play_FEN(const std::string& fen, unsigned int& char_count)
+{
+	if(fen[char_count++] == 'w') {
+		_white_to_play = true;
+	}
+	else {
+		_white_to_play = false;
+		_zob_key ^= _zob_key_impl->get_if_black_to_play_key();
+	}
+}
+
+
+void PositionState::init_castling_rights_FEN(const std::string& fen, unsigned int& char_count)
+{
+	while(fen[char_count] != ' ') {
+		switch(fen[char_count]) {
+			case 'K':
+				_white_right_castling = true;
+				_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+				break;
+			case 'Q':
+				_white_left_castling = true;
+				_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+				break;
+			case 'k':
+				_black_right_castling = true;
+				_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+				break;
+			case 'q':
+				_black_left_castling = true;
+				_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+				break;
+			case '-':
+				break;
+			default:
+				assert(false);
+		}
+		++char_count;
+	}
+}
+
+void PositionState::init_en_passant_file_FEN(const std::string& fen, unsigned int& char_count)
+{
+	if(fen[char_count] == '-') {
+		_en_passant_file = -1;
+		++char_count;
+	}
+	else {
+		++char_count;	
+		_en_passant_file = std::atoi(&fen[char_count++]) - 1;
+		assert(_en_passant_file >= 0 && _en_passant_file < 8);
+		_zob_key ^= _zob_key_impl->get_en_passant_key(_en_passant_file);
+	}
+}
+
+void PositionState::init_move_count_FEN(const std::string& fen, unsigned int& char_count)
+{
+	_halfmove_clock = std::atoi(&fen[char_count]);
+	while(fen[char_count] != ' ') {
+		++char_count;
+	}
+	_fullmove_count = std::atoi(&fen[char_count]);
+	while(char_count != fen.size()) {
+		++char_count;
+	}
 }
 
 bool PositionState::move_is_legal(const move_info& move) const
