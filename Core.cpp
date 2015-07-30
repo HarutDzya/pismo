@@ -11,8 +11,9 @@ namespace pismo
 
 move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 {
-	const std::vector<move_info>& possibleMoves = white_to_play ? 
-		MoveGenerator::instance()->generate_white_moves(pos) : MoveGenerator::instance()->generate_black_moves(pos); 
+	std::vector<move_info> possibleMoves; 
+	white_to_play ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
+	       	MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
 
 	if (possibleMoves.empty()) {
 		return MATE_MOVE; 
@@ -70,8 +71,9 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 		return val;
 	}
 
-	const std::vector<move_info>& possibleMoves = white_to_play ?
-		MoveGenerator::instance()->generate_white_moves(pos) : MoveGenerator::instance()->generate_black_moves(pos); 
+	std::vector<move_info> possibleMoves;
+	white_to_play ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
+	       MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
 	if (possibleMoves.empty()) {
 		return white_to_play ? -MAX_SCORE : MAX_SCORE;
 	}

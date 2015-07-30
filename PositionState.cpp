@@ -1351,7 +1351,8 @@ void PositionState::undo_en_passant_move(const undo_move_info& move)
 	else {
 		remove_piece_from_bitboards(move.to, WHITE);
 		add_piece_to_bitboards(move.from, WHITE);
-	}	
+	}
+	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
 	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
 	_board[move.from / 8][move.from % 8] = move.moved_piece;
 	_pst_value -= calculate_pst_value(move.moved_piece, move.to);
@@ -1386,6 +1387,7 @@ void PositionState::undo_en_passant_capture(const undo_move_info& move)
 		_pst_value += calculate_pst_value(PAWN_BLACK, (Square) (move.to - 8));
 		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_BLACK, _piece_count[PAWN_WHITE]);
 	}
+	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
 	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
 	_board[move.from / 8][move.from % 8] = move.moved_piece;
 	_pst_value -= calculate_pst_value(move.moved_piece, move.to);
@@ -1425,6 +1427,7 @@ void PositionState::undo_promotion_move(const undo_move_info& move)
 		}
 	}
 	Piece promoted = _board[move.to / 8][move.to % 8];
+	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
 	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
 	_board[move.from / 8][move.from % 8] = move.moved_piece;
 	--_piece_count[promoted];

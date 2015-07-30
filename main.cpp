@@ -48,7 +48,7 @@ int main()
 	std::string choice;
 
  	Core* p = new Core();
-  	move_info info = p->think(pos, 4, true );
+  	move_info info = p->think(pos, 5, true );
 
 	while(std::cin >> choice && choice != "q") {
 		if (choice == "n") {
@@ -89,11 +89,14 @@ int main()
 			else {
 				std::cout << "Move is illegal" << std::endl;
 				//pos.print_possible_moves(move.from);
+				std::vector<move_info> possibleMoves;
 				if (turn_to_play == WHITE) {
-					print_generated_moves(MoveGenerator::instance()->generate_white_moves(pos));
+					MoveGenerator::instance()->generate_white_moves(pos, possibleMoves);
+					print_generated_moves(possibleMoves);
 				}
 				else {
-					print_generated_moves(MoveGenerator::instance()->generate_black_moves(pos));
+					MoveGenerator::instance()->generate_black_moves(pos, possibleMoves);
+					print_generated_moves(possibleMoves);
 				}
 			}
 		}
