@@ -1529,7 +1529,7 @@ void PositionState::construct_material_FEN(std::string& fen) const
 						fen.push_back('P');
 						break;
 					case KNIGHT_WHITE:
-						fen.push_back('K');
+						fen.push_back('N');
 						break;
 					case BISHOP_WHITE:
 						fen.push_back('B');
@@ -1547,7 +1547,7 @@ void PositionState::construct_material_FEN(std::string& fen) const
 						fen.push_back('p');
 						break;
 					case KNIGHT_BLACK:
-						fen.push_back('k');
+						fen.push_back('n');
 						break;
 					case BISHOP_BLACK:
 						fen.push_back('b');
