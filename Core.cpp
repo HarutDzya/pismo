@@ -31,7 +31,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 			int16_t s = minimax(pos, depth - 1, !white_to_play);
 			pos.undo_move();
 			if (s > score) {
-				s = score;
+				score = s;
 				move = possibleMoves[i];
 			}
 		}
@@ -43,7 +43,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 			int16_t s = minimax(pos, depth - 1, !white_to_play);
 			pos.undo_move();
 			if (s < score) {
-				s = score;
+				score = s;
 				move = possibleMoves[i];
 			}
 		}
