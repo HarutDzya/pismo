@@ -20,7 +20,7 @@ public:
 	 * white_to_play - move turn
 	 */
 	
-	move_info think(PositionState& pos, uint16_t depth, bool white_to_play);
+	move_info think(PositionState& pos, uint16_t depth);
 
 	Core();
     

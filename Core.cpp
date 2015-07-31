@@ -9,10 +9,10 @@
 namespace pismo
 {
 
-move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
+move_info Core::think(PositionState& pos, uint16_t depth)
 {
 	std::vector<move_info> possibleMoves; 
-	white_to_play ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
+	pos.white_to_play() ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
 	       	MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
 
 	if (possibleMoves.empty()) {
@@ -25,10 +25,10 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 		return move;
 	}
 
-	if (white_to_play) {
+	if (pos.white_to_play()) {
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
 			pos.make_move(possibleMoves[i]);
-			int16_t s = minimax(pos, depth - 1, !white_to_play);
+			int16_t s = minimax(pos, depth - 1, pos.white_to_play());
 			pos.undo_move();
 			if (s > score) {
 				score = s;
@@ -40,7 +40,7 @@ move_info Core::think(PositionState& pos, uint16_t depth, bool white_to_play)
 		score = MAX_SCORE;
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
 			pos.make_move(possibleMoves[i]);
-			int16_t s = minimax(pos, depth - 1, !white_to_play);
+			int16_t s = minimax(pos, depth - 1, pos.white_to_play());
 			pos.undo_move();
 			if (s < score) {
 				score = s;
