@@ -33,7 +33,6 @@ MoveGenerator::MoveGenerator() :
 void MoveGenerator::generate_white_moves(const PositionState& pos, std::vector<move_info>& generated_moves)
 {
 	assert(pos.white_to_play());
-	generated_moves.clear();
 	for (unsigned int from = A1; from <= H8; ++from) {
 		switch(pos.get_board()[from / 8][from % 8]) {
 			case PAWN_WHITE:
@@ -67,7 +66,6 @@ void MoveGenerator::generate_white_moves(const PositionState& pos, std::vector<m
 void MoveGenerator::generate_black_moves(const PositionState& pos, std::vector<move_info>& generated_moves)
 {
 	assert(!pos.white_to_play());
-	generated_moves.clear();
 	for (unsigned int from = A1; from <= H8; ++from) {
 		switch(pos.get_board()[from / 8][from % 8]) {
 			case PAWN_BLACK:

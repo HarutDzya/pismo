@@ -776,7 +776,7 @@ void PositionState::undo_lazy_move(const move_info& move, bool is_en_passant_cap
 	if (_white_to_play) {
 		if (is_en_passant_capture) {
 			non_const_this->add_piece_to_bitboards((Square) (move.to - 8), BLACK);
-			(non_const_this->_board)[move.to / 8 + 1][move.to % 8] = PAWN_BLACK;
+			(non_const_this->_board)[move.to / 8 - 1][move.to % 8] = PAWN_BLACK;
 			}
 		else {
 			if(captured_piece != ETY_SQUARE) {
@@ -1592,24 +1592,24 @@ void PositionState::construct_right_to_play_FEN(std::string& fen) const
 
 void PositionState::construct_castling_rights_FEN(std::string& fen) const
 {
-	bool is_any_right = false;
+	bool castling_allowed = false;
 	if (_white_right_castling) {
 		fen.push_back('K');
-		is_any_right = true;
+		castling_allowed = true;
 	}
 	if (_white_left_castling) {
 		fen.push_back('Q');
-		is_any_right = true;
+		castling_allowed = true;
 	}
 	if (_black_right_castling) {
 		fen.push_back('k');
-		is_any_right = true;
+		castling_allowed = true;
 	}
 	if (_black_left_castling) {
 		fen.push_back('q');
-		is_any_right = true;
+		castling_allowed = true;
 	}
-	if (!is_any_right) {
+	if (!castling_allowed) {
 		fen.push_back('-');
 	}
 }
@@ -1632,17 +1632,12 @@ void PositionState::construct_en_passant_file_FEN(std::string& fen) const
 
 void PositionState::construct_move_count_FEN(std::string& fen) const
 {
-	unsigned int halfmove_count = _halfmove_clock;
-	do {
-		fen.push_back('0' + halfmove_count % 10);
-		halfmove_count /= 10;
-	} while (halfmove_count != 0);
+	char count_str[6];
+	itoa(_halfmove_clock, count_str, 10);
+	fen.append(count_str);
 	fen.push_back(' ');
-	unsigned int fullmove_count = _fullmove_count;
-	do {
-		fen.push_back('0' + fullmove_count % 10);
-		fullmove_count /= 10;
-	} while (fullmove_count != 0);
+	itoa(_fullmove_count, count_str, 10);
+	fen.append(count_str);
 }	
 
 
