@@ -3,22 +3,25 @@
 #include <fstream>
 #include <string>
 #include <cctype>
+#include <ctime>
+#include <iostream>
 
 void parse_input_info(const std::string& line, std::string& fen, uint16_t& depth, uint64_t& golden_output);
-void append_failed_info(std::string& failed_results, const std::string& line, uint64_t move_count);
 
 int main(int argc, char* argv[])
 {
-	std::ifstream if_stream;
-	std::ofstream of_stream;
-	of_stream.open(argv[argc - 1], std::ofstream::out);
-	for (int i = 1; i < argc - 1; ++i) {
-		if_stream.open(argv[i], std::ifstream::in);
-		if (if_stream.is_open()) {
+	if (argc != 3) {
+		std::cout << "Program is executed with the following command: " << argv[0] 
+			<< ".exe input_file output_file" << std::endl;
+	}
+	else {
+		std::ifstream if_stream;
+		std::ofstream of_stream;
+		if_stream.open(argv[1], std::ifstream::in);
+		of_stream.open(argv[2], std::ofstream::out);
+		if (if_stream.is_open() && of_stream.is_open()) {
+			of_stream << "Output format: State\tElapsed_time\tActual_result\tExpected_result\tFEN\tDepth" << std::endl;  
 			std::string line;
-			std::string failed_results;
-			unsigned int test_count = 0;
-			unsigned int passed_test_count = 0;
 			while(std::getline(if_stream, line)) {
 				std::string fen;
 				uint16_t depth;
@@ -27,28 +30,34 @@ int main(int argc, char* argv[])
 				pismo::PositionState pos;
 				pos.init_position_FEN(fen);
 				pismo::Perft perft;
+				std::time_t start = time(NULL);
 				uint64_t move_count = perft.analyze(pos, depth);
-				++test_count;
+				std::time_t end = time(NULL);
 				if (move_count == golden_output) {
-					++passed_test_count;
+					of_stream << "PASSED: ";
 				}
 				else {
-					append_failed_info(failed_results, line, move_count);
+					of_stream << "FAILED: ";
 				}
-			}
-			if (of_stream.is_open()) {
-				of_stream << "Output for file " << argv[i] << ":" << std::endl;
-				of_stream << "From " << test_count << " tests " << passed_test_count << " passed." << std::endl;
-				if (!failed_results.empty()) {
-					of_stream << "Failed tests are (format: input actual_result):" << std::endl;
-					of_stream << failed_results;
-				}
+				of_stream << end - start << "sec " << move_count 
+						<< " " << golden_output << " " << fen << " " << depth << std::endl;
 			}	
 		}
-		if_stream.close();
-		if_stream.clear();
+		else {
+			if(!if_stream.is_open()) {
+				std::cout << "Cannot open the file for reading" << argv[1] << std::endl;
+			}
+			if(!of_stream.is_open()) {
+				std::cout << "Cannot open the file for writing" << argv[2] << std::endl;
+			}
+		}
+		if (if_stream.is_open()) {
+			if_stream.close();
+		}
+		if (of_stream.is_open()) {
+			of_stream.close();
+		}
 	}
-	of_stream.close();
 }
 
 void parse_input_info(const std::string& line, std::string& fen, uint16_t& depth, uint64_t& golden_output)
@@ -88,24 +97,3 @@ void parse_input_info(const std::string& line, std::string& fen, uint16_t& depth
 
 	fen = line.substr(0, char_count);
 }  
-
-void append_failed_info(std::string& failed_results, const std::string& line, uint64_t move_count)
-{
-	unsigned int line_end = line.size() - 1;
-	while (!std::isdigit(line[line_end])) {
-	       --line_end;
-	}	       
-	failed_results.append(line.substr(0, line_end + 1));
-	failed_results.push_back(' ');
-	std::string mc_rev;
-	do {
-		mc_rev.push_back('0' + move_count % 10);
-		move_count /= 10;
-	} while (move_count != 0);
-	
-	for(int i = mc_rev.size() - 1; i >=0; --i) {
-		failed_results.push_back(mc_rev[i]);
-	}
-	failed_results.push_back('\n');
-}
-	
