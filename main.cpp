@@ -44,8 +44,8 @@ int main()
 	//pos.init_position(pcs);
 	pos.init_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	pos.print_board();
-  std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
-                   " \n\tt - for engine to think (and make a move) \n\tq - to stop the game)" << std::endl;
+	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
+		"\n\tt - for engine to think (and make a move) \n\tq - to stop the game)" << std::endl;
 	std::string choice;
 
  	Core* p = new Core();
@@ -55,7 +55,6 @@ int main()
 			std::string sqfrom;
 			std::string sqto;
 			std::string prom;
-			Color turn_to_play = WHITE;
 			std::cout << "Please enter the move" << std::endl;
 			std::cin >> sqfrom >> sqto;
 			std::getline(std::cin, prom);
@@ -79,18 +78,12 @@ int main()
 			if (pos.move_is_legal(move)) {
 				pos.make_move(move);
 				pos.print_board();
-				if (turn_to_play == WHITE) {
-					turn_to_play = BLACK;
-				}
-				else {
-					turn_to_play = WHITE;
-				}
 			}
 			else {
 				std::cout << "Move is illegal" << std::endl;
 				//pos.print_possible_moves(move.from);
 				std::vector<move_info> possibleMoves;
-				if (turn_to_play == WHITE) {
+				if (pos.white_to_play()) {
 					MoveGenerator::instance()->generate_white_moves(pos, possibleMoves);
 					print_generated_moves(possibleMoves);
 				}
@@ -103,14 +96,15 @@ int main()
 		else if (choice == "u") {
 			pos.undo_move();
 			pos.print_board();
-		} else if (choice == "t") {
-      move_info mv = p->think(pos, 5);
-      pos.make_move(mv);
-      pos.print_board();
-      //TODO: print also move
-    }
-    std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
-                   " \n\t t - for engine to think (and make a move) \n\tq - to stop the game" << std::endl;
+		} 
+		else if (choice == "t") {
+			move_info mv = p->think(pos, 5);
+			pos.make_move(mv);
+			pos.print_board();
+			//TODO: print also move
+		}
+		std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
+			"\n\tt - for engine to think (and make a move) \n\tq - to stop the game" << std::endl;
 	}
 
 	std::cout << pos.get_state_FEN() << std::endl;	

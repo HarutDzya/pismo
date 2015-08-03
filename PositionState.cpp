@@ -1632,17 +1632,25 @@ void PositionState::construct_en_passant_file_FEN(std::string& fen) const
 
 void PositionState::construct_move_count_FEN(std::string& fen) const
 {
- unsigned int halfmove_count = _halfmove_clock;
- do {
-   fen.push_back('0' + halfmove_count % 10);
-   halfmove_count /= 10;
- } while (halfmove_count != 0);
- fen.push_back(' ');
- unsigned int fullmove_count = _fullmove_count;
- do {
-   fen.push_back('0' + fullmove_count % 10);
-   fullmove_count /= 10;
- } while (fullmove_count != 0);
+	unsigned int halfmove_count = _halfmove_clock;
+	std::string hc_rev;
+	do {
+		hc_rev.push_back('0' + halfmove_count % 10);
+		halfmove_count /= 10;
+	} while (halfmove_count != 0);
+	for (int i = hc_rev.size() - 1; i >= 0; --i) {
+		fen.push_back(hc_rev[i]);
+	}
+	fen.push_back(' ');
+	unsigned int fullmove_count = _fullmove_count;
+	std::string fc_rev;
+	do {
+		fc_rev.push_back('0' + fullmove_count % 10);
+		fullmove_count /= 10;
+	} while (fullmove_count != 0);
+	for (int i = fc_rev.size() - 1; i >=0; --i) {
+		fen.push_back(fc_rev[i]);
+	}
 }
 
 
