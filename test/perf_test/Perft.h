@@ -22,9 +22,6 @@ public:
 
 private:
 
-	void count_moves(PositionState& pos, uint16_t depth, uint64_t& move_count) const;
-
-
 	Perft(const Perft&); //non-copy constructable
 	Perft& operator=(const Perft&); //non-assignable
 
