@@ -52,7 +52,7 @@ int main()
 	pos.init_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	pos.print_board();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
-		"\n\tt - for engine to think (and make a move) \n\tq - to stop the game)" << std::endl;
+		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game)" << std::endl;
 	std::string choice;
 
  	Core* p = new Core();
@@ -108,10 +108,13 @@ int main()
 			move_info mv = p->think(pos, 5);
 			pos.make_move(mv);
 			pos.print_board();
-			std::cout << "Move: " <<  square_to_notation[mv.from] << "->" << square_to_notation[mv.to] << std::endl;
+			std::cout << "Move: " <<  square_to_notation[mv.from] << "->" << square_to_notation[mv.to] << "\n" << std::endl;
 		}
+    else if (choice == "f") {
+      std::cout << pos.get_state_FEN() << std::endl;
+    }
 		std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
-			"\n\tt - for engine to think (and make a move) \n\tq - to stop the game" << std::endl;
+			"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
 	}
 
 	std::cout << pos.get_state_FEN() << std::endl;	
