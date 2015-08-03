@@ -16,6 +16,13 @@ int main()
 			board_rep[std::string(1, ('A' + j)) + std::string(1, ('1' + i))] = (Square)(i * 8 + j);
 		}
 	} 
+
+	std::map<Square, std::string> square_to_notation;
+	for (int i = 0; i < 8; ++i) {
+		for(int j = 0; j < 8; ++j) {
+			square_to_notation[(Square)(i * 8 + j)] = std::string(1, ('A' + j)) + std::string(1, ('1' + i));
+		}
+	} 
 	
 	PositionState pos;
 	/*std::vector<std::pair<Square, Piece> > pcs;
@@ -45,7 +52,7 @@ int main()
 	pos.init_position_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	pos.print_board();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
-		"\n\tt - for engine to think (and make a move) \n\tq - to stop the game)" << std::endl;
+		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game)" << std::endl;
 	std::string choice;
 
  	Core* p = new Core();
@@ -101,10 +108,13 @@ int main()
 			move_info mv = p->think(pos, 5);
 			pos.make_move(mv);
 			pos.print_board();
-			//TODO: print also move
+			std::cout << "Move: " <<  square_to_notation[mv.from] << "->" << square_to_notation[mv.to] << "\n" << std::endl;
 		}
+    else if (choice == "f") {
+      std::cout << pos.get_state_FEN() << std::endl;
+    }
 		std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
-			"\n\tt - for engine to think (and make a move) \n\tq - to stop the game" << std::endl;
+			"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
 	}
 
 	std::cout << pos.get_state_FEN() << std::endl;	
