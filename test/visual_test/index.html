@@ -41,8 +41,8 @@
 <script src="js/chessboard-0.3.0.js"></script>
 <script>
 
-var width = 1000;
-var height = 180;
+var width = 1300;
+var height = 480000;
 //var height = 1800;
 
 var tree = d3.layout.tree()
@@ -57,7 +57,7 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(100,0)");
 
-d3.json("search.json", tmp); 
+d3.json("my.json", tmp); 
 //d3.json("flare.json", tmp); 
 
 function tmp(error, json)
@@ -90,7 +90,7 @@ function tmp(error, json)
       .attr("dx", function(d) { return d.children ? -8 : 8; })
       .attr("dy", 3)
       .attr("text-anchor", function(d) { return d.children ? "end" : "start"; })
-      .text(function(d) { return d.name; });
+      .text(function(d) { return d.score; });
 
 
     d3.selectAll(".node").on("mouseenter", function (d) {
