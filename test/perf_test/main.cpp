@@ -45,10 +45,10 @@ int main(int argc, char* argv[])
 		}
 		else {
 			if(!if_stream.is_open()) {
-				std::cout << "Cannot open the file for reading" << argv[1] << std::endl;
+				std::cout << "Cannot open the " << argv[1] << " file for reading" << std::endl;
 			}
 			if(!of_stream.is_open()) {
-				std::cout << "Cannot open the file for writing" << argv[2] << std::endl;
+				std::cout << "Cannot open the " << argv[2] << " file for writing" << std::endl;
 			}
 		}
 		if (if_stream.is_open()) {

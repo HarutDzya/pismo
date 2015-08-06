@@ -35,7 +35,7 @@ const Bitboard KNIGHT_MOVES_H3 = 0x0000004020002040; // Bitboard for possible mo
 
 const Bitboard KING_MOVES_B2 = 0x0000000000070507; // Bitboard for possible moves of king at Square B2
 const Bitboard KING_MOVES_A2 = 0x0000000000030203; // Bitboard for possible moves of king at Square A2
-const Bitboard KING_MOVES_H2 = 0x0000000000C080C0; // Bitboard for possible moves of king at Square H2 
+const Bitboard KING_MOVES_H2 = 0x0000000000C040C0; // Bitboard for possible moves of king at Square H2 
 
 const Bitrank OCCUPATION_FROM_LSB[] =
 	{0x00, 0x01, 0x03, 0x07, 0x0F, 

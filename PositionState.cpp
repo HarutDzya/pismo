@@ -418,15 +418,10 @@ bool PositionState::move_is_legal(const move_info& move) const
 			}
 	
 			if (result) {
-				if(pfrom == KING_WHITE) {
-					result = !(_bitboard_impl->square_to_bitboard(move.to) & squares_under_attack(WHITE));
-				}
-				else {
-					Piece captured_piece;
-					make_lazy_move(move, is_en_passant_capture, captured_piece);
-					result = !(_bitboard_impl->square_to_bitboard(_white_king_position) & squares_under_attack(WHITE));
-					undo_lazy_move(move, is_en_passant_capture, captured_piece);
-				}
+				Piece captured_piece;
+				make_lazy_move(move, is_en_passant_capture, captured_piece);
+				result = !(_bitboard_impl->square_to_bitboard(_white_king_position) & squares_under_attack(WHITE));
+				undo_lazy_move(move, is_en_passant_capture, captured_piece);
 			}
 		}
 	}
@@ -465,15 +460,10 @@ bool PositionState::move_is_legal(const move_info& move) const
 			}
 		
 			if (result) {
-				if(pfrom == KING_BLACK) {
-					result = !(_bitboard_impl->square_to_bitboard(move.to) & squares_under_attack(BLACK));
-					}
-				else {
-					Piece captured_piece;
-					make_lazy_move(move, is_en_passant_capture, captured_piece);
-					result = !(_bitboard_impl->square_to_bitboard(_black_king_position) & squares_under_attack(BLACK));
-					undo_lazy_move(move, is_en_passant_capture, captured_piece);
-					}
+				Piece captured_piece;
+				make_lazy_move(move, is_en_passant_capture, captured_piece);
+				result = !(_bitboard_impl->square_to_bitboard(_black_king_position) & squares_under_attack(BLACK));
+				undo_lazy_move(move, is_en_passant_capture, captured_piece);
 			}
 		}
 	}
@@ -765,8 +755,16 @@ void PositionState::make_lazy_move(const move_info& move, bool is_en_passant_cap
 		non_const_this->remove_piece_from_bitboards(move.from, BLACK);
 		non_const_this->add_piece_to_bitboards(move.to, BLACK);
 	}
-	(non_const_this->_board)[move.to / 8][move.to % 8] = _board[move.from / 8][move.from % 8];	
+	Piece pfrom = _board[move.from / 8][move.from % 8]; 
+	(non_const_this->_board)[move.to / 8][move.to % 8] = pfrom;	
 	(non_const_this->_board)[move.from / 8][move.from % 8] = ETY_SQUARE;
+	if (pfrom == KING_WHITE) {
+		non_const_this->_white_king_position = move.to;
+	}
+	else if (pfrom == KING_BLACK) {
+		non_const_this->_black_king_position = move.to;
+	}
+
 }
 
 // Reverses the lazy move done by make_lazy_move
@@ -799,8 +797,15 @@ void PositionState::undo_lazy_move(const move_info& move, bool is_en_passant_cap
 		non_const_this->add_piece_to_bitboards(move.from, BLACK);
 		non_const_this->remove_piece_from_bitboards(move.to, BLACK);
 	}
-	(non_const_this->_board)[move.from / 8][move.from % 8] = _board[move.to / 8][move.to % 8];
+	Piece pto = _board[move.to / 8][move.to % 8];
+	(non_const_this->_board)[move.from / 8][move.from % 8] = pto;
 	(non_const_this->_board)[move.to / 8][move.to % 8] = captured_piece;
+	if (pto == KING_WHITE) {
+		non_const_this->_white_king_position = move.from;
+	}
+	else if (pto == KING_BLACK) {
+		non_const_this->_black_king_position = move.from;
+	}
 }
 
 void PositionState::make_move(const move_info& move)
@@ -1428,7 +1433,7 @@ void PositionState::undo_promotion_move(const undo_move_info& move)
 	}
 	Piece promoted = _board[move.to / 8][move.to % 8];
 	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
-	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
+	_board[move.to / 8][move.to % 8] = move.captured_piece;
 	_board[move.from / 8][move.from % 8] = move.moved_piece;
 	--_piece_count[promoted];
 	++_piece_count[move.moved_piece];

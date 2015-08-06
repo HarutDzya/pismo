@@ -23,6 +23,7 @@ int main()
 			square_to_notation[(Square)(i * 8 + j)] = std::string(1, ('A' + j)) + std::string(1, ('1' + i));
 		}
 	} 
+
 	
 	PositionState pos;
 	/*std::vector<std::pair<Square, Piece> > pcs;
@@ -65,6 +66,7 @@ int main()
 			std::cout << "Please enter the move" << std::endl;
 			std::cin >> sqfrom >> sqto;
 			std::getline(std::cin, prom);
+			prom.erase(0, 1);
 			move_info move;
 			if(prom == "QW") {
 				move.from = board_rep[sqfrom];
@@ -171,8 +173,10 @@ void print_generated_moves(const std::vector<pismo::move_info>& generated_moves)
 				break;
 			case pismo::ROOK_BLACK:
 				std::cout << "RB" << std::endl;
+				break;
 			case pismo::QUEEN_BLACK:
 				std::cout << "QB" << std::endl;
+				break;
 			default:
 				std::cout << "XP" << std::endl;
 		}
