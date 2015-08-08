@@ -193,6 +193,10 @@ void MoveGenerator::generate_rank_moves(Square from, const PositionState& pos, s
 			if (move_count + 1 < left_rank_moves.size()) {
 				Square next_to = left_rank_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -208,6 +212,10 @@ void MoveGenerator::generate_rank_moves(Square from, const PositionState& pos, s
 			if (move_count + 1 < right_rank_moves.size()) {
 				Square next_to = right_rank_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -230,6 +238,10 @@ void MoveGenerator::generate_file_moves(Square from, const PositionState& pos, s
 			if (move_count + 1 < up_file_moves.size()) {
 				Square next_to = up_file_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -245,6 +257,10 @@ void MoveGenerator::generate_file_moves(Square from, const PositionState& pos, s
 			if (move_count + 1 < down_file_moves.size()) {
 				Square next_to = down_file_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -267,6 +283,10 @@ void MoveGenerator::generate_diag_a1h8_moves(Square from, const PositionState& p
 			if (move_count + 1 < up_diag_a1h8_moves.size()) {
 				Square next_to = up_diag_a1h8_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -282,6 +302,10 @@ void MoveGenerator::generate_diag_a1h8_moves(Square from, const PositionState& p
 			if (move_count + 1 < down_diag_a1h8_moves.size()) {
 				Square next_to = down_diag_a1h8_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -304,6 +328,10 @@ void MoveGenerator::generate_diag_a8h1_moves(Square from, const PositionState& p
 			if (move_count + 1 < up_diag_a8h1_moves.size()) {
 				Square next_to = up_diag_a8h1_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}
@@ -319,6 +347,10 @@ void MoveGenerator::generate_diag_a8h1_moves(Square from, const PositionState& p
 			if (move_count + 1 < down_diag_a8h1_moves.size()) {
 				Square next_to = down_diag_a8h1_moves[move_count + 1];
 				if (pos.get_board()[next_to / 8][next_to % 8] != ETY_SQUARE) {
+					current_move.to = next_to;
+					if (pos.move_is_legal(current_move)) {
+						generated_moves.push_back(current_move);
+					}
 					break;
 				}
 			}

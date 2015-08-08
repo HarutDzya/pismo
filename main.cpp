@@ -50,7 +50,7 @@ int main()
 	*/
 
 	//pos.init_position(pcs);
-	pos.init_position_FEN("r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1");
+	pos.init_position_FEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
 	pos.print_board();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
 		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game)" << std::endl;
