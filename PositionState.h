@@ -113,7 +113,7 @@ private:
 	void make_en_passant_capture(const move_info& move);
 	void make_promotion_move(const move_info& move);
 
-	void update_castling_rights();
+	void update_castling_rights(const move_info& move);
 
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);

@@ -849,7 +849,7 @@ void PositionState::make_move(const move_info& move)
 		undo_move->move_type = NORMAL_MOVE;
 	}
 
-	update_castling_rights();
+	update_castling_rights(move);
 	update_game_status();
 	// TODO : check if opponents king is under attack and update the variable accordingly
 	
@@ -1084,53 +1084,67 @@ void PositionState::make_promotion_move(const move_info& move)
 
 // Updates castling variables by checking whether king and rooks 
 // are their designated positions after the move
-void PositionState::update_castling_rights()
+void PositionState::update_castling_rights(const move_info& move)
 {
 	if (_white_to_play) {
-		if (_white_left_castling || _white_right_castling) {
-			if (_board[E1 / 8][E1 % 8] != KING_WHITE){
-				if (_white_left_castling) {
-					_white_left_castling = false;
-					_zob_key ^= _zob_key_impl->get_white_left_castling_key();
-				}
-				if (_white_right_castling) {
-					_white_right_castling = false;
-					_zob_key ^= _zob_key_impl->get_white_right_castling_key();
-				}
+		if (move.from == E1) {
+			if (_white_left_castling) {
+				_white_left_castling = false;
+				_zob_key ^= _zob_key_impl->get_white_left_castling_key();
 			}
-			else {
-				if (_white_left_castling && _board[A1 / 8][A1 % 8] != ROOK_WHITE) {
-					_white_left_castling = false;
-					_zob_key ^= _zob_key_impl->get_white_left_castling_key();
-				}
-				if (_white_right_castling && _board[H1 / 8][H1 % 8] != ROOK_WHITE) {
-					_white_right_castling = false;
-					_zob_key ^= _zob_key_impl->get_white_right_castling_key();
-				}
+			if (_white_right_castling) {
+				_white_right_castling = false;
+				_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+			}
+		}
+		else {
+			if (_white_left_castling && move.from == A1) {
+				_white_left_castling = false;
+				_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+			}
+			else if (_white_right_castling && move.from == H1) {
+				_white_right_castling = false;
+				_zob_key ^= _zob_key_impl->get_white_right_castling_key();
+			}
+			
+			if (_black_left_castling && move.to == A8) {
+				_black_left_castling = false;
+				_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+			}
+			else if (_black_right_castling && move.to == H8) {
+				_black_right_castling = false;
+				_zob_key ^= _zob_key_impl->get_black_right_castling_key();
 			}
 		}
 	}
 	else {
-		if (_black_left_castling || _black_right_castling) {
-			if (_board[E8 / 8][E8 % 8] != KING_BLACK){
-				if(_black_left_castling) {
-					_black_left_castling = false;
-					_zob_key ^= _zob_key_impl->get_black_left_castling_key();
-				}
-				if(_black_right_castling) {
-					_black_right_castling = false;
-					_zob_key ^= _zob_key_impl->get_black_right_castling_key();
-				}
+		if (move.from == E8) {
+			if (_black_left_castling) {
+				_black_left_castling = false;
+				_zob_key ^= _zob_key_impl->get_black_left_castling_key();
 			}
-			else {
-				if (_black_left_castling && _board[A8 / 8][A8 % 8] != ROOK_BLACK) {
-					_black_left_castling = false;
-					_zob_key ^= _zob_key_impl->get_black_left_castling_key();
-				}
-				if (_black_right_castling && _board[H8 / 8][H8 % 8] != ROOK_BLACK) {
-					_black_right_castling = false;
-					_zob_key ^= _zob_key_impl->get_black_right_castling_key();
-				}
+			if (_black_right_castling) {
+				_black_right_castling = false;
+				_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+			}
+		}
+		else {
+			if (_black_left_castling && move.from == A8) {
+				_black_left_castling = false;
+				_zob_key ^= _zob_key_impl->get_black_left_castling_key();
+			}
+			else if (_black_right_castling && move.from == H8) {
+				_black_right_castling = false;
+				_zob_key ^= _zob_key_impl->get_black_right_castling_key();
+			}
+			
+			if (_white_left_castling && move.to == A1) {
+				_white_left_castling = false;
+				_zob_key ^= _zob_key_impl->get_white_left_castling_key();
+			}
+			else if (_white_right_castling && move.to == H1) {
+				_white_right_castling = false;
+				_zob_key ^= _zob_key_impl->get_white_right_castling_key();
 			}
 		}
 	}
