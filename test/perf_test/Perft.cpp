@@ -1,7 +1,7 @@
 #include "Perft.h"
-#include <vector>
 #include "PositionState.h"
 #include "MoveGenerator.h"
+#include "MemPool.h"
 
 namespace pismo
 {
@@ -12,7 +12,8 @@ uint64_t Perft::analyze(PositionState& pos, uint16_t depth) const
 		return 1;
 	}
 
-	std::vector<move_info> possibleMoves;
+	moves_array& possibleMoves = MemPool::instance()->get_moves_array(depth);
+	possibleMoves.clear();
 	if (pos.white_to_play()) {
 		MoveGenerator::instance()->generate_white_moves(pos, possibleMoves);
 	}

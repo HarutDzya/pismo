@@ -1,5 +1,6 @@
 #include "PositionState.h"
 #include "Perft.h"
+#include "MemPool.h"
 #include <fstream>
 #include <string>
 #include <cctype>
@@ -22,6 +23,7 @@ int main(int argc, char* argv[])
 		if (if_stream.is_open() && of_stream.is_open()) {
 			of_stream << "Output format: State\tElapsed_time\tActual_result\tExpected_result\tFEN\tDepth" << std::endl;  
 			std::string line;
+			pismo::MemPool::instance()->init_moves_array();
 			while(std::getline(if_stream, line)) {
 				std::string fen;
 				uint16_t depth;

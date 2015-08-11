@@ -1,17 +1,17 @@
 #include "Core.h"
 #include "MoveGenerator.h"
+#include "MemPool.h"
 #include "PositionState.h"
 #include "PositionEvaluation.h"
 #include "TranspositionTable.h"
-#include "utils.h"
-#include <vector>
 
 namespace pismo
 {
 
 move_info Core::think(PositionState& pos, uint16_t depth)
 {
-	std::vector<move_info> possibleMoves; 
+	moves_array& possibleMoves = MemPool::instance()->get_moves_array(depth);
+	possibleMoves.clear();	
 	pos.white_to_play() ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
 	       	MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
 
@@ -71,7 +71,8 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
 		return val;
 	}
 
-	std::vector<move_info> possibleMoves;
+	moves_array& possibleMoves = MemPool::instance()->get_moves_array(depth);
+	possibleMoves.clear();
 	white_to_play ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
 	       MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
 	if (possibleMoves.empty()) {

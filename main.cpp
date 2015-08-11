@@ -3,9 +3,10 @@
 #include "PositionState.h"
 #include "MoveGenerator.h"
 #include "Core.h"
+#include "MemPool.h"
 
 void print_bitboard(const pismo::Bitboard& board);
-void print_generated_moves(const std::vector<pismo::move_info>& generated_moves);
+void print_generated_moves(const pismo::moves_array& generated_moves);
 
 int main()
 {
@@ -24,7 +25,7 @@ int main()
 		}
 	} 
 
-	
+	MemPool::instance()->init_moves_array();
 	PositionState pos;
 	/*std::vector<std::pair<Square, Piece> > pcs;
 	for (int i = 0; i < 8; ++i) {
@@ -91,7 +92,7 @@ int main()
 			else {
 				std::cout << "Move is illegal" << std::endl;
 				//pos.print_possible_moves(move.from);
-				std::vector<move_info> possibleMoves;
+				moves_array possibleMoves;
 				if (pos.white_to_play()) {
 					MoveGenerator::instance()->generate_white_moves(pos, possibleMoves);
 					print_generated_moves(possibleMoves);
@@ -142,7 +143,7 @@ void print_bitboard(const pismo::Bitboard& board)
 	}
 }
 
-void print_generated_moves(const std::vector<pismo::move_info>& generated_moves)
+void print_generated_moves(const pismo::moves_array& generated_moves)
 {
 	std::cout << "Possible moves are the following" << std::endl; 
 	for (std::size_t move_count = 0; move_count < generated_moves.size(); ++move_count) {

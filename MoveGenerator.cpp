@@ -1,6 +1,7 @@
 #include "MoveGenerator.h"
 #include "PositionState.h"
 #include "PossibleMoves.h"
+#include "MemPool.h"
 
 #include <assert.h>
 
@@ -30,7 +31,7 @@ MoveGenerator::MoveGenerator() :
 
 }
 
-void MoveGenerator::generate_white_moves(const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_white_moves(const PositionState& pos, moves_array& generated_moves)
 {
 	assert(pos.white_to_play());
 	for (unsigned int from = A1; from <= H8; ++from) {
@@ -63,7 +64,7 @@ void MoveGenerator::generate_white_moves(const PositionState& pos, std::vector<m
 	}
 }
 
-void MoveGenerator::generate_black_moves(const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_black_moves(const PositionState& pos, moves_array& generated_moves)
 {
 	assert(!pos.white_to_play());
 	for (unsigned int from = A1; from <= H8; ++from) {
@@ -98,7 +99,7 @@ void MoveGenerator::generate_black_moves(const PositionState& pos, std::vector<m
 
 // Generates all legal pawn moves for color clr from square from
 // and adds these moves to generated_moves data member
-void MoveGenerator::generate_pawn_moves(Square from, Color clr, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_pawn_moves(Square from, Color clr, const PositionState& pos, moves_array& generated_moves)
 {
 	if (clr == WHITE) {
 		const std::vector<Square>& white_pawn_moves =  _possible_moves->possible_white_pawn_moves(from);
@@ -154,7 +155,7 @@ void MoveGenerator::generate_pawn_moves(Square from, Color clr, const PositionSt
 
 // Generates all legal knight moves from square from
 // and adds these moves to generated_moves data member
-void MoveGenerator::generate_knight_moves(Square from, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_knight_moves(Square from, const PositionState& pos, moves_array& generated_moves)
 {
 	const std::vector<Square>& knight_moves = _possible_moves->possible_knight_moves(from);
 	for (std::size_t move_count  = 0; move_count < knight_moves.size(); ++move_count) {
@@ -167,7 +168,7 @@ void MoveGenerator::generate_knight_moves(Square from, const PositionState& pos,
 
 // Generates all legal king moves from square from
 // and adds these moves to generated_moves data member
-void MoveGenerator::generate_king_moves(Square from, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_king_moves(Square from, const PositionState& pos, moves_array& generated_moves)
 {
 	const std::vector<Square>& king_moves = _possible_moves->possible_king_moves(from);
 	for (std::size_t move_count  = 0; move_count < king_moves.size(); ++move_count) {
@@ -181,7 +182,7 @@ void MoveGenerator::generate_king_moves(Square from, const PositionState& pos, s
 // Generates all legal rank moves from square from
 // and adds these moves to generated_moves data member
 // This function should be used for rook and queen
-void MoveGenerator::generate_rank_moves(Square from, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_rank_moves(Square from, const PositionState& pos, moves_array& generated_moves)
 {
 	const std::vector<Square>& left_rank_moves = _possible_moves->possible_left_rank_moves(from);
 	for(std::size_t move_count = 0; move_count < left_rank_moves.size(); ++move_count) {
@@ -208,7 +209,7 @@ void MoveGenerator::generate_rank_moves(Square from, const PositionState& pos, s
 // Generates all legal file moves from square from
 // and adds these moves to generated_moves data member
 // This function should be used for rook and queen
-void MoveGenerator::generate_file_moves(Square from, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_file_moves(Square from, const PositionState& pos, moves_array& generated_moves)
 {
 	const std::vector<Square>& up_file_moves = _possible_moves->possible_up_file_moves(from);
 	for(std::size_t move_count = 0; move_count < up_file_moves.size(); ++move_count) {
@@ -235,7 +236,7 @@ void MoveGenerator::generate_file_moves(Square from, const PositionState& pos, s
 // Generates all legal A1H8 diagonal moves from square from
 // and adds these moves to generated_moves data member
 // This function should be used for bishop and queen
-void MoveGenerator::generate_diag_a1h8_moves(Square from, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_diag_a1h8_moves(Square from, const PositionState& pos, moves_array& generated_moves)
 {
 	const std::vector<Square>& up_diag_a1h8_moves = _possible_moves->possible_up_diag_a1h8_moves(from);
 	for(std::size_t move_count = 0; move_count < up_diag_a1h8_moves.size(); ++move_count) {
@@ -262,7 +263,7 @@ void MoveGenerator::generate_diag_a1h8_moves(Square from, const PositionState& p
 // Generates all legal A8H1 diagonal moves from square from
 // and adds these moves to generated_moves data member
 // This function should be used for bishop and queen
-void MoveGenerator::generate_diag_a8h1_moves(Square from, const PositionState& pos, std::vector<move_info>& generated_moves)
+void MoveGenerator::generate_diag_a8h1_moves(Square from, const PositionState& pos, moves_array& generated_moves)
 {
 	const std::vector<Square>& up_diag_a8h1_moves = _possible_moves->possible_up_diag_a8h1_moves(from);
 	for(std::size_t move_count = 0; move_count < up_diag_a8h1_moves.size(); ++move_count) {
