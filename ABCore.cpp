@@ -97,6 +97,11 @@ int16_t ABCore::alpha_beta_iterative(PositionState& pos, uint16_t depth, int16_t
 
 int16_t ABCore::alpha_beta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool white_to_play)
 {
+	eval_info eval;
+	if (_trans_table->contains(pos, eval) && eval.depth >= depth) {
+		return eval.pos_value;
+	}
+
 	if (depth == 0) {
 		return quiescence_search(pos, depth, alpha, beta, white_to_play);
 	}
@@ -144,6 +149,13 @@ int16_t ABCore::alpha_beta(PositionState& pos, uint16_t depth, int16_t alpha, in
 		}
 	}
 	
+	if (score > alpha && score < beta) {
+		eval.pos_value = score;
+		eval.zob_key = pos.get_zob_key();
+		eval.depth = depth;
+		_trans_table->force_push(eval);
+	}
+
 	return score;
 }
 
