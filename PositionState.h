@@ -118,6 +118,8 @@ private:
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
+	void update_direct_check_array();
+
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();
 
@@ -180,6 +182,10 @@ private:
 	// Each memeber of the array shows the number of appropriate 
 	// piece available 
 	unsigned int _piece_count[PIECE_NB];
+
+	// Bitboard for each piece where set bits show the
+	// positions from which it can attack the king	
+	Bitboard _direct_check[PIECE_NB];
 
 	const BitboardImpl* _bitboard_impl;
 	const ZobKeyImpl* _zob_key_impl;

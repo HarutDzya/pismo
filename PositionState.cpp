@@ -808,6 +808,36 @@ void PositionState::undo_lazy_move(const move_info& move, bool is_en_passant_cap
 	}
 }
 
+void PositionState::update_direct_check_array()
+{
+	if (_white_to_play) {
+		_direct_check[KING_WHITE] = 0;
+		_direct_check[KNIGHT_WHITE] = _bitboard_impl->get_legal_knight_moves(_black_king_position);
+		_direct_check[PAWN_WHITE] = _bitboard_impl->get_pawn_white_checking_pos(_black_king_position);
+		Bitboard rank_attack = _bitboard_impl->get_legal_rank_moves(_black_king_position, _white_pieces | _black_pieces);
+		Bitboard file_attack = _bitboard_impl->bitboard_transpose_to_bitboard(_bitboard_impl->get_legal_file_moves(_black_king_position, _white_pieces_transpose | _black_pieces_transpose));
+		Bitboard diag_a1h8_attack = _bitboard_impl->bitboard_diag_a1h8_to_bitboard(_bitboard_impl->get_legal_diag_a1h8_moves(_black_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8));
+		Bitboard diag_a8h1_attack = _bitboard_impl->bitboard_diag_a8h1_to_bitboard(_bitboard_impl->get_legal_diag_a8h1_moves(_black_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1));
+		_direct_check[ROOK_WHITE] = rank_attack | file_attack;
+		_direct_check[BISHOP_WHITE] = diag_a1h8_attack | diag_a8h1_attack;
+		_direct_check[QUEEN_WHITE] = rank_attack | file_attack | diag_a1h8_attack | diag_a8h1_attack;
+	}
+	else {
+		_direct_check[KING_BLACK] = 0;
+		_direct_check[KNIGHT_BLACK] = _bitboard_impl->get_legal_knight_moves(_white_king_position);
+		_direct_check[PAWN_BLACK] = _bitboard_impl->get_pawn_black_checking_pos(_white_king_position);
+		Bitboard rank_attack = _bitboard_impl->get_legal_rank_moves(_white_king_position, _white_pieces | _black_pieces);
+		Bitboard file_attack = _bitboard_impl->bitboard_transpose_to_bitboard(_bitboard_impl->get_legal_file_moves(_white_king_position, _white_pieces_transpose | _black_pieces_transpose));
+		Bitboard diag_a1h8_attack = _bitboard_impl->bitboard_diag_a1h8_to_bitboard(_bitboard_impl->get_legal_diag_a1h8_moves(_white_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8));
+		Bitboard diag_a8h1_attack = _bitboard_impl->bitboard_diag_a8h1_to_bitboard(_bitboard_impl->get_legal_diag_a8h1_moves(_white_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1));
+		_direct_check[ROOK_WHITE] = rank_attack | file_attack;
+		_direct_check[BISHOP_WHITE] = diag_a1h8_attack | diag_a8h1_attack;
+		_direct_check[QUEEN_WHITE] = rank_attack | file_attack | diag_a1h8_attack | diag_a8h1_attack;
+	}
+}
+
+		   
+
 void PositionState::make_move(const move_info& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];

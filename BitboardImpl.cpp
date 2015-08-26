@@ -97,6 +97,31 @@ Bitboard BitboardImpl::get_legal_pawn_black_attacking_moves(Square from) const
 	return _attacking_pos_board_pawn_black[from - A2];
 }
 
+Bitboard BitboardImpl::get_pawn_white_checking_pos(Square king_pos) const
+{
+	if (king_pos >= A4) {
+		return _attacking_pos_board_pawn_white[king_pos - A4];
+	}
+	else if (king_pos >= A3) {
+		return _attacking_pos_board_pawn_black[king_pos - A2];
+	}
+	else {
+		return 0;
+	}
+}
+
+Bitboard BitboardImpl::get_pawn_black_checking_pos(Square king_pos) const
+{
+	if (king_pos <= H5) {
+		return _attacking_pos_board_pawn_black[king_pos + A2];
+	}
+	else if (king_pos <= H6) {
+		return _attacking_pos_board_pawn_white[king_pos - A2];
+	}
+	else {
+		return 0;
+	}
+}
 // Returns the converted normal bitboard from transpose bitboard
 Bitboard BitboardImpl::bitboard_transpose_to_bitboard(const Bitboard& board_transpose) const
 {

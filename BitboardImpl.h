@@ -61,6 +61,9 @@ public:
 	Bitboard get_legal_pawn_white_attacking_moves(Square from) const;
 	Bitboard get_legal_pawn_black_attacking_moves(Square from) const;
 
+	Bitboard get_pawn_white_checking_pos(Square king_pos) const;
+	Bitboard get_pawn_black_checking_pos(Square king_pos) const;
+
 	Bitboard bitboard_transpose_to_bitboard(const Bitboard& board_transpose) const;
 	Bitboard bitboard_diag_a1h8_to_bitboard(const Bitboard& board_diag_a1h8) const;
 	Bitboard bitboard_diag_a8h1_to_bitboard(const Bitboard& board_diag_a8h1) const;
@@ -85,7 +88,7 @@ private:
 	void init_move_pos_board_king();
 	void init_attacking_pos_board_pawn_white();
 	void init_attacking_pos_board_pawn_black();
-	
+
 	Bitrank move_pos_rank(unsigned int position, Bitrank rank_occup) const;
 	int find_lsb_set(Bitrank rank) const;
 	int find_msb_set(Bitrank rank) const;
@@ -110,8 +113,6 @@ private:
 	Bitboard _move_pos_board_king[NUMBER_OF_SQUARES];
 	Bitboard _attacking_pos_board_pawn_white[NUMBER_OF_SQUARES - 16];
 	Bitboard _attacking_pos_board_pawn_black[NUMBER_OF_SQUARES - 16];
-
-
 };
 }
 

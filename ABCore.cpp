@@ -97,13 +97,13 @@ int16_t ABCore::alpha_beta_iterative(PositionState& pos, uint16_t depth, int16_t
 
 int16_t ABCore::alpha_beta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool white_to_play)
 {
+	if (depth == 0) {
+		return quiescence_search(pos, depth, alpha, beta, white_to_play);
+	}
+
 	eval_info eval;
 	if (_trans_table->contains(pos, eval) && eval.depth >= depth) {
 		return eval.pos_value;
-	}
-
-	if (depth == 0) {
-		return quiescence_search(pos, depth, alpha, beta, white_to_play);
 	}
 
 	moves_array& possible_moves = MemPool::instance()->get_moves_array(depth);
