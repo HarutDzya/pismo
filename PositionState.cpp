@@ -1434,7 +1434,8 @@ void PositionState::undo_en_passant_capture(const undo_move_info& move)
 		++_piece_count[PAWN_BLACK];
 		_board[move.to / 8 - 1][move.to % 8] = PAWN_BLACK;
 		_pst_value += calculate_pst_value(PAWN_BLACK, (Square) (move.to - 8));
-		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_BLACK, _piece_count[PAWN_WHITE]);
+		_zob_key ^= _zob_key_impl->get_piece_at_square_key(PAWN_BLACK, (Square) (move.to - 8));
+		_material_zob_key ^= _zob_key_impl->get_material_key(PAWN_BLACK, _piece_count[PAWN_BLACK]);
 	}
 	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
 	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
