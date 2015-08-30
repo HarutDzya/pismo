@@ -836,7 +836,66 @@ void PositionState::update_direct_check_array()
 	}
 }
 
-		   
+void PositionState::update_discovered_checks()
+{
+	if (_white_to_play) {
+		_pin_info.rank_pin = _bitboard_impl->get_rank_pin_pos(_black_king_position, _white_pieces | _black_pieces);
+		_pin_info.file_pin = _bitboard_impl->get_file_pin_pos(_black_king_position, _white_pieces_transpose | _black_pieces_transpose);
+		_pin_info.diag_a1h8_pin = _bitboard_impl->get_diag_a1h8_pin_pos(_black_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+		_pin_info.diag_a8h1_pin = _bitboard_impl->get_diag_a8h1_pin_pos(_black_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+		update_pin_ray_status(_pin_info.rank_pin, WHITE, false);
+		update_pin_ray_status(_pin_info.file_pin, WHITE, false);
+		update_pin_ray_status(_pin_info.diag_a1h8_pin, WHITE, true);
+		update_pin_ray_status(_pin_info.diag_a8h1_pin, WHITE, true);
+	}
+	else {
+		_pin_info.rank_pin = _bitboard_impl->get_rank_pin_pos(_white_king_position, _white_pieces | _black_pieces);
+		_pin_info.file_pin = _bitboard_impl->get_file_pin_pos(_white_king_position, _white_pieces_transpose | _black_pieces_transpose);
+		_pin_info.diag_a1h8_pin = _bitboard_impl->get_diag_a1h8_pin_pos(_white_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+		_pin_info.diag_a8h1_pin = _bitboard_impl->get_diag_a8h1_pin_pos(_white_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+		update_pin_ray_status(_pin_info.rank_pin, BLACK, false);
+		update_pin_ray_status(_pin_info.file_pin, BLACK, false);
+		update_pin_ray_status(_pin_info.diag_a1h8_pin, BLACK, true);
+		update_pin_ray_status(_pin_info.diag_a8h1_pin, BLACK, true);
+	}
+}
+
+
+void PositionState::update_pin_ray_status(pin_info& pin, Color clr, bool is_diag_ray) const
+{
+	Piece slide_piece;
+	Piece queen_piece;
+	if (clr == WHITE) {
+		if (is_diag_ray) {
+			slide_piece = BISHOP_WHITE;
+		}
+		else {
+			slide_piece = ROOK_WHITE;
+		}
+		queen_piece = QUEEN_WHITE;
+	}
+	else {
+		if (is_diag_ray) {
+			slide_piece = BISHOP_BLACK;
+		}
+		else {
+			slide_piece = ROOK_BLACK;
+		}
+		queen_piece = QUEEN_BLACK;
+	}
+	if (pin.small_square_slide != INVALID_SQUARE) {
+		if (_board[pin.small_square_slide / 8][pin.small_square_slide % 8] != slide_piece || _board[pin.small_square_slide / 8][pin.small_square_slide % 8] != queen_piece) {
+			pin.small_square_slide = INVALID_SQUARE;
+			pin.small_pin_pos = 0;
+		}
+	}
+	if (pin.big_square_slide != INVALID_SQUARE) {
+		if (_board[pin.big_square_slide / 8][pin.big_square_slide % 8] != slide_piece || _board[pin.big_square_slide / 8][pin.big_square_slide % 8] != queen_piece) {
+			pin.big_square_slide = INVALID_SQUARE;
+			pin.big_pin_pos = 0;
+		}
+	}
+}
 
 void PositionState::make_move(const move_info& move)
 {

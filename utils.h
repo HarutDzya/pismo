@@ -29,7 +29,8 @@ enum Square {
 	A6, B6, C6, D6, E6, F6, G6, H6,
 	A7, B7, C7, D7, E7, F7, G7, H7,
 	A8, B8, C8, D8, E8, F8, G8, H8,
-	NUMBER_OF_SQUARES // = 64
+	NUMBER_OF_SQUARES, // = 64
+	INVALID_SQUARE
 };
 
 enum MoveType {
@@ -43,7 +44,7 @@ struct move_info {
 	Piece promoted;
 };
 
-const move_info MATE_MOVE = {NUMBER_OF_SQUARES, NUMBER_OF_SQUARES, ETY_SQUARE};
+const move_info MATE_MOVE = {INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE};
 
 struct eval_info
 {
@@ -68,6 +69,25 @@ const int PIECE_VALUES[PIECE_NB] =
 
 const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE black wins)
 
+// Pin info for one ray direction
+// Bitboards show available pinned piece positions for squares
+// smaller and bigger than the attacked square
+// small_square_slide and big_square_slide give the positions
+// of possible sliding pieces
+struct pin_info {
+        Square small_square_slide;
+        Square big_square_slide;
+        Bitboard small_pin_pos;
+        Bitboard big_pin_pos;
+
+        pin_info(Square small = INVALID_SQUARE, Square big = INVALID_SQUARE, const Bitboard& spos = 0, const Bitboard& bpos = 0)
+        : small_square_slide(small),
+        big_square_slide(big),
+        small_pin_pos(spos),
+        big_pin_pos(bpos)
+        {
+        }
+};
 }
 
 #endif //UTILS_H_

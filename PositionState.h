@@ -119,6 +119,8 @@ private:
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
 	void update_direct_check_array();
+	void update_discovered_checks();
+	void update_pin_ray_status(pin_info& pin, Color clr, bool is_diag_ray) const;
 
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();
@@ -163,6 +165,15 @@ private:
 			undo_move_info _move_stack[MOVE_STACK_CAPACITY];
 			uint32_t _stack_size;
 	};
+	
+	struct state_pin_info {
+		pin_info rank_pin;
+		pin_info file_pin;
+		pin_info diag_a1h8_pin;
+		pin_info diag_a8h1_pin;
+	};
+
+
 
 
 //data members
@@ -186,6 +197,10 @@ private:
 	// Bitboard for each piece where set bits show the
 	// positions from which it can attack the king	
 	Bitboard _direct_check[PIECE_NB];
+
+	// Complete info of the positions where pinned pieces 
+	// can be located and appropriate sliding piece positions
+	state_pin_info _pin_info;
 
 	const BitboardImpl* _bitboard_impl;
 	const ZobKeyImpl* _zob_key_impl;
