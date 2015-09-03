@@ -190,7 +190,7 @@ int16_t ABCore::quiescence_search(PositionState& pos, int16_t qs_depth, int16_t 
 			current_alpha = val;
 		}
 		moves_array possible_moves; //TODO: Implement memory pool for quiescence search
-		MoveGenerator::instance()->generate_white_non_quiet_moves(pos, possible_moves);
+		//MoveGenerator::instance()->generate_white_non_quiet_moves(pos, possible_moves);
 		int16_t score;
 		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
 			pos.make_move(possible_moves[i]);
@@ -214,7 +214,7 @@ int16_t ABCore::quiescence_search(PositionState& pos, int16_t qs_depth, int16_t 
 			current_beta = val;
 		}
 		moves_array possible_moves; //TODO: Implement memory pool for quiescence search
-		MoveGenerator::instance()->generate_black_non_quiet_moves(pos, possible_moves);
+		//MoveGenerator::instance()->generate_black_non_quiet_moves(pos, possible_moves);
 		int16_t score;
 		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
 			pos.make_move(possible_moves[i]);

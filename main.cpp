@@ -86,6 +86,14 @@ int main()
 			}
   		
 			if (pos.move_is_legal(move)) {
+				pos.update_direct_check_array();
+				pos.update_discovered_checks();
+				if (pos.move_checks_opponent_king(move)) {
+					std::cout << "Move checks opponent king" << std::endl;
+				}
+				else {
+					std::cout << "Move does not check opponent king" << std::endl;
+				}
 				pos.make_move(move);
 				pos.print_board();
 			}

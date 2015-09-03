@@ -43,6 +43,17 @@ public:
 	*/
 	void undo_move();
 
+	/* Checks to see whether the move checks opponent king
+	   by either direct check or discovered check.
+	   In order for this function to work the update_direct_check_array()
+	   and update_discovered_checks() should be invoked first.
+	*/
+	bool move_checks_opponent_king(const move_info& move) const;
+	
+	void update_direct_check_array();
+	void update_discovered_checks();
+
+	
 	/*
 	Prints board for white pieces using information from 
 	_white_pieces Bitboard
@@ -118,9 +129,10 @@ private:
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
-	void update_direct_check_array();
-	void update_discovered_checks();
 	void update_pin_ray_status(pin_info& pin, Color clr, bool is_diag_ray) const;
+	
+	bool move_opens_discovered_check(const move_info& move) const;
+	bool castling_checks_opponent_king(const move_info& move) const;
 
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();

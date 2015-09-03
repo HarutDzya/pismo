@@ -21,9 +21,9 @@ BitboardImpl::BitboardImpl()
 	init_attacking_pos_board_pawn_black();
 
 	init_pin_pos_board_rank();
-        init_pin_pos_board_file();
-        init_pin_pos_board_a1h8();
-        init_pin_pos_board_a8h1();
+	init_pin_pos_board_file();
+	init_pin_pos_board_a1h8();
+	init_pin_pos_board_a8h1();
 }
 
 // Returns the bitboard with sq Square filled 

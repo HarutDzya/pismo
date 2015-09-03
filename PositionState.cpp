@@ -830,9 +830,9 @@ void PositionState::update_direct_check_array()
 		Bitboard file_attack = _bitboard_impl->bitboard_transpose_to_bitboard(_bitboard_impl->get_legal_file_moves(_white_king_position, _white_pieces_transpose | _black_pieces_transpose));
 		Bitboard diag_a1h8_attack = _bitboard_impl->bitboard_diag_a1h8_to_bitboard(_bitboard_impl->get_legal_diag_a1h8_moves(_white_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8));
 		Bitboard diag_a8h1_attack = _bitboard_impl->bitboard_diag_a8h1_to_bitboard(_bitboard_impl->get_legal_diag_a8h1_moves(_white_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1));
-		_direct_check[ROOK_WHITE] = rank_attack | file_attack;
-		_direct_check[BISHOP_WHITE] = diag_a1h8_attack | diag_a8h1_attack;
-		_direct_check[QUEEN_WHITE] = rank_attack | file_attack | diag_a1h8_attack | diag_a8h1_attack;
+		_direct_check[ROOK_BLACK] = rank_attack | file_attack;
+		_direct_check[BISHOP_BLACK] = diag_a1h8_attack | diag_a8h1_attack;
+		_direct_check[QUEEN_BLACK] = rank_attack | file_attack | diag_a1h8_attack | diag_a8h1_attack;
 	}
 }
 
@@ -860,7 +860,6 @@ void PositionState::update_discovered_checks()
 	}
 }
 
-
 void PositionState::update_pin_ray_status(pin_info& pin, Color clr, bool is_diag_ray) const
 {
 	Piece slide_piece;
@@ -884,18 +883,136 @@ void PositionState::update_pin_ray_status(pin_info& pin, Color clr, bool is_diag
 		queen_piece = QUEEN_BLACK;
 	}
 	if (pin.small_square_slide != INVALID_SQUARE) {
-		if (_board[pin.small_square_slide / 8][pin.small_square_slide % 8] != slide_piece || _board[pin.small_square_slide / 8][pin.small_square_slide % 8] != queen_piece) {
+		if (_board[pin.small_square_slide / 8][pin.small_square_slide % 8] != slide_piece && _board[pin.small_square_slide / 8][pin.small_square_slide % 8] != queen_piece) {
 			pin.small_square_slide = INVALID_SQUARE;
 			pin.small_pin_pos = 0;
 		}
 	}
 	if (pin.big_square_slide != INVALID_SQUARE) {
-		if (_board[pin.big_square_slide / 8][pin.big_square_slide % 8] != slide_piece || _board[pin.big_square_slide / 8][pin.big_square_slide % 8] != queen_piece) {
+		if (_board[pin.big_square_slide / 8][pin.big_square_slide % 8] != slide_piece && _board[pin.big_square_slide / 8][pin.big_square_slide % 8] != queen_piece) {
 			pin.big_square_slide = INVALID_SQUARE;
 			pin.big_pin_pos = 0;
 		}
 	}
 }
+
+bool PositionState::move_checks_opponent_king(const move_info& move) const
+{
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	if (_bitboard_impl->square_to_bitboard(move.to) & _direct_check[pfrom]) {
+		return true;
+	}	   
+	
+	if (move_opens_discovered_check(move)) {
+		return true;
+	}
+
+	if (move.promoted != ETY_SQUARE) {
+		if (_bitboard_impl->square_to_bitboard(move.to) & _direct_check[move.promoted]) {
+			return true;
+		}
+	}
+		
+	if ((pfrom == KING_WHITE || pfrom == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
+		if (castling_checks_opponent_king(move)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool PositionState::move_opens_discovered_check(const move_info& move) const
+{
+	if (_pin_info.rank_pin.small_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard(move.from) & _pin_info.rank_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard(move.to) & _pin_info.rank_pin.small_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.rank_pin.big_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard(move.from) & _pin_info.rank_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard(move.to) & _pin_info.rank_pin.big_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.file_pin.small_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_transpose(move.from) & _pin_info.file_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_transpose(move.to) & _pin_info.file_pin.small_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.file_pin.big_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_transpose(move.from) & _pin_info.file_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_transpose(move.to) & _pin_info.file_pin.big_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.diag_a1h8_pin.small_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a1h8(move.from) & _pin_info.diag_a1h8_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a1h8(move.to) & _pin_info.diag_a1h8_pin.small_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.diag_a1h8_pin.big_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a1h8(move.from) & _pin_info.diag_a1h8_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a1h8(move.to) & _pin_info.diag_a1h8_pin.big_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.diag_a8h1_pin.small_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a8h1(move.from) & _pin_info.diag_a8h1_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _pin_info.diag_a8h1_pin.small_pin_pos)) {
+			return true;
+		}
+	}
+	if (_pin_info.diag_a8h1_pin.big_square_slide != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a8h1(move.from) & _pin_info.diag_a8h1_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _pin_info.diag_a8h1_pin.big_pin_pos)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool PositionState::castling_checks_opponent_king(const move_info& move) const
+{
+	if (_white_to_play) {
+		if (_black_king_position / 8 != 0) {
+			if (move.to == C1) {
+				if (_bitboard_impl->square_to_bitboard(D1) & _direct_check[ROOK_WHITE]) {
+					return true;
+				}
+			}
+			else {
+				assert (move.to == G1);
+				if (_bitboard_impl->square_to_bitboard(F1) & _direct_check[ROOK_WHITE]) {
+					return true;
+				}
+			}
+		}
+		else {
+			if (_bitboard_impl->square_to_bitboard(E1) & _direct_check[ROOK_WHITE]) {
+				return true;
+			}
+		}
+	}
+	else {
+		if (_white_king_position / 8 != 7) {
+			if (move.to == C8) {
+				if (_bitboard_impl->square_to_bitboard(D8) & _direct_check[ROOK_BLACK]) {
+					return true;
+				}
+			}
+			else {
+				assert (move.to == G8);
+				if (_bitboard_impl->square_to_bitboard(F8) & _direct_check[ROOK_BLACK]) {
+					return true;
+				}
+			}
+		}
+		else {
+			if (_bitboard_impl->square_to_bitboard(E8) & _direct_check[ROOK_WHITE]) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+			
 
 void PositionState::make_move(const move_info& move)
 {
