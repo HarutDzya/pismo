@@ -69,6 +69,9 @@ public:
 	const pin_info& get_diag_a1h8_pin_pos(Square king_sq, const Bitboard& occupied_squares) const;
 	const pin_info& get_diag_a8h1_pin_pos(Square king_sq, const Bitboard& occupied_squares) const;
 
+	void get_en_passant_pin_info(Square from, Square to, const Bitboard& occupied_squares, Square& left_pos, Square& right_pos) const;
+
+
 	Bitboard bitboard_transpose_to_bitboard(const Bitboard& board_transpose) const;
 	Bitboard bitboard_diag_a1h8_to_bitboard(const Bitboard& board_diag_a1h8) const;
 	Bitboard bitboard_diag_a8h1_to_bitboard(const Bitboard& board_diag_a8h1) const;

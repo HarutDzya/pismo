@@ -907,6 +907,8 @@ bool PositionState::move_checks_opponent_king(const move_info& move) const
 		return true;
 	}
 
+	// TODO: Consider discovered check for en_passant capture
+
 	if (move.promoted != ETY_SQUARE) {
 		if (_bitboard_impl->square_to_bitboard(move.to) & _direct_check[move.promoted]) {
 			return true;
@@ -1013,6 +1015,47 @@ bool PositionState::castling_checks_opponent_king(const move_info& move) const
 	return false;
 }
 			
+bool PositionState::en_passant_capture_discoveres_check(const move_info& move) const
+{
+	if (_white_to_play && _black_king_position / 8 == 4) {
+		Square left_pos;
+		Square right_pos;
+		_bitboard_impl->get_en_passant_pin_info(move.from, move.to, _white_pieces | _black_pieces, left_pos, right_pos);
+		if (left_pos == INVALID_SQUARE || right_pos == INVALID_SQUARE) {
+			return false;
+		}
+		if (left_pos == _black_king_position) {
+			if (_board[right_pos / 8][right_pos % 8] == ROOK_WHITE || _board[right_pos / 8][right_pos % 8] == QUEEN_WHITE) {
+				return true;
+			}
+		}
+		if (right_pos == _black_king_position) {
+			if (_board[left_pos / 8][left_pos % 8] == ROOK_WHITE || _board[left_pos / 8][left_pos % 8] == QUEEN_WHITE) {
+				return true;
+			}
+		}
+	}
+	else if (!_white_to_play && _white_king_position / 8 == 3) {
+		Square left_pos;
+		Square right_pos;
+		_bitboard_impl->get_en_passant_pin_info(move.from, move.to, _white_pieces | _black_pieces, left_pos, right_pos);
+		if (left_pos == INVALID_SQUARE || right_pos == INVALID_SQUARE) {
+			return false;
+		}
+		if (left_pos == _white_king_position) {
+			if (_board[right_pos / 8][right_pos % 8] == ROOK_BLACK || _board[right_pos / 8][right_pos % 8] == QUEEN_BLACK) {
+				return true;
+			}
+		}
+		if (right_pos == _white_king_position) {
+			if (_board[left_pos / 8][left_pos % 8] == ROOK_BLACK || _board[left_pos / 8][left_pos % 8] == QUEEN_BLACK) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
 
 void PositionState::make_move(const move_info& move)
 {

@@ -133,6 +133,7 @@ private:
 	
 	bool move_opens_discovered_check(const move_info& move) const;
 	bool castling_checks_opponent_king(const move_info& move) const;
+	bool en_passant_capture_discoveres_check(const move_info& move) const;
 
 	int calculate_pst_value(Piece p, Square s) const;
 	void update_game_status();
