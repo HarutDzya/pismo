@@ -129,7 +129,8 @@ private:
 	void add_piece_to_bitboards(Square sq, Color clr);
 	void remove_piece_from_bitboards(Square sq, Color clr);
 
-	void update_pin_ray_status(pin_info& pin, Color clr, bool is_diag_ray) const;
+	void update_non_diag_pin_status(pin_info& pin, Color clr) const;
+	void update_diag_pin_status(pin_info& pin, Color clr) const;
 	
 	bool move_opens_discovered_check(const move_info& move) const;
 	bool castling_checks_opponent_king(const move_info& move) const;
@@ -213,7 +214,7 @@ private:
 
 	// Complete info of the positions where pinned pieces 
 	// can be located and appropriate sliding piece positions
-	state_pin_info _pin_info;
+	state_pin_info _state_pin_info;
 
 	const BitboardImpl* _bitboard_impl;
 	const ZobKeyImpl* _zob_key_impl;

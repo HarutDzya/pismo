@@ -72,24 +72,24 @@ const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE b
 // Pin info for one ray direction
 // Bitboards show available pinned piece current and possible moving positions for squares
 // smaller and bigger than the attacked square
-// small_square_slide and big_square_slide give the positions
+// small_sliding_piece_pos and big_sliding_piece_pos give the positions
 // of possible sliding pieces
 // if there is no sliding piece in one direction appropriate Square is set to INVALID_SQUARE
 // and Bitboard to 0
 // for example of the rank ray case
 // if king is at C4, pawn is at B4 and E4, and ROOK is at A4 and G4
-// small_square_slide = A4, big_square_slide = G4
+// small_sliding_piece_pos = A4, big_sliding_piece_pos = G4
 // small_pin_pos is Bitboard with bits on A4 to B4 set
 // big_pin_pos is Bitboard with bits on D4 to G4 set
 struct pin_info {
-        Square small_square_slide;
-        Square big_square_slide;
+        Square small_sliding_piece_pos;
+        Square big_sliding_piece_pos;
         Bitboard small_pin_pos;
         Bitboard big_pin_pos;
 
         pin_info(Square small = INVALID_SQUARE, Square big = INVALID_SQUARE, const Bitboard& spos = 0, const Bitboard& bpos = 0)
-        : small_square_slide(small),
-        big_square_slide(big),
+        : small_sliding_piece_pos(small),
+        big_sliding_piece_pos(big),
         small_pin_pos(spos),
         big_pin_pos(bpos)
         {

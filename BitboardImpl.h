@@ -64,10 +64,10 @@ public:
 	Bitboard get_pawn_white_checking_pos(Square king_pos) const;
 	Bitboard get_pawn_black_checking_pos(Square king_pos) const;
 
-	const pin_info& get_rank_pin_pos(Square king_sq, const Bitboard& occupied_squares) const;
-	const pin_info& get_file_pin_pos(Square king_sq, const Bitboard& occupied_squares) const;
-	const pin_info& get_diag_a1h8_pin_pos(Square king_sq, const Bitboard& occupied_squares) const;
-	const pin_info& get_diag_a8h1_pin_pos(Square king_sq, const Bitboard& occupied_squares) const;
+	const pin_info& get_rank_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
+	const pin_info& get_file_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
+	const pin_info& get_diag_a1h8_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
+	const pin_info& get_diag_a8h1_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
 
 	void get_en_passant_pin_info(Square from, Square to, const Bitboard& occupied_squares, Square& left_pos, Square& right_pos) const;
 
@@ -97,13 +97,13 @@ private:
 	void init_attacking_pos_board_pawn_white();
 	void init_attacking_pos_board_pawn_black();
 
-	void init_pin_pos_board_rank();
-	void init_pin_pos_board_file();
-	void init_pin_pos_board_a1h8();
-	void init_pin_pos_board_a8h1();
+	void init_rank_pin_info();
+	void init_file_pin_info();
+	void init_diag_a1h8_pin_info();
+	void init_diag_a8h1_pin_info();
 
 	Bitrank move_pos_rank(unsigned int position, Bitrank rank_occup) const;
-	void possible_pin_pos_rank(unsigned int position, Bitrank rank_occup, int& left_slide_pos, int& right_slide_pos, Bitrank & left_pin, Bitrank& right_pin) const;
+	void set_rank_pin_info(unsigned int position, Bitrank rank_occup, int& left_slide_pos, int& right_slide_pos, Bitrank & left_pin, Bitrank& right_pin) const;
 	int find_lsb_set(Bitrank rank) const;
 	int find_msb_set(Bitrank rank) const;
 	
@@ -128,10 +128,10 @@ private:
 	Bitboard _attacking_pos_board_pawn_white[NUMBER_OF_SQUARES - 16];
 	Bitboard _attacking_pos_board_pawn_black[NUMBER_OF_SQUARES - 16];
 
-	pin_info _pin_pos_board_rank[NUMBER_OF_SQUARES][256];
-	pin_info _pin_pos_board_file[NUMBER_OF_SQUARES][256];
-	pin_info _pin_pos_board_diag_a1h8[NUMBER_OF_SQUARES][256];
-	pin_info _pin_pos_board_diag_a8h1[NUMBER_OF_SQUARES][256];
+	pin_info _rank_pin_info[NUMBER_OF_SQUARES][256];
+	pin_info _file_pin_info[NUMBER_OF_SQUARES][256];
+	pin_info _diag_a1h8_pin_info[NUMBER_OF_SQUARES][256];
+	pin_info _diag_a8h1_pin_info[NUMBER_OF_SQUARES][256];
 };
 }
 

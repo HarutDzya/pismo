@@ -839,58 +839,74 @@ void PositionState::update_direct_check_array()
 void PositionState::update_discovered_checks()
 {
 	if (_white_to_play) {
-		_pin_info.rank_pin = _bitboard_impl->get_rank_pin_pos(_black_king_position, _white_pieces | _black_pieces);
-		_pin_info.file_pin = _bitboard_impl->get_file_pin_pos(_black_king_position, _white_pieces_transpose | _black_pieces_transpose);
-		_pin_info.diag_a1h8_pin = _bitboard_impl->get_diag_a1h8_pin_pos(_black_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
-		_pin_info.diag_a8h1_pin = _bitboard_impl->get_diag_a8h1_pin_pos(_black_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
-		update_pin_ray_status(_pin_info.rank_pin, WHITE, false);
-		update_pin_ray_status(_pin_info.file_pin, WHITE, false);
-		update_pin_ray_status(_pin_info.diag_a1h8_pin, WHITE, true);
-		update_pin_ray_status(_pin_info.diag_a8h1_pin, WHITE, true);
+		_state_pin_info.rank_pin = _bitboard_impl->get_rank_pin_info(_black_king_position, _white_pieces | _black_pieces);
+		_state_pin_info.file_pin = _bitboard_impl->get_file_pin_info(_black_king_position, _white_pieces_transpose | _black_pieces_transpose);
+		_state_pin_info.diag_a1h8_pin = _bitboard_impl->get_diag_a1h8_pin_info(_black_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+		_state_pin_info.diag_a8h1_pin = _bitboard_impl->get_diag_a8h1_pin_info(_black_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+		update_non_diag_pin_status(_state_pin_info.rank_pin, WHITE);
+		update_non_diag_pin_status(_state_pin_info.file_pin, WHITE);
+		update_diag_pin_status(_state_pin_info.diag_a1h8_pin, WHITE);
+		update_diag_pin_status(_state_pin_info.diag_a8h1_pin, WHITE);
 	}
 	else {
-		_pin_info.rank_pin = _bitboard_impl->get_rank_pin_pos(_white_king_position, _white_pieces | _black_pieces);
-		_pin_info.file_pin = _bitboard_impl->get_file_pin_pos(_white_king_position, _white_pieces_transpose | _black_pieces_transpose);
-		_pin_info.diag_a1h8_pin = _bitboard_impl->get_diag_a1h8_pin_pos(_white_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
-		_pin_info.diag_a8h1_pin = _bitboard_impl->get_diag_a8h1_pin_pos(_white_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
-		update_pin_ray_status(_pin_info.rank_pin, BLACK, false);
-		update_pin_ray_status(_pin_info.file_pin, BLACK, false);
-		update_pin_ray_status(_pin_info.diag_a1h8_pin, BLACK, true);
-		update_pin_ray_status(_pin_info.diag_a8h1_pin, BLACK, true);
+		_state_pin_info.rank_pin = _bitboard_impl->get_rank_pin_info(_white_king_position, _white_pieces | _black_pieces);
+		_state_pin_info.file_pin = _bitboard_impl->get_file_pin_info(_white_king_position, _white_pieces_transpose | _black_pieces_transpose);
+		_state_pin_info.diag_a1h8_pin = _bitboard_impl->get_diag_a1h8_pin_info(_white_king_position, _white_pieces_diag_a1h8 | _black_pieces_diag_a1h8);
+		_state_pin_info.diag_a8h1_pin = _bitboard_impl->get_diag_a8h1_pin_info(_white_king_position, _white_pieces_diag_a8h1 | _black_pieces_diag_a8h1);
+		update_non_diag_pin_status(_state_pin_info.rank_pin, BLACK);
+		update_non_diag_pin_status(_state_pin_info.file_pin, BLACK);
+		update_diag_pin_status(_state_pin_info.diag_a1h8_pin, BLACK);
+		update_diag_pin_status(_state_pin_info.diag_a8h1_pin, BLACK);
 	}
 }
 
-void PositionState::update_pin_ray_status(pin_info& pin, Color clr, bool is_diag_ray) const
+void PositionState::update_non_diag_pin_status(pin_info& pin, Color clr) const
 {
 	Piece slide_piece;
 	Piece queen_piece;
 	if (clr == WHITE) {
-		if (is_diag_ray) {
-			slide_piece = BISHOP_WHITE;
-		}
-		else {
-			slide_piece = ROOK_WHITE;
-		}
+		slide_piece = ROOK_WHITE;
 		queen_piece = QUEEN_WHITE;
 	}
 	else {
-		if (is_diag_ray) {
-			slide_piece = BISHOP_BLACK;
-		}
-		else {
-			slide_piece = ROOK_BLACK;
-		}
+		slide_piece = ROOK_BLACK;
 		queen_piece = QUEEN_BLACK;
 	}
-	if (pin.small_square_slide != INVALID_SQUARE) {
-		if (_board[pin.small_square_slide / 8][pin.small_square_slide % 8] != slide_piece && _board[pin.small_square_slide / 8][pin.small_square_slide % 8] != queen_piece) {
-			pin.small_square_slide = INVALID_SQUARE;
+	if (pin.small_sliding_piece_pos != INVALID_SQUARE) {
+		if (_board[pin.small_sliding_piece_pos / 8][pin.small_sliding_piece_pos % 8] != slide_piece && _board[pin.small_sliding_piece_pos / 8][pin.small_sliding_piece_pos % 8] != queen_piece) {
+			pin.small_sliding_piece_pos = INVALID_SQUARE;
 			pin.small_pin_pos = 0;
 		}
 	}
-	if (pin.big_square_slide != INVALID_SQUARE) {
-		if (_board[pin.big_square_slide / 8][pin.big_square_slide % 8] != slide_piece && _board[pin.big_square_slide / 8][pin.big_square_slide % 8] != queen_piece) {
-			pin.big_square_slide = INVALID_SQUARE;
+	if (pin.big_sliding_piece_pos != INVALID_SQUARE) {
+		if (_board[pin.big_sliding_piece_pos / 8][pin.big_sliding_piece_pos % 8] != slide_piece && _board[pin.big_sliding_piece_pos / 8][pin.big_sliding_piece_pos % 8] != queen_piece) {
+			pin.big_sliding_piece_pos = INVALID_SQUARE;
+			pin.big_pin_pos = 0;
+		}
+	}
+}
+
+void PositionState::update_diag_pin_status(pin_info& pin, Color clr) const
+{
+	Piece slide_piece;
+	Piece queen_piece;
+	if (clr == WHITE) {
+		slide_piece = BISHOP_WHITE;
+		queen_piece = QUEEN_WHITE;
+	}
+	else {
+		slide_piece = BISHOP_BLACK;
+		queen_piece = QUEEN_BLACK;
+	}
+	if (pin.small_sliding_piece_pos != INVALID_SQUARE) {
+		if (_board[pin.small_sliding_piece_pos / 8][pin.small_sliding_piece_pos % 8] != slide_piece && _board[pin.small_sliding_piece_pos / 8][pin.small_sliding_piece_pos % 8] != queen_piece) {
+			pin.small_sliding_piece_pos = INVALID_SQUARE;
+			pin.small_pin_pos = 0;
+		}
+	}
+	if (pin.big_sliding_piece_pos != INVALID_SQUARE) {
+		if (_board[pin.big_sliding_piece_pos / 8][pin.big_sliding_piece_pos % 8] != slide_piece && _board[pin.big_sliding_piece_pos / 8][pin.big_sliding_piece_pos % 8] != queen_piece) {
+			pin.big_sliding_piece_pos = INVALID_SQUARE;
 			pin.big_pin_pos = 0;
 		}
 	}
@@ -926,43 +942,44 @@ bool PositionState::move_checks_opponent_king(const move_info& move) const
 
 bool PositionState::move_opens_discovered_check(const move_info& move) const
 {
-	if (_pin_info.rank_pin.small_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard(move.from) & _pin_info.rank_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard(move.to) & _pin_info.rank_pin.small_pin_pos)) {
+	// TODO: Check whether move.from is possible pin position for appropriate king position
+	if (_state_pin_info.rank_pin.small_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard(move.from) & _state_pin_info.rank_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard(move.to) & _state_pin_info.rank_pin.small_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.rank_pin.big_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard(move.from) & _pin_info.rank_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard(move.to) & _pin_info.rank_pin.big_pin_pos)) {
+	if (_state_pin_info.rank_pin.big_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard(move.from) & _state_pin_info.rank_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard(move.to) & _state_pin_info.rank_pin.big_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.file_pin.small_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard_transpose(move.from) & _pin_info.file_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_transpose(move.to) & _pin_info.file_pin.small_pin_pos)) {
+	if (_state_pin_info.file_pin.small_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_transpose(move.from) & _state_pin_info.file_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_transpose(move.to) & _state_pin_info.file_pin.small_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.file_pin.big_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard_transpose(move.from) & _pin_info.file_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_transpose(move.to) & _pin_info.file_pin.big_pin_pos)) {
+	if (_state_pin_info.file_pin.big_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_transpose(move.from) & _state_pin_info.file_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_transpose(move.to) & _state_pin_info.file_pin.big_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.diag_a1h8_pin.small_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard_diag_a1h8(move.from) & _pin_info.diag_a1h8_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a1h8(move.to) & _pin_info.diag_a1h8_pin.small_pin_pos)) {
+	if (_state_pin_info.diag_a1h8_pin.small_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a1h8(move.from) & _state_pin_info.diag_a1h8_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a1h8(move.to) & _state_pin_info.diag_a1h8_pin.small_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.diag_a1h8_pin.big_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard_diag_a1h8(move.from) & _pin_info.diag_a1h8_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a1h8(move.to) & _pin_info.diag_a1h8_pin.big_pin_pos)) {
+	if (_state_pin_info.diag_a1h8_pin.big_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a1h8(move.from) & _state_pin_info.diag_a1h8_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a1h8(move.to) & _state_pin_info.diag_a1h8_pin.big_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.diag_a8h1_pin.small_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard_diag_a8h1(move.from) & _pin_info.diag_a8h1_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _pin_info.diag_a8h1_pin.small_pin_pos)) {
+	if (_state_pin_info.diag_a8h1_pin.small_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a8h1(move.from) & _state_pin_info.diag_a8h1_pin.small_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _state_pin_info.diag_a8h1_pin.small_pin_pos)) {
 			return true;
 		}
 	}
-	if (_pin_info.diag_a8h1_pin.big_square_slide != INVALID_SQUARE) {
-		if ((_bitboard_impl->square_to_bitboard_diag_a8h1(move.from) & _pin_info.diag_a8h1_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _pin_info.diag_a8h1_pin.big_pin_pos)) {
+	if (_state_pin_info.diag_a8h1_pin.big_sliding_piece_pos != INVALID_SQUARE) {
+		if ((_bitboard_impl->square_to_bitboard_diag_a8h1(move.from) & _state_pin_info.diag_a8h1_pin.big_pin_pos) && !(_bitboard_impl->square_to_bitboard_diag_a8h1(move.to) & _state_pin_info.diag_a8h1_pin.big_pin_pos)) {
 			return true;
 		}
 	}

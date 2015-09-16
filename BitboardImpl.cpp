@@ -21,10 +21,10 @@ BitboardImpl::BitboardImpl()
 	init_attacking_pos_board_pawn_white();
 	init_attacking_pos_board_pawn_black();
 
-	init_pin_pos_board_rank();
-	init_pin_pos_board_file();
-	init_pin_pos_board_a1h8();
-	init_pin_pos_board_a8h1();
+	init_rank_pin_info();
+	init_file_pin_info();
+	init_diag_a1h8_pin_info();
+	init_diag_a8h1_pin_info();
 }
 
 // Returns the bitboard with sq Square filled 
@@ -139,34 +139,34 @@ Bitboard BitboardImpl::get_pawn_black_checking_pos(Square king_pos) const
 
 // Returns pin_info for the rank ray when the king is at position king_sq
 // occupied_squares is the normal bitboard of occupied squares 
-const pin_info& BitboardImpl::get_rank_pin_pos(Square king_sq, const Bitboard& occupied_squares) const
+const pin_info& BitboardImpl::get_rank_pin_info(Square king_sq, const Bitboard& occupied_squares) const
 {
 	Bitrank rank_occup = occupied_squares >> (king_sq / 8) * 8;
-	return _pin_pos_board_rank[king_sq][rank_occup];
+	return _rank_pin_info[king_sq][rank_occup];
 }
 
 // Returns pin_info for the file ray when the king is at position king_sq
 // occupied_squares is the transposed bitboard of normal occupied squares 
-const pin_info& BitboardImpl::get_file_pin_pos(Square king_sq, const Bitboard& occupied_squares) const
+const pin_info& BitboardImpl::get_file_pin_info(Square king_sq, const Bitboard& occupied_squares) const
 {
 	Bitrank file_occup = occupied_squares >> (square_to_square_transpose(king_sq) / 8) * 8;
-	return _pin_pos_board_file[king_sq][file_occup];
+	return _file_pin_info[king_sq][file_occup];
 }
 
 // Returns pin_info for a1h8 diagonal ray when the king is at position king_sq 
 // occupied_squares is the 45 angle rotated bitboard of normal occupied squares
-const pin_info& BitboardImpl::get_diag_a1h8_pin_pos(Square king_sq, const Bitboard& occupied_squares) const
+const pin_info& BitboardImpl::get_diag_a1h8_pin_info(Square king_sq, const Bitboard& occupied_squares) const
 {
 	Bitrank diag_occup = occupied_squares >> (square_to_square_a1h8(king_sq) / 8) * 8;
-	return _pin_pos_board_diag_a1h8[king_sq][diag_occup];
+	return _diag_a1h8_pin_info[king_sq][diag_occup];
 }
 
 // Returns pin_info for a8h1 diagonal ray when the king is at position king_sq 
 // occupied_squares is the -45 angle rotated bitboard of normal occupied squares
-const pin_info& BitboardImpl::get_diag_a8h1_pin_pos(Square king_sq, const Bitboard& occupied_squares) const
+const pin_info& BitboardImpl::get_diag_a8h1_pin_info(Square king_sq, const Bitboard& occupied_squares) const
 {
 	Bitrank diag_occup = occupied_squares >> (square_to_square_a8h1(king_sq) / 8) * 8;
-	return _pin_pos_board_diag_a8h1[king_sq][diag_occup];
+	return _diag_a8h1_pin_info[king_sq][diag_occup];
 }
 
 // Changes the values of left_pos and right_pos to the squares where sliding piece and the king can be located
@@ -511,14 +511,14 @@ void BitboardImpl::init_attacking_pos_board_pawn_black()
 	}
 }
 
-// Initializes _pin_pos_board_rank array for all possible rank occupations and 
+// Initializes _rank_pin_info array for all possible rank occupations and 
 // for all squares where king can be located
 // pin_info is comprised from sliding piece positions to the left and right of king position 
 // in this case the square of the left_slide square is smaller than king square
 // and right_slide is bigger than king square
-// left_board and right_board are Bitboards where the position for the pinned piece to be located and
-// also the positions from sliding piece to king square (excluding king square) are set
-void BitboardImpl::init_pin_pos_board_rank()
+// in left_board and right_board Bitboards positions of pinned pieces are stored plus
+// the positions of sliding pieces 
+void BitboardImpl::init_rank_pin_info()
 {
 	Bitrank left_rank;
 	Bitrank right_rank;
@@ -529,7 +529,7 @@ void BitboardImpl::init_pin_pos_board_rank()
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
 		for (unsigned int rank_occup = 0; rank_occup < 256; ++rank_occup) {
 			if (rank_occup & (1 << sq % 8)) {
-				possible_pin_pos_rank(sq % 8, rank_occup, right_slide_pos, left_slide_pos, right_rank, left_rank);
+				set_rank_pin_info(sq % 8, rank_occup, right_slide_pos, left_slide_pos, right_rank, left_rank);
 				left_board = left_rank;
 				right_board = right_rank;
 				if (left_board) {
@@ -540,23 +540,23 @@ void BitboardImpl::init_pin_pos_board_rank()
 				}
 				Square left_slide = (left_slide_pos != -1) ? (Square) ((sq / 8) * 8 + left_slide_pos) : INVALID_SQUARE;
 				Square right_slide = (right_slide_pos != -1) ? (Square) ((sq / 8) * 8 + right_slide_pos) : INVALID_SQUARE;
-				_pin_pos_board_rank[sq][rank_occup] = pin_info(left_slide, right_slide, left_board, right_board);
+				_rank_pin_info[sq][rank_occup] = pin_info(left_slide, right_slide, left_board, right_board);
 			}
 			else {
-				_pin_pos_board_rank[sq][rank_occup] = pin_info();
+				_rank_pin_info[sq][rank_occup] = pin_info();
 			}
 		}
 	}
 }
 
-// Initializes _pin_pos_board_file array for all possible file occupations and 
+// Initializes _file_pin_info array for all possible file occupations and 
 // for all squares where king can be located
 // pin_info is comprised from sliding piece positions to the up and down of king position 
 // in this case the square of the up_slide square is bigger than king square
 // and down_slide is smaller than king square
-// up_board and down_board are Bitboards where the position for the pinned piece to be located and
-// also the positions from sliding piece to king square (excluding king square) are set
-void BitboardImpl::init_pin_pos_board_file()
+// in up_board and down_board Bitboards positions of pinned pieces are stored plus the
+// the positions of sliding pieces; Bitboards in the pin_info are transposed of normal Bitboards
+void BitboardImpl::init_file_pin_info()
 {
 	Bitrank up_file;
 	Bitrank down_file;
@@ -568,7 +568,7 @@ void BitboardImpl::init_pin_pos_board_file()
 		Square sq_transpose = square_to_square_transpose((Square) sq);
 		for (unsigned int file_occup = 0; file_occup < 256; ++file_occup) {
 			if (file_occup & (1 << sq_transpose % 8)) {
-				possible_pin_pos_rank(sq_transpose % 8, file_occup, down_slide_pos, up_slide_pos, down_file, up_file);
+				set_rank_pin_info(sq_transpose % 8, file_occup, down_slide_pos, up_slide_pos, down_file, up_file);
 				up_board = up_file;
 				down_board = down_file;
 				if (up_board) {
@@ -579,23 +579,23 @@ void BitboardImpl::init_pin_pos_board_file()
 				}
 				Square up_slide = (up_slide_pos != -1) ? square_to_square_transpose((Square) ((sq_transpose / 8) * 8 + up_slide_pos)) : INVALID_SQUARE;
 				Square down_slide = (down_slide_pos != -1) ? square_to_square_transpose((Square) ((sq_transpose / 8) * 8 + down_slide_pos)) : INVALID_SQUARE;
-				_pin_pos_board_file[sq][file_occup] = pin_info(down_slide, up_slide, down_board, up_board);
+				_file_pin_info[sq][file_occup] = pin_info(down_slide, up_slide, down_board, up_board);
 			}
 			else {
-				_pin_pos_board_file[sq][file_occup] = pin_info();
+				_file_pin_info[sq][file_occup] = pin_info();
 			}
 		}
 	}
 }
 
-// Initializes _pin_pos_board_diag_a1h8 array for all possible a1h8 diagonal occupations and 
+// Initializes _diag_a1h8_pin_info array for all possible a1h8 diagonal occupations and 
 // for all squares where king can be located
 // pin_info is comprised from sliding piece positions to the left and right of king position 
 // in this case the square of the right_slide square is bigger than king square
 // and left_slide is smaller than king square
-// right_board and left_board are Bitboards where the position for the pinned piece to be located and
-// also the positions from sliding piece to king square (excluding king square) are set
-void BitboardImpl::init_pin_pos_board_a1h8()
+// in right_board and left_board Bitboards positions of the pinned pieces is stored plus
+// the positions of sliding pieces; Bitboards in pin_info are 45 degree rotated form of the normal Bitboards
+void BitboardImpl::init_diag_a1h8_pin_info()
 {
 	Bitrank left_diag;
 	Bitrank right_diag;
@@ -614,7 +614,7 @@ void BitboardImpl::init_pin_pos_board_a1h8()
 		}
 		for (unsigned int diag_occup = 0; diag_occup < 256; ++diag_occup) {
 			if (diag_occup & (1 << sq_a1h8 % 8)) {
-				possible_pin_pos_rank(sq_a1h8 % 8, diag_occup & diag_allowed, right_slide_pos, left_slide_pos, right_diag, left_diag);
+				set_rank_pin_info(sq_a1h8 % 8, diag_occup & diag_allowed, right_slide_pos, left_slide_pos, right_diag, left_diag);
 				left_board = left_diag;
 				right_board = right_diag;
 				if (left_board) {
@@ -625,23 +625,23 @@ void BitboardImpl::init_pin_pos_board_a1h8()
 				}
 				Square left_slide = (left_slide_pos != -1) ? square_to_square_a8h1((Square) ((sq_a1h8 / 8) * 8 + left_slide_pos)) : INVALID_SQUARE;
 				Square right_slide = (right_slide_pos != -1) ? square_to_square_a8h1((Square) ((sq_a1h8 / 8) * 8 + right_slide_pos)) : INVALID_SQUARE;
-				_pin_pos_board_diag_a1h8[sq][diag_occup] = pin_info(left_slide, right_slide, left_board, right_board);
+				_diag_a1h8_pin_info[sq][diag_occup] = pin_info(left_slide, right_slide, left_board, right_board);
 			}
 			else {
-				_pin_pos_board_diag_a1h8[sq][diag_occup] = pin_info();
+				_diag_a1h8_pin_info[sq][diag_occup] = pin_info();
 			}
 		}
 	}
 }
 
-// Initializes _pin_pos_board_diag_a8h1 array for all possible a8h1 diagonal occupations and 
+// Initializes _diag_a8h1_pin_info array for all possible a8h1 diagonal occupations and 
 // for all squares where king can be located
 // pin_info is comprised from sliding piece positions to the left and right of king position 
 // in this case the square of the right_slide square is smaller than king square
 // and left_slide is bigger than king square
-// right_board and left_board are Bitboards where the position for the pinned piece to be located and
-// also the positions from sliding piece to king square (excluding king square) are set
-void BitboardImpl::init_pin_pos_board_a8h1()
+// in right_board and left_board Bitboards positions of the pinned pieces is stored plus
+// the positions of the sliding pieces; Bitboards in pin_info are -45 degree rotated form of the normal Bitboards
+void BitboardImpl::init_diag_a8h1_pin_info()
 {
 	Bitrank left_diag;
 	Bitrank right_diag;
@@ -660,7 +660,7 @@ void BitboardImpl::init_pin_pos_board_a8h1()
 		}
 		for (unsigned int diag_occup = 0; diag_occup < 256; ++diag_occup) {
 			if (diag_occup & (1 << sq_a8h1 % 8)) {
-				possible_pin_pos_rank(sq_a8h1 % 8, diag_occup & diag_allowed, right_slide_pos, left_slide_pos, right_diag, left_diag);
+				set_rank_pin_info(sq_a8h1 % 8, diag_occup & diag_allowed, right_slide_pos, left_slide_pos, right_diag, left_diag);
 				left_board = left_diag;
 				right_board = right_diag;
 				if (left_board) {
@@ -671,10 +671,10 @@ void BitboardImpl::init_pin_pos_board_a8h1()
 				}
 				Square left_slide = (left_slide_pos != -1) ? square_to_square_a1h8((Square) ((sq_a8h1 / 8) * 8 + left_slide_pos)) : INVALID_SQUARE;
 				Square right_slide = (right_slide_pos != -1) ? square_to_square_a1h8((Square) ((sq_a8h1 / 8) * 8 + right_slide_pos)) : INVALID_SQUARE;
-				_pin_pos_board_diag_a8h1[sq][diag_occup] = pin_info(right_slide, left_slide, right_board, left_board);
+				_diag_a8h1_pin_info[sq][diag_occup] = pin_info(right_slide, left_slide, right_board, left_board);
 			}
 			else {
-				_pin_pos_board_diag_a8h1[sq][diag_occup] = pin_info();
+				_diag_a8h1_pin_info[sq][diag_occup] = pin_info();
 			}
 		}
 	}
@@ -710,7 +710,7 @@ Bitrank BitboardImpl::move_pos_rank(unsigned int position, Bitrank rank_occup) c
 // right_slide_pos is the position of the sliding piece to the right; -1 if not there
 // for example for the Bitrank 10101011 and position 3, the left_pin is 11110000
 // left_slide_pos is 7, right_pin is 00000111, right_slide_pos is 0
-void BitboardImpl::possible_pin_pos_rank(unsigned int position, Bitrank rank_occup, int& left_slide_pos, int& right_slide_pos, Bitrank& left_pin, Bitrank& right_pin) const
+void BitboardImpl::set_rank_pin_info(unsigned int position, Bitrank rank_occup, int& left_slide_pos, int& right_slide_pos, Bitrank& left_pin, Bitrank& right_pin) const
 {
 	int right_set_bit = find_msb_set(rank_occup << (8 - position));
 	int right_pin_pos = (right_set_bit != -1) ? (position - 8 + right_set_bit) : -1;
