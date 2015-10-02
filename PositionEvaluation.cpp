@@ -4,53 +4,53 @@
 namespace pismo
 {
 PositionEvaluation::PositionEvaluation():
-	_pos_value(0),
-	_material_hash(MATERIAL_HASH_SIZE)
+	_posValue(0),
+	_materialHash(MATERIAL_HASH_SIZE)
 {
 }
 
 
 int16_t PositionEvaluation::evaluate(const PositionState& pos)
 {
-	_pos_value = 0;
-	eval_material(pos);
-	eval_piece_square(pos);
-	eval_mobility(pos);
-	// king_safety();
+	_posValue = 0;
+	evalMaterial(pos);
+	evalPieceSquare(pos);
+	evalMobility(pos);
+	// kingSafety();
 	
-	return _pos_value;
+	return _posValue;
 }
 
-void PositionEvaluation::eval_material(const PositionState& pos)
+void PositionEvaluation::evalMaterial(const PositionState& pos)
 {
-	int16_t material_value = 0;
-	unsigned int index = hash_function(pos.get_material_zob_key());
-	if (_material_hash[index].material_zob_key == pos.get_material_zob_key()) {
-		material_value = _material_hash[index].material_value;
+	int16_t materialValue = 0;
+	unsigned int index = hashFunction(pos.getMaterialZobKey());
+	if (_materialHash[index].materialZobKey == pos.getMaterialZobKey()) {
+		materialValue = _materialHash[index].materialValue;
 	}
 	else {	
 		for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
-			material_value += pos.get_piece_count((Piece) piece) * PIECE_VALUES[piece];
+			materialValue += pos.getPieceCount((Piece) piece) * PIECE_VALUES[piece];
 		}
-		_material_hash[index] = material_info(material_value, pos.get_material_zob_key());
+		_materialHash[index] = materialInfo(materialValue, pos.getMaterialZobKey());
 	}
 	
-	_pos_value += material_value;
+	_posValue += materialValue;
 }
 
-void PositionEvaluation::eval_piece_square(const PositionState& pos)
+void PositionEvaluation::evalPieceSquare(const PositionState& pos)
 {
-	_pos_value += pos.get_pst_value();
+	_posValue += pos.getPstValue();
 }
 
-void PositionEvaluation::eval_mobility(const PositionState& pos)
+void PositionEvaluation::evalMobility(const PositionState& pos)
 {
 }
 
-unsigned int PositionEvaluation::hash_function(const ZobKey& material_zob_key) const
+unsigned int PositionEvaluation::hashFunction(const ZobKey& materialZobKey) const
 {
-	return (material_zob_key % MATERIAL_HASH_SIZE);
-       // TODO: Change the impl to return first log(MATERIAL_HASH_SIZE) + 1 bits of material_zob_key	
+	return (materialZobKey % MATERIAL_HASH_SIZE);
+       // TODO: Change the impl to return first log(MATERIAL_HASH_SIZE) + 1 bits of materialZobKey	
 
 }
 

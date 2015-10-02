@@ -26,71 +26,71 @@ void MoveGenerator::destroy()
 }
 
 MoveGenerator::MoveGenerator() :
-	_possible_moves(new PossibleMoves())
+	_possibleMoves(new PossibleMoves())
 {
 
 }
 
-void MoveGenerator::generate_white_moves(const PositionState& pos, moves_array& generated_moves)
+void MoveGenerator::generateWhiteMoves(const PositionState& pos, movesArray& generatedMoves)
 {
-	assert(pos.white_to_play());
+	assert(pos.whiteToPlay());
 	for (unsigned int from = A1; from <= H8; ++from) {
-		switch(pos.get_board()[from / 8][from % 8]) {
+		switch(pos.getBoard()[from / 8][from % 8]) {
 			case PAWN_WHITE:
-				generate_pawn_moves((Square) from, WHITE, pos, generated_moves);
+				generatePawnMoves((Square) from, WHITE, pos, generatedMoves);
 				break;
 			case KNIGHT_WHITE:
-				generate_knight_moves((Square) from, pos, generated_moves);
+				generateKnightMoves((Square) from, pos, generatedMoves);
 				break;
 			case BISHOP_WHITE:
-				generate_diag_a1h8_moves((Square) from, pos, generated_moves);
-				generate_diag_a8h1_moves((Square) from, pos, generated_moves);
+				generateDiagA1h8Moves((Square) from, pos, generatedMoves);
+				generateDiagA8h1Moves((Square) from, pos, generatedMoves);
 				break;
 			case ROOK_WHITE:
-				generate_rank_moves((Square) from, pos, generated_moves);
-				generate_file_moves((Square) from, pos, generated_moves);
+				generateRankMoves((Square) from, pos, generatedMoves);
+				generateFileMoves((Square) from, pos, generatedMoves);
 				break;
 			case QUEEN_WHITE:
-				generate_diag_a1h8_moves((Square) from, pos, generated_moves);
-				generate_diag_a8h1_moves((Square) from, pos, generated_moves);
-				generate_rank_moves((Square) from, pos, generated_moves);
-				generate_file_moves((Square) from, pos, generated_moves);
+				generateDiagA1h8Moves((Square) from, pos, generatedMoves);
+				generateDiagA8h1Moves((Square) from, pos, generatedMoves);
+				generateRankMoves((Square) from, pos, generatedMoves);
+				generateFileMoves((Square) from, pos, generatedMoves);
 				break;
 			case KING_WHITE:
-				generate_king_moves((Square) from, pos, generated_moves);
+				generateKingMoves((Square) from, pos, generatedMoves);
 			default:
 				break;
 		}
 	}
 }
 
-void MoveGenerator::generate_black_moves(const PositionState& pos, moves_array& generated_moves)
+void MoveGenerator::generateBlackMoves(const PositionState& pos, movesArray& generatedMoves)
 {
-	assert(!pos.white_to_play());
+	assert(!pos.whiteToPlay());
 	for (unsigned int from = A1; from <= H8; ++from) {
-		switch(pos.get_board()[from / 8][from % 8]) {
+		switch(pos.getBoard()[from / 8][from % 8]) {
 			case PAWN_BLACK:
-				generate_pawn_moves((Square) from, BLACK, pos, generated_moves);
+				generatePawnMoves((Square) from, BLACK, pos, generatedMoves);
 				break;
 			case KNIGHT_BLACK:
-				generate_knight_moves((Square) from, pos, generated_moves);
+				generateKnightMoves((Square) from, pos, generatedMoves);
 				break;
 			case BISHOP_BLACK:
-				generate_diag_a1h8_moves((Square) from, pos, generated_moves);
-				generate_diag_a8h1_moves((Square) from, pos, generated_moves);
+				generateDiagA1h8Moves((Square) from, pos, generatedMoves);
+				generateDiagA8h1Moves((Square) from, pos, generatedMoves);
 				break;
 			case ROOK_BLACK:
-				generate_rank_moves((Square) from, pos, generated_moves);
-				generate_file_moves((Square) from, pos, generated_moves);
+				generateRankMoves((Square) from, pos, generatedMoves);
+				generateFileMoves((Square) from, pos, generatedMoves);
 				break;
 			case QUEEN_BLACK:
-				generate_diag_a1h8_moves((Square) from, pos, generated_moves);
-				generate_diag_a8h1_moves((Square) from, pos, generated_moves);
-				generate_rank_moves((Square) from, pos, generated_moves);
-				generate_file_moves((Square) from, pos, generated_moves);
+				generateDiagA1h8Moves((Square) from, pos, generatedMoves);
+				generateDiagA8h1Moves((Square) from, pos, generatedMoves);
+				generateRankMoves((Square) from, pos, generatedMoves);
+				generateFileMoves((Square) from, pos, generatedMoves);
 				break;
 			case KING_BLACK:
-				generate_king_moves((Square) from, pos, generated_moves);
+				generateKingMoves((Square) from, pos, generatedMoves);
 			default:
 				break;
 		}
@@ -98,55 +98,55 @@ void MoveGenerator::generate_black_moves(const PositionState& pos, moves_array& 
 }
 
 // Generates all legal pawn moves for color clr from square from
-// and adds these moves to generated_moves data member
-void MoveGenerator::generate_pawn_moves(Square from, Color clr, const PositionState& pos, moves_array& generated_moves)
+// and adds these moves to generatedMoves data member
+void MoveGenerator::generatePawnMoves(Square from, Color clr, const PositionState& pos, movesArray& generatedMoves)
 {
 	if (clr == WHITE) {
-		const std::vector<Square>& white_pawn_moves =  _possible_moves->possible_white_pawn_moves(from);
+		const std::vector<Square>& whitePawnMoves =  _possibleMoves->possibleWhitePawnMoves(from);
 		if(from >= A7 && from <= H7) {
-			for (std::size_t move_count = 0; move_count < white_pawn_moves.size(); ++move_count) {
-				move_info current_move = {from, white_pawn_moves[move_count], KNIGHT_WHITE};
-				if (pos.move_is_legal(current_move)) {
-					generated_moves.push_back(current_move);
-					current_move.promoted = BISHOP_WHITE;
-					generated_moves.push_back(current_move);
-					current_move.promoted = ROOK_WHITE;
-					generated_moves.push_back(current_move);
-					current_move.promoted = QUEEN_WHITE;
-					generated_moves.push_back(current_move);
+			for (std::size_t moveCount = 0; moveCount < whitePawnMoves.size(); ++moveCount) {
+				moveInfo currentMove = {from, whitePawnMoves[moveCount], KNIGHT_WHITE};
+				if (pos.moveIsLegal(currentMove)) {
+					generatedMoves.push_back(currentMove);
+					currentMove.promoted = BISHOP_WHITE;
+					generatedMoves.push_back(currentMove);
+					currentMove.promoted = ROOK_WHITE;
+					generatedMoves.push_back(currentMove);
+					currentMove.promoted = QUEEN_WHITE;
+					generatedMoves.push_back(currentMove);
 				}
 		       }
 		}
 		else {
-			for (std::size_t move_count = 0; move_count < white_pawn_moves.size(); ++move_count) {
-				move_info current_move = {from, white_pawn_moves[move_count], ETY_SQUARE};
-				if (pos.move_is_legal(current_move)) {
-					generated_moves.push_back(current_move);
+			for (std::size_t moveCount = 0; moveCount < whitePawnMoves.size(); ++moveCount) {
+				moveInfo currentMove = {from, whitePawnMoves[moveCount], ETY_SQUARE};
+				if (pos.moveIsLegal(currentMove)) {
+					generatedMoves.push_back(currentMove);
 				}
 			}
 		}
 	}
 	else {
-		const std::vector<Square>& black_pawn_moves = _possible_moves->possible_black_pawn_moves(from);
+		const std::vector<Square>& blackPawnMoves = _possibleMoves->possibleBlackPawnMoves(from);
 		if(from >= A2 && from <= H2) {
-			for (std::size_t move_count = 0; move_count < black_pawn_moves.size(); ++move_count) {
-				move_info current_move = {from, black_pawn_moves[move_count], KNIGHT_BLACK};
-				if (pos.move_is_legal(current_move)) {
-					generated_moves.push_back(current_move);
-					current_move.promoted = BISHOP_BLACK;
-					generated_moves.push_back(current_move);
-					current_move.promoted = ROOK_BLACK;
-					generated_moves.push_back(current_move);
-					current_move.promoted = QUEEN_BLACK;
-					generated_moves.push_back(current_move);
+			for (std::size_t moveCount = 0; moveCount < blackPawnMoves.size(); ++moveCount) {
+				moveInfo currentMove = {from, blackPawnMoves[moveCount], KNIGHT_BLACK};
+				if (pos.moveIsLegal(currentMove)) {
+					generatedMoves.push_back(currentMove);
+					currentMove.promoted = BISHOP_BLACK;
+					generatedMoves.push_back(currentMove);
+					currentMove.promoted = ROOK_BLACK;
+					generatedMoves.push_back(currentMove);
+					currentMove.promoted = QUEEN_BLACK;
+					generatedMoves.push_back(currentMove);
 				}
 		       }
 		}
 		else {
-			for (std::size_t move_count = 0; move_count < black_pawn_moves.size(); ++move_count) {
-				move_info current_move = {from, black_pawn_moves[move_count], ETY_SQUARE};
-				if (pos.move_is_legal(current_move)) {
-					generated_moves.push_back(current_move);
+			for (std::size_t moveCount = 0; moveCount < blackPawnMoves.size(); ++moveCount) {
+				moveInfo currentMove = {from, blackPawnMoves[moveCount], ETY_SQUARE};
+				if (pos.moveIsLegal(currentMove)) {
+					generatedMoves.push_back(currentMove);
 				}
 			}
 		}
@@ -154,134 +154,134 @@ void MoveGenerator::generate_pawn_moves(Square from, Color clr, const PositionSt
 }
 
 // Generates all legal knight moves from square from
-// and adds these moves to generated_moves data member
-void MoveGenerator::generate_knight_moves(Square from, const PositionState& pos, moves_array& generated_moves)
+// and adds these moves to generatedMoves data member
+void MoveGenerator::generateKnightMoves(Square from, const PositionState& pos, movesArray& generatedMoves)
 {
-	const std::vector<Square>& knight_moves = _possible_moves->possible_knight_moves(from);
-	for (std::size_t move_count  = 0; move_count < knight_moves.size(); ++move_count) {
-		move_info current_move = {from, knight_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& knightMoves = _possibleMoves->possibleKnightMoves(from);
+	for (std::size_t moveCount  = 0; moveCount < knightMoves.size(); ++moveCount) {
+		moveInfo currentMove = {from, knightMoves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
 	}
 }
 
 // Generates all legal king moves from square from
-// and adds these moves to generated_moves data member
-void MoveGenerator::generate_king_moves(Square from, const PositionState& pos, moves_array& generated_moves)
+// and adds these moves to generatedMoves data member
+void MoveGenerator::generateKingMoves(Square from, const PositionState& pos, movesArray& generatedMoves)
 {
-	const std::vector<Square>& king_moves = _possible_moves->possible_king_moves(from);
-	for (std::size_t move_count  = 0; move_count < king_moves.size(); ++move_count) {
-		move_info current_move = {from, king_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& kingMoves = _possibleMoves->possibleKingMoves(from);
+	for (std::size_t moveCount  = 0; moveCount < kingMoves.size(); ++moveCount) {
+		moveInfo currentMove = {from, kingMoves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
 	}
 }
 
 // Generates all legal rank moves from square from
-// and adds these moves to generated_moves data member
+// and adds these moves to generatedMoves data member
 // This function should be used for rook and queen
-void MoveGenerator::generate_rank_moves(Square from, const PositionState& pos, moves_array& generated_moves)
+void MoveGenerator::generateRankMoves(Square from, const PositionState& pos, movesArray& generatedMoves)
 {
-	const std::vector<Square>& left_rank_moves = _possible_moves->possible_left_rank_moves(from);
-	for(std::size_t move_count = 0; move_count < left_rank_moves.size(); ++move_count) {
-		move_info current_move = {from, left_rank_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& leftRankMoves = _possibleMoves->possibleLeftRankMoves(from);
+	for(std::size_t moveCount = 0; moveCount < leftRankMoves.size(); ++moveCount) {
+		moveInfo currentMove = {from, leftRankMoves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
-	const std::vector<Square>& right_rank_moves = _possible_moves->possible_right_rank_moves(from);
-	for(std::size_t move_count = 0; move_count < right_rank_moves.size(); ++move_count) {
-		move_info current_move = {from, right_rank_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& rightRankMoves = _possibleMoves->possibleRightRankMoves(from);
+	for(std::size_t moveCount = 0; moveCount < rightRankMoves.size(); ++moveCount) {
+		moveInfo currentMove = {from, rightRankMoves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
 }
 
 // Generates all legal file moves from square from
-// and adds these moves to generated_moves data member
+// and adds these moves to generatedMoves data member
 // This function should be used for rook and queen
-void MoveGenerator::generate_file_moves(Square from, const PositionState& pos, moves_array& generated_moves)
+void MoveGenerator::generateFileMoves(Square from, const PositionState& pos, movesArray& generatedMoves)
 {
-	const std::vector<Square>& up_file_moves = _possible_moves->possible_up_file_moves(from);
-	for(std::size_t move_count = 0; move_count < up_file_moves.size(); ++move_count) {
-		move_info current_move = {from, up_file_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& upFileMoves = _possibleMoves->possibleUpFileMoves(from);
+	for(std::size_t moveCount = 0; moveCount < upFileMoves.size(); ++moveCount) {
+		moveInfo currentMove = {from, upFileMoves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
-	const std::vector<Square>& down_file_moves = _possible_moves->possible_down_file_moves(from);
-	for(std::size_t move_count = 0; move_count < down_file_moves.size(); ++move_count) {
-		move_info current_move = {from, down_file_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& downFileMoves = _possibleMoves->possibleDownFileMoves(from);
+	for(std::size_t moveCount = 0; moveCount < downFileMoves.size(); ++moveCount) {
+		moveInfo currentMove = {from, downFileMoves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
 }
 
 // Generates all legal A1H8 diagonal moves from square from
-// and adds these moves to generated_moves data member
+// and adds these moves to generatedMoves data member
 // This function should be used for bishop and queen
-void MoveGenerator::generate_diag_a1h8_moves(Square from, const PositionState& pos, moves_array& generated_moves)
+void MoveGenerator::generateDiagA1h8Moves(Square from, const PositionState& pos, movesArray& generatedMoves)
 {
-	const std::vector<Square>& up_diag_a1h8_moves = _possible_moves->possible_up_diag_a1h8_moves(from);
-	for(std::size_t move_count = 0; move_count < up_diag_a1h8_moves.size(); ++move_count) {
-		move_info current_move = {from, up_diag_a1h8_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& upDiagA1h8Moves = _possibleMoves->possibleUpDiagA1h8Moves(from);
+	for(std::size_t moveCount = 0; moveCount < upDiagA1h8Moves.size(); ++moveCount) {
+		moveInfo currentMove = {from, upDiagA1h8Moves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
-	const std::vector<Square>& down_diag_a1h8_moves = _possible_moves->possible_down_diag_a1h8_moves(from);
-	for(std::size_t move_count = 0; move_count < down_diag_a1h8_moves.size(); ++move_count) {
-		move_info current_move = {from, down_diag_a1h8_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& downDiagA1h8Moves = _possibleMoves->possibleDownDiagA1h8Moves(from);
+	for(std::size_t moveCount = 0; moveCount < downDiagA1h8Moves.size(); ++moveCount) {
+		moveInfo currentMove = {from, downDiagA1h8Moves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
 }
 
 // Generates all legal A8H1 diagonal moves from square from
-// and adds these moves to generated_moves data member
+// and adds these moves to generatedMoves data member
 // This function should be used for bishop and queen
-void MoveGenerator::generate_diag_a8h1_moves(Square from, const PositionState& pos, moves_array& generated_moves)
+void MoveGenerator::generateDiagA8h1Moves(Square from, const PositionState& pos, movesArray& generatedMoves)
 {
-	const std::vector<Square>& up_diag_a8h1_moves = _possible_moves->possible_up_diag_a8h1_moves(from);
-	for(std::size_t move_count = 0; move_count < up_diag_a8h1_moves.size(); ++move_count) {
-		move_info current_move = {from, up_diag_a8h1_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& upDiagA8h1Moves = _possibleMoves->possibleUpDiagA8h1Moves(from);
+	for(std::size_t moveCount = 0; moveCount < upDiagA8h1Moves.size(); ++moveCount) {
+		moveInfo currentMove = {from, upDiagA8h1Moves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
-	const std::vector<Square>& down_diag_a8h1_moves = _possible_moves->possible_down_diag_a8h1_moves(from);
-	for(std::size_t move_count = 0; move_count < down_diag_a8h1_moves.size(); ++move_count) {
-		move_info current_move = {from, down_diag_a8h1_moves[move_count], ETY_SQUARE};
-		if (pos.move_is_legal(current_move)) {
-			generated_moves.push_back(current_move);
+	const std::vector<Square>& downDiagA8h1Moves = _possibleMoves->possibleDownDiagA8h1Moves(from);
+	for(std::size_t moveCount = 0; moveCount < downDiagA8h1Moves.size(); ++moveCount) {
+		moveInfo currentMove = {from, downDiagA8h1Moves[moveCount], ETY_SQUARE};
+		if (pos.moveIsLegal(currentMove)) {
+			generatedMoves.push_back(currentMove);
 		}
-		if (pos.get_board()[current_move.to / 8][current_move.to % 8] != ETY_SQUARE) {
+		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
 			break;
 		}
 	}
@@ -289,7 +289,7 @@ void MoveGenerator::generate_diag_a8h1_moves(Square from, const PositionState& p
 
 MoveGenerator::~MoveGenerator()
 {
-	delete _possible_moves;
+	delete _possibleMoves;
 }
 
 }

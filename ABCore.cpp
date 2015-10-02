@@ -7,240 +7,240 @@
 
 namespace pismo
 {
-move_info ABCore::think(PositionState& pos, uint16_t depth)
+moveInfo ABCore::think(PositionState& pos, uint16_t depth)
 {
-	moves_array& possible_moves = MemPool::instance()->get_moves_array(depth);
-	possible_moves.clear();
-	pos.white_to_play() ? MoveGenerator::instance()->generate_white_moves(pos, possible_moves) :
-		MoveGenerator::instance()->generate_black_moves(pos, possible_moves);
+	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
+	possibleMoves.clear();
+	pos.whiteToPlay() ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
+		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
 
-	if (possible_moves.empty()) {
+	if (possibleMoves.empty()) {
 		return MATE_MOVE;
 	}
 
-	if (possible_moves.size() == 1) {
-		return possible_moves[0];
+	if (possibleMoves.size() == 1) {
+		return possibleMoves[0];
 	}
 
-	move_info move;
+	moveInfo move;
 	int16_t score;
-	if (pos.white_to_play()) {
+	if (pos.whiteToPlay()) {
 		score = -MAX_SCORE;
-		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
-			pos.make_move(possible_moves[i]);
-			int16_t s = alpha_beta_iterative(pos, depth - 1, score, MAX_SCORE, pos.white_to_play());
-			pos.undo_move();
+		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = alphaBetaIterative(pos, depth - 1, score, MAX_SCORE, pos.whiteToPlay());
+			pos.undoMove();
 			if (s > score) {
 				score = s;
-				move = possible_moves[i];
+				move = possibleMoves[i];
 			}
 		}
 	}
 	else {
 		score = MAX_SCORE;
-		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
-			pos.make_move(possible_moves[i]);
-			int16_t s = alpha_beta_iterative(pos, depth - 1, -MAX_SCORE, score, pos.white_to_play());
-			pos.undo_move();
+		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = alphaBetaIterative(pos, depth - 1, -MAX_SCORE, score, pos.whiteToPlay());
+			pos.undoMove();
 			if (s < score) {
 				score = s;
-				move = possible_moves[i];
+				move = possibleMoves[i];
 			}
 		}
 	}
 	
-	eval_info eval(score, pos.get_zob_key(), depth);
-	_trans_table->push(eval);
+	evalInfo eval(score, pos.getZobKey(), depth);
+	_transTable->push(eval);
 
 	return move;
 }
 
-int16_t ABCore::alpha_beta_iterative(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool white_to_play)
+int16_t ABCore::alphaBetaIterative(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool whiteToPlay)
 {
 	int16_t score;
-	uint16_t current_depth = 0;
-	int16_t current_alpha = alpha;
-	int16_t current_beta = beta;
-	uint16_t try_count = 0;
-	while (current_depth <= depth) {
-		score = alpha_beta(pos, current_depth, current_alpha, current_beta, white_to_play);
-		if (score <= current_alpha) {
-			if (try_count < MAX_TRY) {
-				current_alpha -= (try_count + 1) * DELTA;
-				++try_count;
+	uint16_t currentDepth = 0;
+	int16_t currentAlpha = alpha;
+	int16_t currentBeta = beta;
+	uint16_t tryCount = 0;
+	while (currentDepth <= depth) {
+		score = alphaBeta(pos, currentDepth, currentAlpha, currentBeta, whiteToPlay);
+		if (score <= currentAlpha) {
+			if (tryCount < MAX_TRY) {
+				currentAlpha -= (tryCount + 1) * DELTA;
+				++tryCount;
 			}
 			else {
-				current_alpha = -MAX_SCORE;
+				currentAlpha = -MAX_SCORE;
 			}
 		}
-		else if (score >= current_beta) {
-			if (try_count < MAX_TRY) {
-				current_beta += (try_count + 1) * DELTA;
-				++try_count;
+		else if (score >= currentBeta) {
+			if (tryCount < MAX_TRY) {
+				currentBeta += (tryCount + 1) * DELTA;
+				++tryCount;
 			}
 			else {
-				current_beta = MAX_SCORE;
+				currentBeta = MAX_SCORE;
 			}
 		}
 		else {
-			if (current_depth >= ASP_DEPTH) { 
-				current_alpha = score - ASP_WINDOW;
-				current_beta = score + ASP_WINDOW;
+			if (currentDepth >= ASP_DEPTH) { 
+				currentAlpha = score - ASP_WINDOW;
+				currentBeta = score + ASP_WINDOW;
 			}
-			try_count = 0;
-			++current_depth;
+			tryCount = 0;
+			++currentDepth;
 		}
 	}
 	
 	return score;
 }
 
-int16_t ABCore::alpha_beta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool white_to_play)
+int16_t ABCore::alphaBeta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool whiteToPlay)
 {
 	if (depth == 0) {
-		return quiescence_search(pos, depth, alpha, beta, white_to_play);
+		return quiescenceSearch(pos, depth, alpha, beta, whiteToPlay);
 	}
 
-	eval_info eval;
-	if (_trans_table->contains(pos, eval) && eval.depth >= depth) {
-		return eval.pos_value;
+	evalInfo eval;
+	if (_transTable->contains(pos, eval) && eval.depth >= depth) {
+		return eval.posValue;
 	}
 
-	moves_array& possible_moves = MemPool::instance()->get_moves_array(depth);
-	possible_moves.clear();
-	white_to_play ? MoveGenerator::instance()->generate_white_moves(pos, possible_moves) :
-		MoveGenerator::instance()->generate_black_moves(pos, possible_moves);
+	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
+	possibleMoves.clear();
+	whiteToPlay ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
+		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
 
 	int16_t score;
-	int16_t current_alpha = alpha;
-	int16_t current_beta = beta;
-	if (white_to_play) {
+	int16_t currentAlpha = alpha;
+	int16_t currentBeta = beta;
+	if (whiteToPlay) {
 		score = -MAX_SCORE;
-		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
-			pos.make_move(possible_moves[i]);
-			int16_t s = alpha_beta(pos, depth - 1, current_alpha, current_beta, !white_to_play);
-			pos.undo_move();
+		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = alphaBeta(pos, depth - 1, currentAlpha, currentBeta, !whiteToPlay);
+			pos.undoMove();
 			if (s > score) {
 				score = s;
 			}
-			if (score > current_alpha) {
-				current_alpha = score;
+			if (score > currentAlpha) {
+				currentAlpha = score;
 			}
-			if (score >= current_beta) {
+			if (score >= currentBeta) {
 				break;
 			}
 		}
 	}
 	else {
 		score = MAX_SCORE;
-		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
-			pos.make_move(possible_moves[i]);
-			int16_t s = alpha_beta(pos, depth - 1, current_alpha, current_beta, !white_to_play);
-			pos.undo_move();
+		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = alphaBeta(pos, depth - 1, currentAlpha, currentBeta, !whiteToPlay);
+			pos.undoMove();
 			if (s < score) {
 				score = s;
 			}
-			if (score < current_beta) {
-				current_beta = score;
+			if (score < currentBeta) {
+				currentBeta = score;
 			}
-			if (score <= current_alpha) {
+			if (score <= currentAlpha) {
 				break;
 			}
 		}
 	}
 	
 	if (score > alpha && score < beta) {
-		eval.pos_value = score;
-		eval.zob_key = pos.get_zob_key();
+		eval.posValue = score;
+		eval.zobKey = pos.getZobKey();
 		eval.depth = depth;
-		_trans_table->force_push(eval);
+		_transTable->forcePush(eval);
 	}
 
 	return score;
 }
 
-int16_t ABCore::quiescence_search(PositionState& pos, int16_t qs_depth, int16_t alpha, int16_t beta, bool white_to_play)
+int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t alpha, int16_t beta, bool whiteToPlay)
 {
 	//TODO : Consider check evasions
-	eval_info eval;
+	evalInfo eval;
 	int16_t val;
-	if (_trans_table->contains(pos, eval) && eval.depth >= 0) {
-		val = eval.pos_value;
+	if (_transTable->contains(pos, eval) && eval.depth >= 0) {
+		val = eval.posValue;
 	}
 	else {
-		val = _pos_eval->evaluate(pos);
-		eval.pos_value = val;
-		eval.zob_key = pos.get_zob_key();
+		val = _posEval->evaluate(pos);
+		eval.posValue = val;
+		eval.zobKey = pos.getZobKey();
 		eval.depth = 0;
-		_trans_table->force_push(eval);
+		_transTable->forcePush(eval);
 	}
 
-	if (qs_depth == -MAX_QUIET_DEPTH) {
+	if (qsDepth == -MAX_QUIET_DEPTH) {
 		return val;
 	}
 
-	int16_t current_alpha = alpha;
-	int16_t current_beta = beta;
-	if (white_to_play) {	
-		if (val >= current_beta) {
+	int16_t currentAlpha = alpha;
+	int16_t currentBeta = beta;
+	if (whiteToPlay) {	
+		if (val >= currentBeta) {
 			return val;
 		}
 	
-		if (val > current_alpha) {
-			current_alpha = val;
+		if (val > currentAlpha) {
+			currentAlpha = val;
 		}
-		moves_array possible_moves; //TODO: Implement memory pool for quiescence search
-		//MoveGenerator::instance()->generate_white_non_quiet_moves(pos, possible_moves);
+		movesArray possibleMoves; //TODO: Implement memory pool for quiescence search
+		//MoveGenerator::instance()->generateWhiteNonQuietMoves(pos, possibleMoves);
 		int16_t score;
-		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
-			pos.make_move(possible_moves[i]);
-			score = quiescence_search(pos, qs_depth - 1, current_alpha, current_beta, !white_to_play);
-			pos.undo_move();
-			if (score > current_alpha) {
-				current_alpha = score;
+		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
+			pos.makeMove(possibleMoves[i]);
+			score = quiescenceSearch(pos, qsDepth - 1, currentAlpha, currentBeta, !whiteToPlay);
+			pos.undoMove();
+			if (score > currentAlpha) {
+				currentAlpha = score;
 			}
-			if (score >= current_beta) {
+			if (score >= currentBeta) {
 				break;
 			} 
 		}
-		return current_alpha;	
+		return currentAlpha;	
 	}
 	else {
-		if (val <= current_alpha) {
+		if (val <= currentAlpha) {
 			return val;
 		}
 	
-		if (val < current_beta) {
-			current_beta = val;
+		if (val < currentBeta) {
+			currentBeta = val;
 		}
-		moves_array possible_moves; //TODO: Implement memory pool for quiescence search
-		//MoveGenerator::instance()->generate_black_non_quiet_moves(pos, possible_moves);
+		movesArray possibleMoves; //TODO: Implement memory pool for quiescence search
+		//MoveGenerator::instance()->generateBlackNonQuietMoves(pos, possibleMoves);
 		int16_t score;
-		for (uint16_t i = 0; i < possible_moves.size(); ++i) {
-			pos.make_move(possible_moves[i]);
-			score = quiescence_search(pos, qs_depth - 1, current_alpha, current_beta, !white_to_play);
-			pos.undo_move();
-			if (score < current_beta) {
-				current_beta = score;
+		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
+			pos.makeMove(possibleMoves[i]);
+			score = quiescenceSearch(pos, qsDepth - 1, currentAlpha, currentBeta, !whiteToPlay);
+			pos.undoMove();
+			if (score < currentBeta) {
+				currentBeta = score;
 			}
-			if (score <= current_alpha) {
+			if (score <= currentAlpha) {
 				break;
 			} 
 		}
-		return current_beta;	
+		return currentBeta;	
 	}
 }
 
 ABCore::ABCore() :
-_pos_eval(new PositionEvaluation()),
-_trans_table(new TranspositionTable())
+_posEval(new PositionEvaluation()),
+_transTable(new TranspositionTable())
 {
 }
 
 ABCore::~ABCore()
 {
-	delete _pos_eval;
-	delete _trans_table;
+	delete _posEval;
+	delete _transTable;
 }
 
 } 	

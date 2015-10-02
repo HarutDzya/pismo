@@ -46,92 +46,92 @@ class BitboardImpl
 public: 
 	BitboardImpl();
 	
-	Bitboard square_to_bitboard(Square sq) const;
-	Bitboard square_to_bitboard_transpose(Square sq) const;
-	Bitboard square_to_bitboard_diag_a1h8(Square sq) const;
-	Bitboard square_to_bitboard_diag_a8h1(Square sq) const;
+	Bitboard squareToBitboard(Square sq) const;
+	Bitboard squareToBitboardTranspose(Square sq) const;
+	Bitboard squareToBitboardDiagA1h8(Square sq) const;
+	Bitboard squareToBitboardDiagA8h1(Square sq) const;
 	
-	Bitboard get_legal_rank_moves(Square from, const Bitboard& occupied_squares) const;
-	Bitboard get_legal_file_moves(Square from, const Bitboard& occupied_squares) const;
-	Bitboard get_legal_diag_a1h8_moves(Square from, const Bitboard& occupied_squares) const;
-	Bitboard get_legal_diag_a8h1_moves(Square from, const Bitboard& occupied_squares) const;
+	Bitboard getLegalRankMoves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getLegalFileMoves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getLegalDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getLegalDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const;
 
-	Bitboard get_legal_knight_moves(Square from) const;
-	Bitboard get_legal_king_moves(Square from) const;
-	Bitboard get_legal_pawn_white_attacking_moves(Square from) const;
-	Bitboard get_legal_pawn_black_attacking_moves(Square from) const;
+	Bitboard getLegalKnightMoves(Square from) const;
+	Bitboard getLegalKingMoves(Square from) const;
+	Bitboard getLegalPawnWhiteAttackingMoves(Square from) const;
+	Bitboard getLegalPawnBlackAttackingMoves(Square from) const;
 
-	Bitboard get_pawn_white_checking_pos(Square king_pos) const;
-	Bitboard get_pawn_black_checking_pos(Square king_pos) const;
+	Bitboard getPawnWhiteCheckingPos(Square kingPos) const;
+	Bitboard getPawnBlackCheckingPos(Square kingPos) const;
 
-	const pin_info& get_rank_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
-	const pin_info& get_file_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
-	const pin_info& get_diag_a1h8_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
-	const pin_info& get_diag_a8h1_pin_info(Square king_sq, const Bitboard& occupied_squares) const;
+	const pinInfo& getRankPinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const pinInfo& getFilePinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const pinInfo& getDiagA1h8PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const pinInfo& getDiagA8h1PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
 
-	void get_en_passant_pin_info(Square from, Square to, const Bitboard& occupied_squares, Square& left_pos, Square& right_pos) const;
+	void getEnPassantPinInfo(Square from, Square to, const Bitboard& occupiedSquares, Square& leftPos, Square& rightPos) const;
 
 
-	Bitboard bitboard_transpose_to_bitboard(const Bitboard& board_transpose) const;
-	Bitboard bitboard_diag_a1h8_to_bitboard(const Bitboard& board_diag_a1h8) const;
-	Bitboard bitboard_diag_a8h1_to_bitboard(const Bitboard& board_diag_a8h1) const;
+	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
+	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
+	Bitboard bitboardDiagA8h1ToBitboard(const Bitboard& boardDiagA8h1) const;
 
 //private member functions
 private:
-	Square square_to_square_transpose(Square sq) const;
-	Square square_to_square_a1h8(Square sq) const;
-	Square square_to_square_a8h1(Square sq) const;
+	Square squareToSquareTranspose(Square sq) const;
+	Square squareToSquareA1h8(Square sq) const;
+	Square squareToSquareA8h1(Square sq) const;
 
-	void init_square_to_bitboard();
-	void init_square_to_bitboard_transpose();
-	void init_square_to_bitboard_a1h8();
-	void init_square_to_bitboard_a8h1();
+	void initSquareToBitboard();
+	void initSquareToBitboardTranspose();
+	void initSquareToBitboardA1h8();
+	void initSquareToBitboardA8h1();
 
-	void init_move_pos_board_rank();
-	void init_move_pos_board_file();
-	void init_move_pos_board_a1h8();
-	void init_move_pos_board_a8h1();
+	void initMovePosBoardRank();
+	void initMovePosBoardFile();
+	void initMovePosBoardA1h8();
+	void initMovePosBoardA8h1();
 
-	void init_move_pos_board_knight();
-	void init_move_pos_board_king();
-	void init_attacking_pos_board_pawn_white();
-	void init_attacking_pos_board_pawn_black();
+	void initMovePosBoardKnight();
+	void initMovePosBoardKing();
+	void initAttackingPosBoardPawnWhite();
+	void initAttackingPosBoardPawnBlack();
 
-	void init_rank_pin_info();
-	void init_file_pin_info();
-	void init_diag_a1h8_pin_info();
-	void init_diag_a8h1_pin_info();
+	void initRankPinInfo();
+	void initFilePinInfo();
+	void initDiagA1h8PinInfo();
+	void initDiagA8h1PinInfo();
 
-	Bitrank move_pos_rank(unsigned int position, Bitrank rank_occup) const;
-	void set_rank_pin_info(unsigned int position, Bitrank rank_occup, int& left_slide_pos, int& right_slide_pos, Bitrank & left_pin, Bitrank& right_pin) const;
-	int find_lsb_set(Bitrank rank) const;
-	int find_msb_set(Bitrank rank) const;
+	Bitrank movePosRank(unsigned int position, Bitrank rankOccup) const;
+	void setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank & leftPin, Bitrank& rightPin) const;
+	int findLsbSet(Bitrank rank) const;
+	int findMsbSet(Bitrank rank) const;
 	
-	Bitboard rotate_bitboard_right(const Bitboard& board, unsigned int num) const;
+	Bitboard rotateBitboardRight(const Bitboard& board, unsigned int num) const;
 
 // date members
 private:
 
-	Bitboard _square_to_bitboard[NUMBER_OF_SQUARES];
-	Bitboard _square_to_bitboard_transpose[NUMBER_OF_SQUARES];
-	Bitboard _square_to_bitboard_a1h8[NUMBER_OF_SQUARES];
-	Bitboard _square_to_bitboard_a8h1[NUMBER_OF_SQUARES];
+	Bitboard _squareToBitboard[NUMBER_OF_SQUARES];
+	Bitboard _squareToBitboardTranspose[NUMBER_OF_SQUARES];
+	Bitboard _squareToBitboardA1h8[NUMBER_OF_SQUARES];
+	Bitboard _squareToBitboardA8h1[NUMBER_OF_SQUARES];
 
 	// TODO: For optimization purposes change arrays to [64][64]	
-	Bitboard _move_pos_board_rank[NUMBER_OF_SQUARES][256];
-	Bitboard _move_pos_board_file[NUMBER_OF_SQUARES][256];
-	Bitboard _move_pos_board_diag_a1h8[NUMBER_OF_SQUARES][256];
-	Bitboard _move_pos_board_diag_a8h1[NUMBER_OF_SQUARES][256];
+	Bitboard _movePosBoardRank[NUMBER_OF_SQUARES][256];
+	Bitboard _movePosBoardFile[NUMBER_OF_SQUARES][256];
+	Bitboard _movePosBoardDiagA1h8[NUMBER_OF_SQUARES][256];
+	Bitboard _movePosBoardDiagA8h1[NUMBER_OF_SQUARES][256];
 
-	Bitboard _move_pos_board_knight[NUMBER_OF_SQUARES];
-	Bitboard _move_pos_board_king[NUMBER_OF_SQUARES];
-	Bitboard _attacking_pos_board_pawn_white[NUMBER_OF_SQUARES - 16];
-	Bitboard _attacking_pos_board_pawn_black[NUMBER_OF_SQUARES - 16];
+	Bitboard _movePosBoardKnight[NUMBER_OF_SQUARES];
+	Bitboard _movePosBoardKing[NUMBER_OF_SQUARES];
+	Bitboard _attackingPosBoardPawnWhite[NUMBER_OF_SQUARES - 16];
+	Bitboard _attackingPosBoardPawnBlack[NUMBER_OF_SQUARES - 16];
 
-	pin_info _rank_pin_info[NUMBER_OF_SQUARES][256];
-	pin_info _file_pin_info[NUMBER_OF_SQUARES][256];
-	pin_info _diag_a1h8_pin_info[NUMBER_OF_SQUARES][256];
-	pin_info _diag_a8h1_pin_info[NUMBER_OF_SQUARES][256];
+	pinInfo _rankPinInfo[NUMBER_OF_SQUARES][256];
+	pinInfo _filePinInfo[NUMBER_OF_SQUARES][256];
+	pinInfo _diagA1h8PinInfo[NUMBER_OF_SQUARES][256];
+	pinInfo _diagA8h1PinInfo[NUMBER_OF_SQUARES][256];
 };
 }
 

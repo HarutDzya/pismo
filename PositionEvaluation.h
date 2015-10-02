@@ -27,13 +27,13 @@ public:
 	 * - king safety ( hold it for later releases ?)
 	 *
 	 * returns value in centi pawns.
-	 * (_pos_value) / 100:
+	 * (_posValue) / 100:
 	 *        == -100                 - black wins (mate?)
-	 *        is in (-50, 0) range    - the smaller _pos_value the better black postion is
+	 *        is in (-50, 0) range    - the smaller _posValue the better black postion is
 	 *        < -5                    - 99% GMs can win playing with black pieces (advantage of more than 5 pawns)
 	 *        == 0                    - position is equa
 	 *        > 5                     - 99% GMs can win playing with black pieces (advantage of more than 5 pawns)
-	 *        is in (50, 0) range     - the bigger _pos_value the better white postion is
+	 *        is in (50, 0) range     - the bigger _posValue the better white postion is
 	 *        == 100                  - black wins (mate?)
 	 */
   
@@ -44,27 +44,27 @@ public:
 
 private:
 	
-	void eval_material(const PositionState& pos);
-	void eval_piece_square(const PositionState& pos);  
-	void eval_mobility(const PositionState& pos);
+	void evalMaterial(const PositionState& pos);
+	void evalPieceSquare(const PositionState& pos);  
+	void evalMobility(const PositionState& pos);
 
-	unsigned int hash_function(const ZobKey& material_zob_key) const;
+	unsigned int hashFunction(const ZobKey& materialZobKey) const;
 
-	struct material_info {
-		int16_t material_value;
-		ZobKey material_zob_key;
+	struct materialInfo {
+		int16_t materialValue;
+		ZobKey materialZobKey;
 
-		material_info(int16_t mv = 0, ZobKey mz = 0)
-		: material_value(mv),
-		material_zob_key(mz)
+		materialInfo(int16_t mv = 0, ZobKey mz = 0)
+		: materialValue(mv),
+		materialZobKey(mz)
 	 	{
 	 	}
 	};
 
 	//position value in centi pawns
-	int16_t _pos_value;
+	int16_t _posValue;
 
-	std::vector<material_info> _material_hash;
+	std::vector<materialInfo> _materialHash;
 };
 
 }

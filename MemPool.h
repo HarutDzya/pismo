@@ -16,21 +16,21 @@ const int MAX_POSSIBLE_MOVES = 100;
 
 const int MAX_SEARCH_DEPTH = 60;
 
-struct moves_array
+struct movesArray
 {
-	move_info* arr;
+	moveInfo* arr;
 	int _size;
-	moves_array() : _size(0)
+	movesArray() : _size(0)
 	{
-		arr = new move_info[MAX_POSSIBLE_MOVES];
+		arr = new moveInfo[MAX_POSSIBLE_MOVES];
 	}
 
-	~moves_array()
+	~movesArray()
 	{
 		delete[] arr;
 	}
 
-	void push_back(move_info& move)
+	void push_back(moveInfo& move)
 	{
 		assert(_size != MAX_POSSIBLE_MOVES);
 		arr[_size++] = move;
@@ -41,7 +41,7 @@ struct moves_array
 		_size = 0;
 	}
 
-	const move_info& operator[](uint16_t i) const
+	const moveInfo& operator[](uint16_t i) const
 	{ 
 		assert(i < _size);
 		return arr[i];
@@ -65,9 +65,9 @@ public:
 	static void destroy();
 	
 	//call this funciton at the beginning of program
-	void init_moves_array();
+	void initMovesArray();
 
-	moves_array& get_moves_array(uint16_t depth);
+	movesArray& getMovesArray(uint16_t depth);
 
 private:
 	MemPool();
@@ -79,7 +79,7 @@ private:
 
 private:
 	static MemPool* _instance;
-	moves_array** depth_array;
+	movesArray** depthArray;
 };
 
 }

@@ -14,22 +14,22 @@ class TranspositionTable
 public:
 	TranspositionTable();
 	
-	bool contains(const PositionState& pos, eval_info& eval) const;
+	bool contains(const PositionState& pos, evalInfo& eval) const;
 	
 	/**
 	 * override existing eval value if position is different,
 	 * or position is the same but the depth is bigger
 	 */
-	void push(const eval_info& eval);
+	void push(const evalInfo& eval);
 
 
-	void force_push(const eval_info& eval);
-
-private:
-	unsigned int hash_function(const ZobKey& zob_key) const;
+	void forcePush(const evalInfo& eval);
 
 private:
-	std::vector<eval_info> _hash; 
+	unsigned int hashFunction(const ZobKey& zobKey) const;
+
+private:
+	std::vector<evalInfo> _hash; 
 };
 
 }

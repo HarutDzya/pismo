@@ -24,22 +24,22 @@ public:
 	 * depth - search depth
 	 */
 
-	move_info think(PositionState& pos, uint16_t depth);
+	moveInfo think(PositionState& pos, uint16_t depth);
 
 	ABCore();
 	~ABCore();
 
 private:
-	int16_t alpha_beta_iterative(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool white_to_play);
-	int16_t alpha_beta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool white_to_play);
-	int16_t quiescence_search(PositionState& pos, int16_t qs_depth, int16_t alpha, int16_t beta, bool white_to_play);
+	int16_t alphaBetaIterative(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool whiteToPlay);
+	int16_t alphaBeta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool whiteToPlay);
+	int16_t quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t alpha, int16_t beta, bool whiteToPlay);
 	
 
 	ABCore(const ABCore&); // non-copyable
 	ABCore& operator=(const ABCore&); //non-assignable
 
-	PositionEvaluation* _pos_eval;
-	TranspositionTable* _trans_table;
+	PositionEvaluation* _posEval;
+	TranspositionTable* _transTable;
 
 };
 

@@ -8,7 +8,7 @@ namespace pismo
 
 class PositionState;
 class PossibleMoves;
-struct moves_array;
+struct movesArray;
 
 class MoveGenerator
 {
@@ -16,23 +16,23 @@ public:
 	static MoveGenerator* instance();
 	void destroy();
 
-	void generate_white_moves(const PositionState& pos, moves_array& generated_moves);
-	void generate_black_moves(const PositionState& pos, moves_array& generated_moves);
+	void generateWhiteMoves(const PositionState& pos, movesArray& generatedMoves);
+	void generateBlackMoves(const PositionState& pos, movesArray& generatedMoves);
 
 private:
 	MoveGenerator();
 	~MoveGenerator();
 	static MoveGenerator* _instance;
 
-	void generate_pawn_moves(Square from, Color clr, const PositionState& pos, moves_array& generated_moves);
-	void generate_knight_moves(Square from, const PositionState& pos, moves_array& generated_moves);
-	void generate_king_moves(Square from, const PositionState& pos, moves_array& generated_moves);
-	void generate_rank_moves(Square from, const PositionState& pos, moves_array& generated_moves);
-	void generate_file_moves(Square from, const PositionState& pos, moves_array& generated_moves);
-	void generate_diag_a1h8_moves(Square from, const PositionState& pos, moves_array& generated_moves);
-	void generate_diag_a8h1_moves(Square from, const PositionState& pos, moves_array& generated_moves);
+	void generatePawnMoves(Square from, Color clr, const PositionState& pos, movesArray& generatedMoves);
+	void generateKnightMoves(Square from, const PositionState& pos, movesArray& generatedMoves);
+	void generateKingMoves(Square from, const PositionState& pos, movesArray& generatedMoves);
+	void generateRankMoves(Square from, const PositionState& pos, movesArray& generatedMoves);
+	void generateFileMoves(Square from, const PositionState& pos, movesArray& generatedMoves);
+	void generateDiagA1h8Moves(Square from, const PositionState& pos, movesArray& generatedMoves);
+	void generateDiagA8h1Moves(Square from, const PositionState& pos, movesArray& generatedMoves);
 
-	const PossibleMoves* _possible_moves;
+	const PossibleMoves* _possibleMoves;
 };
 
 }

@@ -7,100 +7,100 @@ namespace pismo
 ZobKeyImpl::ZobKeyImpl()
 {
 	std::srand(RANDOM_GENERATOR_SEED);
-	init_piece_at_square_keys();
-	init_black_to_play_key();
-	init_en_passant_keys();
-	init_castling_keys();
+	initPieceAtSquareKeys();
+	initBlackToPlayKey();
+	initEnPassantKeys();
+	initCastlingKeys();
 
-	//for _material_zob_key
-	init_material_keys();
+	//for _materialZobKey
+	initMaterialKeys();
 }
 
-ZobKey ZobKeyImpl::get_piece_at_square_key(Piece piece, Square sq) const
+ZobKey ZobKeyImpl::getPieceAtSquareKey(Piece piece, Square sq) const
 {
 	assert((piece != PAWN_WHITE && piece != PAWN_BLACK) || (sq >= A2 && sq <= H7));
-	return _piece_at_square_keys[piece][sq];
+	return _pieceAtSquareKeys[piece][sq];
 }
 
-ZobKey ZobKeyImpl::get_if_black_to_play_key() const
+ZobKey ZobKeyImpl::getIfBlackToPlayKey() const
 {
-	return _black_to_play_key;
+	return _blackToPlayKey;
 }
 
-ZobKey ZobKeyImpl::get_en_passant_key(unsigned int en_passant_file) const
+ZobKey ZobKeyImpl::getEnPassantKey(unsigned int enPassantFile) const
 {
-	assert(en_passant_file < 8);
-	return _en_passant_keys[en_passant_file];
+	assert(enPassantFile < 8);
+	return _enPassantKeys[enPassantFile];
 }
 
-ZobKey ZobKeyImpl::get_white_left_castling_key() const
+ZobKey ZobKeyImpl::getWhiteLeftCastlingKey() const
 {
-	return _white_left_castling_key;
+	return _whiteLeftCastlingKey;
 }
 
-ZobKey ZobKeyImpl::get_white_right_castling_key() const
+ZobKey ZobKeyImpl::getWhiteRightCastlingKey() const
 {
-	return _white_right_castling_key;
+	return _whiteRightCastlingKey;
 }
 
-ZobKey ZobKeyImpl::get_black_left_castling_key() const
+ZobKey ZobKeyImpl::getBlackLeftCastlingKey() const
 {
-	return _black_left_castling_key;
+	return _blackLeftCastlingKey;
 }
 
-ZobKey ZobKeyImpl::get_black_right_castling_key() const
+ZobKey ZobKeyImpl::getBlackRightCastlingKey() const
 {
-	return _black_right_castling_key;
+	return _blackRightCastlingKey;
 }
 
-ZobKey ZobKeyImpl::get_material_key(Piece piece, unsigned int count) const
+ZobKey ZobKeyImpl::getMaterialKey(Piece piece, unsigned int count) const
 {
-      return _material_keys[piece][count];
+      return _materialKeys[piece][count];
 }
 
-void ZobKeyImpl::init_piece_at_square_keys()
+void ZobKeyImpl::initPieceAtSquareKeys()
 {
 	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
 		for (unsigned int square = A1; square < NUMBER_OF_SQUARES; ++square) {
 			if ((piece != PAWN_WHITE && piece != PAWN_BLACK) || (square >= A2 && square <= H7)) {
-				_piece_at_square_keys[piece][square] = get_random_number();
+				_pieceAtSquareKeys[piece][square] = getRandomNumber();
 			}
 		}
 	}
 }
 
-void ZobKeyImpl::init_black_to_play_key()
+void ZobKeyImpl::initBlackToPlayKey()
 {
-	_black_to_play_key = get_random_number();
+	_blackToPlayKey = getRandomNumber();
 }
 
-void ZobKeyImpl::init_en_passant_keys()
+void ZobKeyImpl::initEnPassantKeys()
 {
 	for (unsigned int file = 0; file < 8; ++file) {
-		_en_passant_keys[file] = get_random_number();
+		_enPassantKeys[file] = getRandomNumber();
 	}
 }
 
-void ZobKeyImpl::init_castling_keys()
+void ZobKeyImpl::initCastlingKeys()
 {
-	_white_left_castling_key = get_random_number();	
-	_white_right_castling_key = get_random_number();
-	_black_left_castling_key = get_random_number();
-	_black_right_castling_key = get_random_number();
+	_whiteLeftCastlingKey = getRandomNumber();	
+	_whiteRightCastlingKey = getRandomNumber();
+	_blackLeftCastlingKey = getRandomNumber();
+	_blackRightCastlingKey = getRandomNumber();
 }
 
-void ZobKeyImpl::init_material_keys()
+void ZobKeyImpl::initMaterialKeys()
 {
 	//for kings it doesn't make sense to generate all values, but we did it to reduce code size
 	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
 		for (unsigned int count = 0; count <= POSSIBLE_SAME_PIECES; ++count) {
-			_material_keys[piece][count] = get_random_number();
+			_materialKeys[piece][count] = getRandomNumber();
 		}
 	}
 }
 
 
-ZobKey ZobKeyImpl::get_random_number() const
+ZobKey ZobKeyImpl::getRandomNumber() const
 {
 	//TODO: Implement our own generator in future
 	ZobKey tmp = std::rand();

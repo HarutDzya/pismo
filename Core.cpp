@@ -8,28 +8,28 @@
 namespace pismo
 {
 
-move_info Core::think(PositionState& pos, uint16_t depth)
+moveInfo Core::think(PositionState& pos, uint16_t depth)
 {
-	moves_array& possibleMoves = MemPool::instance()->get_moves_array(depth);
+	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();	
-	pos.white_to_play() ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
-	       	MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
+	pos.whiteToPlay() ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
+	       	MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves); 
 
 	if (possibleMoves.empty()) {
 		return MATE_MOVE; 
 	}
 
-	move_info move = possibleMoves[0];
+	moveInfo move = possibleMoves[0];
 	int16_t score = -MAX_SCORE;
 	if (possibleMoves.size() == 1) {
 		return move;
 	}
 
-	if (pos.white_to_play()) {
+	if (pos.whiteToPlay()) {
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.make_move(possibleMoves[i]);
-			int16_t s = minimax(pos, depth - 1, pos.white_to_play());
-			pos.undo_move();
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = minimax(pos, depth - 1, pos.whiteToPlay());
+			pos.undoMove();
 			if (s > score) {
 				score = s;
 				move = possibleMoves[i];
@@ -39,9 +39,9 @@ move_info Core::think(PositionState& pos, uint16_t depth)
 	else {
 		score = MAX_SCORE;
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.make_move(possibleMoves[i]);
-			int16_t s = minimax(pos, depth - 1, pos.white_to_play());
-			pos.undo_move();
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = minimax(pos, depth - 1, pos.whiteToPlay());
+			pos.undoMove();
 			if (s < score) {
 				score = s;
 				move = possibleMoves[i];
@@ -49,80 +49,80 @@ move_info Core::think(PositionState& pos, uint16_t depth)
 		}
 	}
 	
-	eval_info eval(score, pos.get_zob_key(), depth);
-	_trans_table->push(eval);
+	evalInfo eval(score, pos.getZobKey(), depth);
+	_transTable->push(eval);
 
 	return move;
 }
 
-int16_t Core::minimax(PositionState& pos, uint16_t depth, bool white_to_play)
+int16_t Core::minimax(PositionState& pos, uint16_t depth, bool whiteToPlay)
 {
-	eval_info eval;
-	if(_trans_table->contains(pos, eval) && eval.depth >= depth) {
-		return eval.pos_value;
+	evalInfo eval;
+	if(_transTable->contains(pos, eval) && eval.depth >= depth) {
+		return eval.posValue;
 	}
 	
 	if (depth == 0) {
-		int16_t val = _pos_eval->evaluate(pos);
-		eval.pos_value = val;
+		int16_t val = _posEval->evaluate(pos);
+		eval.posValue = val;
 		eval.depth = 0;
-		eval.zob_key = pos.get_zob_key();
-		_trans_table->force_push(eval);
+		eval.zobKey = pos.getZobKey();
+		_transTable->forcePush(eval);
 		return val;
 	}
 
-	moves_array& possibleMoves = MemPool::instance()->get_moves_array(depth);
+	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();
-	white_to_play ? MoveGenerator::instance()->generate_white_moves(pos, possibleMoves) :
-	       MoveGenerator::instance()->generate_black_moves(pos, possibleMoves); 
+	whiteToPlay ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
+	       MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves); 
 	if (possibleMoves.empty()) {
-		return white_to_play ? -MAX_SCORE : MAX_SCORE;
+		return whiteToPlay ? -MAX_SCORE : MAX_SCORE;
 	}
 	
-	if (white_to_play) {
+	if (whiteToPlay) {
 		int16_t score = -MAX_SCORE;
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.make_move(possibleMoves[i]);
-			int16_t s = minimax(pos, depth - 1, !white_to_play);
-			pos.undo_move();
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = minimax(pos, depth - 1, !whiteToPlay);
+			pos.undoMove();
 			if (s > score) {
 			       score = s;
 			}
 		}
 
-		eval_info eval(score, pos.get_zob_key(), depth);
-		_trans_table->force_push(eval);
+		evalInfo eval(score, pos.getZobKey(), depth);
+		_transTable->forcePush(eval);
 
 		return score;
 	}
 	else {
 		int16_t score = MAX_SCORE;
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.make_move(possibleMoves[i]);
-			int16_t s = minimax(pos, depth - 1, !white_to_play);
-			pos.undo_move();
+			pos.makeMove(possibleMoves[i]);
+			int16_t s = minimax(pos, depth - 1, !whiteToPlay);
+			pos.undoMove();
 			if (s < score) {
 			       score = s;
 			}
 		}
 
-		eval_info eval(score, pos.get_zob_key(), depth);
-		_trans_table->force_push(eval);
+		evalInfo eval(score, pos.getZobKey(), depth);
+		_transTable->forcePush(eval);
 
 		return score;
 	}
 }
 
 Core::Core() : 
-_pos_eval(new PositionEvaluation),
-_trans_table(new TranspositionTable)
+_posEval(new PositionEvaluation),
+_transTable(new TranspositionTable)
 {
 }
 
 Core::~Core()
 {
-	delete _pos_eval;
-	delete _trans_table;
+	delete _posEval;
+	delete _transTable;
 }
 
 }

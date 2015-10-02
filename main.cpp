@@ -5,27 +5,27 @@
 #include "Core.h"
 #include "MemPool.h"
 
-void print_bitboard(const pismo::Bitboard& board);
-void print_generated_moves(const pismo::moves_array& generated_moves);
+void printBitboard(const pismo::Bitboard& board);
+void printGeneratedMoves(const pismo::movesArray& generatedMoves);
 
 int main()
 {
 	using namespace pismo;
-	std::map<std::string, Square> board_rep;
+	std::map<std::string, Square> boardRep;
 	for (int i = 0; i < 8; ++i) {
 		for(int j = 0; j < 8; ++j) {
-			board_rep[std::string(1, ('A' + j)) + std::string(1, ('1' + i))] = (Square)(i * 8 + j);
+			boardRep[std::string(1, ('A' + j)) + std::string(1, ('1' + i))] = (Square)(i * 8 + j);
 		}
 	} 
 
-	std::map<Square, std::string> square_to_notation;
+	std::map<Square, std::string> squareToNotation;
 	for (int i = 0; i < 8; ++i) {
 		for(int j = 0; j < 8; ++j) {
-			square_to_notation[(Square)(i * 8 + j)] = std::string(1, ('A' + j)) + std::string(1, ('1' + i));
+			squareToNotation[(Square)(i * 8 + j)] = std::string(1, ('A' + j)) + std::string(1, ('1' + i));
 		}
 	} 
 
-	MemPool::instance()->init_moves_array();
+	MemPool::instance()->initMovesArray();
 	PositionState pos;
 	
 	/*std::vector<std::pair<Square, Piece> > pcs;
@@ -51,9 +51,9 @@ int main()
 	pcs.push_back(std::pair<Square, Piece>(D8, QUEEN_BLACK));
 	*/
 
-	//pos.init_position(pcs);
-	pos.init_position_FEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
-	pos.print_board();
+	//pos.initPosition(pcs);
+	pos.initPositionFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
+	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
 		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game)" << std::endl;
 	std::string choice;
@@ -69,73 +69,73 @@ int main()
 			std::cin >> sqfrom >> sqto;
 			std::getline(std::cin, prom);
 			prom.erase(0, 1);
-			move_info move;
+			moveInfo move;
 			if(prom == "QW") {
-				move.from = board_rep[sqfrom];
-				move.to = board_rep[sqto];
+				move.from = boardRep[sqfrom];
+				move.to = boardRep[sqto];
 				move.promoted = QUEEN_WHITE;
 			}
 			else if (prom == "QB") {
-				move.from = board_rep[sqfrom];
-				move.to = board_rep[sqto];
+				move.from = boardRep[sqfrom];
+				move.to = boardRep[sqto];
 				move.promoted = QUEEN_BLACK;
 			}
 			else {
-				move.from = board_rep[sqfrom];
-				move.to = board_rep[sqto];
+				move.from = boardRep[sqfrom];
+				move.to = boardRep[sqto];
 				move.promoted = ETY_SQUARE;
 			}
   		
-			if (pos.move_is_legal(move)) {
-				pos.update_direct_check_array();
-				pos.update_discovered_checks();
-				if (pos.move_checks_opponent_king(move)) {
+			if (pos.moveIsLegal(move)) {
+				pos.updateDirectCheckArray();
+				pos.updateDiscoveredChecks();
+				if (pos.moveChecksOpponentKing(move)) {
 					std::cout << "Move checks opponent king" << std::endl;
 				}
 				else {
 					std::cout << "Move does not check opponent king" << std::endl;
 				}
-				pos.make_move(move);
-				pos.print_board();
+				pos.makeMove(move);
+				pos.printBoard();
 			}
 			else {
 				std::cout << "Move is illegal" << std::endl;
-				//pos.print_possible_moves(move.from);
-				moves_array possibleMoves;
-				if (pos.white_to_play()) {
-					MoveGenerator::instance()->generate_white_moves(pos, possibleMoves);
-					print_generated_moves(possibleMoves);
+				//pos.printPossibleMoves(move.from);
+				movesArray possibleMoves;
+				if (pos.whiteToPlay()) {
+					MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves);
+					printGeneratedMoves(possibleMoves);
 				}
 				else {
-					MoveGenerator::instance()->generate_black_moves(pos, possibleMoves);
-					print_generated_moves(possibleMoves);
+					MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
+					printGeneratedMoves(possibleMoves);
 				}
 			}
 		}
 		else if (choice == "u") {
-			pos.undo_move();
-			pos.print_board();
+			pos.undoMove();
+			pos.printBoard();
 		} 
 		else if (choice == "t") {
-			move_info mv = p->think(pos, 5);
-			pos.make_move(mv);
-			pos.print_board();
-			std::cout << "Move: " <<  square_to_notation[mv.from] << "->" << square_to_notation[mv.to] << "\n" << std::endl;
+			moveInfo mv = p->think(pos, 5);
+			pos.makeMove(mv);
+			pos.printBoard();
+			std::cout << "Move: " <<  squareToNotation[mv.from] << "->" << squareToNotation[mv.to] << "\n" << std::endl;
 		}
     else if (choice == "f") {
-      std::cout << pos.get_state_FEN() << std::endl;
+      std::cout << pos.getStateFEN() << std::endl;
     }
 		std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
 			"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
 	}
 
-	std::cout << pos.get_state_FEN() << std::endl;	
-	pos.print_board();
-	pos.print_white_pieces();
-	pos.print_black_pieces();
+	std::cout << pos.getStateFEN() << std::endl;	
+	pos.printBoard();
+	pos.printWhitePieces();
+	pos.printBlackPieces();
 }
 
-void print_bitboard(const pismo::Bitboard& board)
+void printBitboard(const pismo::Bitboard& board)
 {
 	for (int i = 7; i >= 0; --i) {
 		for (int j = 0; j < 8; ++j) {
@@ -152,11 +152,11 @@ void print_bitboard(const pismo::Bitboard& board)
 	}
 }
 
-void print_generated_moves(const pismo::moves_array& generated_moves)
+void printGeneratedMoves(const pismo::movesArray& generatedMoves)
 {
 	std::cout << "Possible moves are the following" << std::endl; 
-	for (std::size_t move_count = 0; move_count < generated_moves.size(); ++move_count) {
-		pismo::move_info move = generated_moves[move_count];
+	for (std::size_t moveCount = 0; moveCount < generatedMoves.size(); ++moveCount) {
+		pismo::moveInfo move = generatedMoves[moveCount];
 		std::cout << std::string(1, ('A' + move.from % 8)) + std::string(1, ('1' + move.from / 8)) << "	";
 		std::cout << std::string(1, ('A' + move.to % 8)) + std::string(1, ('1' + move.to / 8)) << "	";
 		switch(move.promoted) {

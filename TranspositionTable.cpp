@@ -9,10 +9,10 @@ _hash(HASH_TABLE_SIZE)
 {
 }
 
-bool TranspositionTable::contains(const PositionState& pos, eval_info& eval) const
+bool TranspositionTable::contains(const PositionState& pos, evalInfo& eval) const
 {
-	unsigned int index = hash_function(pos.get_zob_key());
-	if (_hash[index].zob_key == pos.get_zob_key()) {
+	unsigned int index = hashFunction(pos.getZobKey());
+	if (_hash[index].zobKey == pos.getZobKey()) {
 		eval = _hash[index];
 		return true;
 	}
@@ -21,22 +21,22 @@ bool TranspositionTable::contains(const PositionState& pos, eval_info& eval) con
 	}
 }
 
-void TranspositionTable::push(const eval_info& eval)
+void TranspositionTable::push(const evalInfo& eval)
 {
-	unsigned int index = hash_function(eval.zob_key);
-	if ((_hash[index].zob_key != eval.zob_key) || (_hash[index].depth < eval.depth)) {
+	unsigned int index = hashFunction(eval.zobKey);
+	if ((_hash[index].zobKey != eval.zobKey) || (_hash[index].depth < eval.depth)) {
 		_hash[index] = eval;
 	}
 }
 
-void TranspositionTable::force_push(const eval_info& eval)
+void TranspositionTable::forcePush(const evalInfo& eval)
 {
-	_hash[hash_function(eval.zob_key)] = eval;
+	_hash[hashFunction(eval.zobKey)] = eval;
 }
 
-unsigned int TranspositionTable::hash_function(const ZobKey& zob_key) const
+unsigned int TranspositionTable::hashFunction(const ZobKey& zobKey) const
 {
-	return (zob_key % HASH_TABLE_SIZE);
-	//TODO:Change the impl to return first log(HASH_TABLE_SIZE) + 1 bits of zob_key
+	return (zobKey % HASH_TABLE_SIZE);
+	//TODO:Change the impl to return first log(HASH_TABLE_SIZE) + 1 bits of zobKey
 }
 }

@@ -12,47 +12,47 @@ class PossibleMoves
 public:
 	PossibleMoves();
 
-	const std::vector<Square>& possible_white_pawn_moves(Square from) const;
-	const std::vector<Square>& possible_black_pawn_moves(Square from) const;
-	const std::vector<Square>& possible_knight_moves(Square from) const;
-	const std::vector<Square>& possible_king_moves(Square from) const;
-	const std::vector<Square>& possible_left_rank_moves(Square from) const;
-	const std::vector<Square>& possible_right_rank_moves(Square from) const;
-	const std::vector<Square>& possible_up_file_moves(Square from) const;
-	const std::vector<Square>& possible_down_file_moves(Square from) const;
-	const std::vector<Square>& possible_up_diag_a1h8_moves(Square from) const;
-	const std::vector<Square>& possible_down_diag_a1h8_moves(Square from) const;
-	const std::vector<Square>& possible_up_diag_a8h1_moves(Square from) const;
-	const std::vector<Square>& possible_down_diag_a8h1_moves(Square from) const;
+	const std::vector<Square>& possibleWhitePawnMoves(Square from) const;
+	const std::vector<Square>& possibleBlackPawnMoves(Square from) const;
+	const std::vector<Square>& possibleKnightMoves(Square from) const;
+	const std::vector<Square>& possibleKingMoves(Square from) const;
+	const std::vector<Square>& possibleLeftRankMoves(Square from) const;
+	const std::vector<Square>& possibleRightRankMoves(Square from) const;
+	const std::vector<Square>& possibleUpFileMoves(Square from) const;
+	const std::vector<Square>& possibleDownFileMoves(Square from) const;
+	const std::vector<Square>& possibleUpDiagA1h8Moves(Square from) const;
+	const std::vector<Square>& possibleDownDiagA1h8Moves(Square from) const;
+	const std::vector<Square>& possibleUpDiagA8h1Moves(Square from) const;
+	const std::vector<Square>& possibleDownDiagA8h1Moves(Square from) const;
 
 
 private:
-	void init_white_pawn_moves();
-	void init_black_pawn_moves();
-	void init_knight_moves();
-	void init_king_moves();
-	void init_left_rank_moves();
-	void init_right_rank_moves();
-	void init_up_file_moves();
-	void init_down_file_moves();
-	void init_up_diag_a1h8_moves();
-	void init_down_diag_a1h8_moves();
-	void init_up_diag_a8h1_moves();
-	void init_down_diag_a8h1_moves();
+	void initWhitePawnMoves();
+	void initBlackPawnMoves();
+	void initKnightMoves();
+	void initKingMoves();
+	void initLeftRankMoves();
+	void initRightRankMoves();
+	void initUpFileMoves();
+	void initDownFileMoves();
+	void initUpDiagA1h8Moves();
+	void initDownDiagA1h8Moves();
+	void initUpDiagA8h1Moves();
+	void initDownDiagA8h1Moves();
 
 private:
-	std::vector<std::vector<Square> > _white_pawn_moves_list;
-	std::vector<std::vector<Square> > _black_pawn_moves_list;
-	std::vector<std::vector<Square> > _knight_moves_list;
-	std::vector<std::vector<Square> > _king_moves_list;
-	std::vector<std::vector<Square> > _left_rank_moves_list;
-	std::vector<std::vector<Square> > _right_rank_moves_list;
-	std::vector<std::vector<Square> > _up_file_moves_list;
-	std::vector<std::vector<Square> > _down_file_moves_list;
-	std::vector<std::vector<Square> > _up_diag_a1h8_moves_list;
-	std::vector<std::vector<Square> > _down_diag_a1h8_moves_list;
-	std::vector<std::vector<Square> > _up_diag_a8h1_moves_list;
-	std::vector<std::vector<Square> > _down_diag_a8h1_moves_list;
+	std::vector<std::vector<Square> > _whitePawnMovesList;
+	std::vector<std::vector<Square> > _blackPawnMovesList;
+	std::vector<std::vector<Square> > _knightMovesList;
+	std::vector<std::vector<Square> > _kingMovesList;
+	std::vector<std::vector<Square> > _leftRankMovesList;
+	std::vector<std::vector<Square> > _rightRankMovesList;
+	std::vector<std::vector<Square> > _upFileMovesList;
+	std::vector<std::vector<Square> > _downFileMovesList;
+	std::vector<std::vector<Square> > _upDiagA1h8MovesList;
+	std::vector<std::vector<Square> > _downDiagA1h8MovesList;
+	std::vector<std::vector<Square> > _upDiagA8h1MovesList;
+	std::vector<std::vector<Square> > _downDiagA8h1MovesList;
 };
 
 }

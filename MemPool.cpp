@@ -20,29 +20,29 @@ void MemPool::destroy()
 }
 
 MemPool::MemPool():
-depth_array(0)
+depthArray(0)
 {
 }
 
 MemPool::~MemPool()
 {
 	for (uint16_t i = 0; i < MAX_SEARCH_DEPTH; ++i) {
-		delete depth_array[i];
+		delete depthArray[i];
 	}
-	delete[] depth_array;
+	delete[] depthArray;
 }
 
-void MemPool::init_moves_array()
+void MemPool::initMovesArray()
 {
-	depth_array = new moves_array*[MAX_SEARCH_DEPTH];
+	depthArray = new movesArray*[MAX_SEARCH_DEPTH];
 	for (uint16_t i = 0; i < MAX_SEARCH_DEPTH; ++i) {
-		depth_array[i] = new moves_array();
+		depthArray[i] = new movesArray();
 	}
 }
 
-moves_array& MemPool::get_moves_array(uint16_t depth)
+movesArray& MemPool::getMovesArray(uint16_t depth)
 {
-	return *depth_array[depth];
+	return *depthArray[depth];
 }
 
 }

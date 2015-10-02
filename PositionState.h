@@ -19,172 +19,172 @@ public:
 	PositionState();
 	~PositionState();
 
-	void init_position(const std::vector<std::pair<Square, Piece> >& pieces); 
+	void initPosition(const std::vector<std::pair<Square, Piece> >& pieces); 
 
 	// Initializes the state using Forsyth-Edwards notation string as an input
 	// the FEN should have 6 fields separated by whitespaces
-	void init_position_FEN(const std::string& fen);
+	void initPositionFEN(const std::string& fen);
 
 	/*
 	Checks all the rules of the game for legality of the move
 	even if it involves capture of the opponent piece
 	*/
-	bool move_is_legal(const move_info& move) const;
+	bool moveIsLegal(const moveInfo& move) const;
 	
 	/*
-	Makes a move if the move if legal according to the move_is_legal
+	Makes a move if the move if legal according to the moveIsLegal
 	method
 	*/
-	void make_move(const move_info& move);
+	void makeMove(const moveInfo& move);
 
 	/*
 	Makes an undo move of the last made move, by reverting all
 	state variables to the previous state
 	*/
-	void undo_move();
+	void undoMove();
 
 	/* Checks to see whether the move checks opponent king
 	   by either direct check or discovered check.
-	   In order for this function to work the update_direct_check_array()
-	   and update_discovered_checks() should be invoked first.
+	   In order for this function to work the updateDirectCheckArray()
+	   and updateDiscoveredChecks() should be invoked first.
 	*/
-	bool move_checks_opponent_king(const move_info& move) const;
+	bool moveChecksOpponentKing(const moveInfo& move) const;
 	
-	void update_direct_check_array();
-	void update_discovered_checks();
+	void updateDirectCheckArray();
+	void updateDiscoveredChecks();
 
 	
 	/*
 	Prints board for white pieces using information from 
-	_white_pieces Bitboard
+	_whitePieces Bitboard
 	*/
-	void print_white_pieces() const;
+	void printWhitePieces() const;
 	
 	/*
 	Prints board for black pieces using information from 
-	_black_pieses Bitboard
+	_blackPieses Bitboard
 	*/
-	void print_black_pieces() const;
+	void printBlackPieces() const;
 
 	/*
 	Prints single board for both pieces using information
 	from _board array
 	*/
-	void print_board() const;
+	void printBoard() const;
 
 	/* Constructs state Forsyth-Edwards notation
 	 * and returns as a string
 	 */
-	const std::string get_state_FEN() const;
+	const std::string getStateFEN() const;
 
 	/*
 	Prints possible moves from Square from on the board
 	*/
-	void print_possible_moves(Square from) const;
+	void printPossibleMoves(Square from) const;
 
-	ZobKey get_zob_key() const {return _zob_key;}
+	ZobKey getZobKey() const {return _zobKey;}
 
-	Piece const (&get_board()const)[8][8] {return _board;}
+	Piece const (&getBoard()const)[8][8] {return _board;}
 
-	unsigned int get_piece_count(Piece p) const {return _piece_count[p];}
+	unsigned int getPieceCount(Piece p) const {return _pieceCount[p];}
 
-	ZobKey get_material_zob_key() const {return _material_zob_key;}
+	ZobKey getMaterialZobKey() const {return _materialZobKey;}
 
-	int get_pst_value() const {return _pst_value;}
+	int getPstValue() const {return _pstValue;}
 
-	bool white_to_play() const {return _white_to_play;}
+	bool whiteToPlay() const {return _whiteToPlay;}
 
 //private member functions
 private:
-	void set_piece(Square s, Piece p);
-	bool init_position_is_valid(const std::vector<std::pair<Square, Piece> >& pieces) const;
-	void init_material_FEN(const std::string& fen, unsigned int& char_count);
-	void init_right_to_play_FEN(const std::string& fen, unsigned int& char_count);
-	void init_castling_rights_FEN(const std::string& fen, unsigned int& char_count);
-	void init_en_passant_file_FEN(const std::string& fen, unsigned int& char_count);
-	void init_move_count_FEN(const std::string& fen, unsigned int& char_count);
+	void setPiece(Square s, Piece p);
+	bool initPositionIsValid(const std::vector<std::pair<Square, Piece> >& pieces) const;
+	void initMaterialFEN(const std::string& fen, unsigned int& charCount);
+	void initRightToPlayFEN(const std::string& fen, unsigned int& charCount);
+	void initCastlingRightsFEN(const std::string& fen, unsigned int& charCount);
+	void initEnPassantFileFEN(const std::string& fen, unsigned int& charCount);
+	void initMoveCountFEN(const std::string& fen, unsigned int& charCount);
 
-	bool pawn_move_is_legal(const move_info& move, bool& is_en_passant_capture) const;
-	bool knight_move_is_legal(const move_info& move) const;
-	bool bishop_move_is_legal(const move_info& move) const;
-	bool rook_move_is_legal(const move_info& move) const;
-	bool queen_move_is_legal(const move_info& move) const;
-	bool king_move_is_legal(const move_info& move) const;
-	bool en_passant_capture_is_legal(const move_info& move) const;
-	bool castling_is_legal(const move_info& move) const;
+	bool pawnMoveIsLegal(const moveInfo& move, bool& isEnPassantCapture) const;
+	bool knightMoveIsLegal(const moveInfo& move) const;
+	bool bishopMoveIsLegal(const moveInfo& move) const;
+	bool rookMoveIsLegal(const moveInfo& move) const;
+	bool queenMoveIsLegal(const moveInfo& move) const;
+	bool kingMoveIsLegal(const moveInfo& move) const;
+	bool enPassantCaptureIsLegal(const moveInfo& move) const;
+	bool castlingIsLegal(const moveInfo& move) const;
 	
-	Bitboard squares_under_attack(Color attacked_color) const;
+	Bitboard squaresUnderAttack(Color attackedColor) const;
 
-	void make_lazy_move(const move_info& move, bool is_en_passant_capture, Piece& captured_piece) const;
-	void undo_lazy_move(const move_info& move, bool is_en_passant_capture, Piece captured_piece) const;
+	void makeLazyMove(const moveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const;
+	void undoLazyMove(const moveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const;
 
-	void make_normal_move(const move_info& move);
-	void make_castling_move(const move_info& move);
-	void make_en_passant_move(const move_info& move);
-	void make_en_passant_capture(const move_info& move);
-	void make_promotion_move(const move_info& move);
+	void makeNormalMove(const moveInfo& move);
+	void makeCastlingMove(const moveInfo& move);
+	void makeEnPassantMove(const moveInfo& move);
+	void makeEnPassantCapture(const moveInfo& move);
+	void makePromotionMove(const moveInfo& move);
 
-	void update_castling_rights(const move_info& move);
+	void updateCastlingRights(const moveInfo& move);
 
-	void add_piece_to_bitboards(Square sq, Color clr);
-	void remove_piece_from_bitboards(Square sq, Color clr);
+	void addPieceToBitboards(Square sq, Color clr);
+	void removePieceFromBitboards(Square sq, Color clr);
 
-	void update_non_diag_pin_status(pin_info& pin, Color clr) const;
-	void update_diag_pin_status(pin_info& pin, Color clr) const;
+	void updateNonDiagPinStatus(pinInfo& pin, Color clr) const;
+	void updateDiagPinStatus(pinInfo& pin, Color clr) const;
 	
-	bool move_opens_discovered_check(const move_info& move) const;
-	bool castling_checks_opponent_king(const move_info& move) const;
-	bool en_passant_capture_discoveres_check(const move_info& move) const;
+	bool moveOpensDiscoveredCheck(const moveInfo& move) const;
+	bool castlingChecksOpponentKing(const moveInfo& move) const;
+	bool enPassantCaptureDiscoveresCheck(const moveInfo& move) const;
 
-	int calculate_pst_value(Piece p, Square s) const;
-	void update_game_status();
+	int calculatePstValue(Piece p, Square s) const;
+	void updateGameStatus();
 
 
-	void construct_material_FEN(std::string& fen) const;
-	void construct_right_to_play_FEN(std::string& fen) const;
-	void construct_castling_rights_FEN(std::string& fen) const;
-	void construct_en_passant_file_FEN(std::string& fen) const;
-	void construct_move_count_FEN(std::string& fen) const;
+	void constructMaterialFEN(std::string& fen) const;
+	void constructRightToPlayFEN(std::string& fen) const;
+	void constructCastlingRightsFEN(std::string& fen) const;
+	void constructEnPassantFileFEN(std::string& fen) const;
+	void constructMoveCountFEN(std::string& fen) const;
 	
-	struct undo_move_info {
+	struct undoMoveInfo {
 		Square from;
 		Square to;
-		Piece moved_piece;
-		Piece captured_piece;
-		MoveType move_type;
-		int8_t en_passant_file;
-		bool white_left_castling;
-		bool white_right_castling;
-		bool black_left_castling;
-		bool black_right_castling;
+		Piece movedPiece;
+		Piece capturedPiece;
+		MoveType moveType;
+		int8_t enPassantFile;
+		bool whiteLeftCastling;
+		bool whiteRightCastling;
+		bool blackLeftCastling;
+		bool blackRightCastling;
 	};
 
-	void undo_normal_move(const undo_move_info& move);
-	void undo_castling_move(const undo_move_info& move);
-	void undo_en_passant_move(const undo_move_info& move);
-	void undo_en_passant_capture(const undo_move_info& move);
-	void undo_promotion_move(const undo_move_info& move);
+	void undoNormalMove(const undoMoveInfo& move);
+	void undoCastlingMove(const undoMoveInfo& move);
+	void undoEnPassantMove(const undoMoveInfo& move);
+	void undoEnPassantCapture(const undoMoveInfo& move);
+	void undoPromotionMove(const undoMoveInfo& move);
 
-	void revert_castling_rights(const undo_move_info& move);
+	void revertCastlingRights(const undoMoveInfo& move);
 
 	class MoveStack {
 		public:
 			MoveStack();
-			undo_move_info* get_next_item();
-			const undo_move_info* pop();
+			undoMoveInfo* getNextItem();
+			const undoMoveInfo* pop();
 			bool isEmpty() const;
-			uint32_t get_size() const;
+			uint32_t getSize() const;
 		
 		private:
-			undo_move_info _move_stack[MOVE_STACK_CAPACITY];
-			uint32_t _stack_size;
+			undoMoveInfo _moveStack[MOVE_STACK_CAPACITY];
+			uint32_t _stackSize;
 	};
 	
-	struct state_pin_info {
-		pin_info rank_pin;
-		pin_info file_pin;
-		pin_info diag_a1h8_pin;
-		pin_info diag_a8h1_pin;
+	struct statePinInfo {
+		pinInfo rankPin;
+		pinInfo filePin;
+		pinInfo diagA1h8Pin;
+		pinInfo diagA8h1Pin;
 	};
 
 
@@ -195,65 +195,65 @@ private:
 	Piece _board[8][8];
 	
 	// Occupation bitboards (4 for each color)
-	Bitboard _white_pieces;
-	Bitboard _white_pieces_transpose;
-	Bitboard _white_pieces_diag_a1h8;
-	Bitboard _white_pieces_diag_a8h1;
-	Bitboard _black_pieces;
-	Bitboard _black_pieces_transpose;
-	Bitboard _black_pieces_diag_a1h8;
-	Bitboard _black_pieces_diag_a8h1;
+	Bitboard _whitePieces;
+	Bitboard _whitePiecesTranspose;
+	Bitboard _whitePiecesDiagA1h8;
+	Bitboard _whitePiecesDiagA8h1;
+	Bitboard _blackPieces;
+	Bitboard _blackPiecesTranspose;
+	Bitboard _blackPiecesDiagA1h8;
+	Bitboard _blackPiecesDiagA8h1;
 
 	// Each memeber of the array shows the number of appropriate 
 	// piece available 
-	unsigned int _piece_count[PIECE_NB];
+	unsigned int _pieceCount[PIECE_NB];
 
 	// Bitboard for each piece where set bits show the
 	// positions from which it can attack the king	
-	Bitboard _direct_check[PIECE_NB];
+	Bitboard _directCheck[PIECE_NB];
 
 	// Complete info of the positions where pinned pieces 
 	// can be located and appropriate sliding piece positions
-	state_pin_info _state_pin_info;
+	statePinInfo _statePinInfo;
 
-	const BitboardImpl* _bitboard_impl;
-	const ZobKeyImpl* _zob_key_impl;
+	const BitboardImpl* _bitboardImpl;
+	const ZobKeyImpl* _zobKeyImpl;
 
 	//true - if white's move, false - black's move
-	bool _white_to_play;
-	// the file number of possible en_passant, -1 if none
-	int _en_passant_file;
+	bool _whiteToPlay;
+	// the file number of possible enPassant, -1 if none
+	int _enPassantFile;
 	
 	//Shows white and black king position after the move
-	Square _white_king_position;
-	Square _black_king_position;
+	Square _whiteKingPosition;
+	Square _blackKingPosition;
 
 	// true if appropriate castling is allowed
-	bool _white_left_castling;
-	bool _white_right_castling;
-	bool _black_left_castling;
-	bool _black_right_castling;
+	bool _whiteLeftCastling;
+	bool _whiteRightCastling;
+	bool _blackLeftCastling;
+	bool _blackRightCastling;
 
 	// true if it is a middle game
-	bool _is_middle_game;
+	bool _isMiddleGame;
 
 	// Zobrist key for the state of the game
-	ZobKey _zob_key;
+	ZobKey _zobKey;
 	
 	// Zobrist key for material of the game
-	ZobKey _material_zob_key;
+	ZobKey _materialZobKey;
 
 	// Piece Square Table value for the state of the game
-	int _pst_value;
+	int _pstValue;
 
-	// Stack of the moves to be used by undo_move
-	MoveStack _move_stack;
+	// Stack of the moves to be used by undoMove
+	MoveStack _moveStack;
 
 	// Halfmove count for fifty move rule
-	uint16_t _halfmove_clock;
+	uint16_t _halfmoveClock;
 
 	// Full move count of the game
-	uint16_t _fullmove_count;
+	uint16_t _fullmoveCount;
 
 };
 

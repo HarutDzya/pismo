@@ -17,10 +17,10 @@ public:
 	/** Returns the best move in current position.
 	 * pos - current position
 	 * depth - search depth
-	 * white_to_play - move turn
+	 * whiteToPlay - move turn
 	 */
 	
-	move_info think(PositionState& pos, uint16_t depth);
+	moveInfo think(PositionState& pos, uint16_t depth);
 
 	Core();
     
@@ -30,14 +30,14 @@ private:
 	/*
 	 * It implements naive minimax algorithm (later add alpha-beta pruning)
 	 */
-	int16_t minimax(PositionState& pos, uint16_t depth, bool white_to_play);
+	int16_t minimax(PositionState& pos, uint16_t depth, bool whiteToPlay);
 
    
 	Core(const Core&); //non copy constructable
 	const Core& operator=(const Core&); // non assignable
 	
-	PositionEvaluation* _pos_eval;
-	TranspositionTable* _trans_table;
+	PositionEvaluation* _posEval;
+	TranspositionTable* _transTable;
 
 };
 
