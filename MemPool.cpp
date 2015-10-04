@@ -34,13 +34,13 @@ MemPool::~MemPool()
 
 void MemPool::initMovesArray()
 {
-	depthArray = new movesArray*[MAX_SEARCH_DEPTH];
+	depthArray = new MovesArray*[MAX_SEARCH_DEPTH];
 	for (uint16_t i = 0; i < MAX_SEARCH_DEPTH; ++i) {
-		depthArray[i] = new movesArray();
+		depthArray[i] = new MovesArray();
 	}
 }
 
-movesArray& MemPool::getMovesArray(uint16_t depth)
+MovesArray& MemPool::getMovesArray(uint16_t depth)
 {
 	return *depthArray[depth];
 }

@@ -24,7 +24,7 @@ public:
 	 * depth - search depth
 	 */
 
-	moveInfo think(PositionState& pos, uint16_t depth);
+	MoveInfo think(PositionState& pos, uint16_t depth);
 
 	ABCore();
 	~ABCore();

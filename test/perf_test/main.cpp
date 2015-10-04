@@ -7,7 +7,7 @@
 #include <ctime>
 #include <iostream>
 
-void parse_input_info(const std::string& line, std::string& fen, uint16_t& depth, uint64_t& golden_output);
+void parseInputInfo(const std::string& line, std::string& fen, uint16_t& depth, uint64_t& goldenOutput);
 
 int main(int argc, char* argv[])
 {
@@ -16,86 +16,86 @@ int main(int argc, char* argv[])
 			<< ".exe input_file output_file" << std::endl;
 	}
 	else {
-		std::ifstream if_stream;
-		std::ofstream of_stream;
-		if_stream.open(argv[1], std::ifstream::in);
-		of_stream.open(argv[2], std::ofstream::out);
-		if (if_stream.is_open() && of_stream.is_open()) {
-			of_stream << "Output format: State\tElapsed_time\tActual_result\tExpected_result\tFEN\tDepth" << std::endl;  
+		std::ifstream ifStream;
+		std::ofstream ofStream;
+		ifStream.open(argv[1], std::ifstream::in);
+		ofStream.open(argv[2], std::ofstream::out);
+		if (ifStream.is_open() && ofStream.is_open()) {
+			ofStream << "Output format: State\tElapsed_time\tActual_result\tExpected_result\tFEN\tDepth" << std::endl;  
 			std::string line;
-			pismo::MemPool::instance()->init_moves_array();
-			while(std::getline(if_stream, line)) {
+			pismo::MemPool::instance()->initMovesArray();
+			while(std::getline(ifStream, line)) {
 				std::string fen;
 				uint16_t depth;
-				uint64_t golden_output;
-				parse_input_info(line, fen, depth, golden_output);
+				uint64_t goldenOutput;
+				parseInputInfo(line, fen, depth, goldenOutput);
 				pismo::PositionState pos;
-				pos.init_position_FEN(fen);
+				pos.initPositionFEN(fen);
 				pismo::Perft perft;
 				std::time_t start = time(NULL);
-				uint64_t move_count = perft.analyze(pos, depth);
+				uint64_t moveCount = perft.analyze(pos, depth);
 				std::time_t end = time(NULL);
-				if (move_count == golden_output) {
-					of_stream << "PASSED: ";
+				if (moveCount == goldenOutput) {
+					ofStream << "PASSED: ";
 				}
 				else {
-					of_stream << "FAILED: ";
+					ofStream << "FAILED: ";
 				}
-				of_stream << end - start << "sec " << move_count 
-						<< " " << golden_output << " " << fen << " " << depth << std::endl;
+				ofStream << end - start << "sec " << moveCount 
+						<< " " << goldenOutput << " " << fen << " " << depth << std::endl;
 			}	
 		}
 		else {
-			if(!if_stream.is_open()) {
+			if(!ifStream.is_open()) {
 				std::cout << "Cannot open the " << argv[1] << " file for reading" << std::endl;
 			}
-			if(!of_stream.is_open()) {
+			if(!ofStream.is_open()) {
 				std::cout << "Cannot open the " << argv[2] << " file for writing" << std::endl;
 			}
 		}
-		if (if_stream.is_open()) {
-			if_stream.close();
+		if (ifStream.is_open()) {
+			ifStream.close();
 		}
-		if (of_stream.is_open()) {
-			of_stream.close();
+		if (ofStream.is_open()) {
+			ofStream.close();
 		}
 	}
 }
 
-void parse_input_info(const std::string& line, std::string& fen, uint16_t& depth, uint64_t& golden_output)
+void parseInputInfo(const std::string& line, std::string& fen, uint16_t& depth, uint64_t& goldenOutput)
 {
-	int char_count = line.size() - 1;
-	while (!std::isdigit(line[char_count])) {
-		--char_count;
+	int charCount = line.size() - 1;
+	while (!std::isdigit(line[charCount])) {
+		--charCount;
 	}
 	
-	std::string mc_tmp;
-	while (line[char_count] != ' ' && line[char_count] != '\t') {
-		if (std::isdigit(line[char_count])) {
-			mc_tmp.push_back(line[char_count]);
+	std::string mcTmp;
+	while (line[charCount] != ' ' && line[charCount] != '\t') {
+		if (std::isdigit(line[charCount])) {
+			mcTmp.push_back(line[charCount]);
 		}
-		--char_count;
+		--charCount;
 	}
 	
-	golden_output = mc_tmp[mc_tmp.size() - 1] - '0';
-	for (int i = mc_tmp.size() - 2; i >= 0; --i) {
-		golden_output *= 10;
-		golden_output += (mc_tmp[i] - '0');
+	goldenOutput = mcTmp[mcTmp.size() - 1] - '0';
+	for (int i = mcTmp.size() - 2; i >= 0; --i) {
+		goldenOutput *= 10;
+		goldenOutput += (mcTmp[i] - '0');
 	}
 
-	--char_count;
-	std::string d_tmp;
-	while (line[char_count] != ' ' && line[char_count] != '\t') {
-		if (std::isdigit(line[char_count])) {
-			d_tmp.push_back(line[char_count]);
+	--charCount;
+	std::string dTmp;
+	while (line[charCount] != ' ' && line[charCount] != '\t') {
+		if (std::isdigit(line[charCount])) {
+			dTmp.push_back(line[charCount]);
 		}
-		--char_count;
+		--charCount;
 	}
-	depth = d_tmp[d_tmp.size() - 1] - '0';
-	for (int i = d_tmp.size() - 2; i >= 0; --i) {
+	depth = dTmp[dTmp.size() - 1] - '0';
+	for (int i = dTmp.size() - 2; i >= 0; --i) {
 		depth *= 10;
-		depth += (d_tmp[i] - '0');
+		depth += (dTmp[i] - '0');
 	}
 
-	fen = line.substr(0, char_count);
+	fen = line.substr(0, charCount);
 }  

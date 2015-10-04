@@ -38,21 +38,21 @@ enum MoveType {
         EN_PASSANT_MOVE, EN_PASSANT_CAPTURE
 };	
 
-struct moveInfo {
+struct MoveInfo {
 	Square from;
 	Square to;
 	Piece promoted;
 };
 
-const moveInfo MATE_MOVE = {INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE};
+const MoveInfo MATE_MOVE = {INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE};
 
-struct evalInfo
+struct EvalInfo
 {
 	int16_t posValue;
 	ZobKey zobKey;
 	uint16_t depth;
 	
-	evalInfo(int16_t v = 0, ZobKey z = 0, uint16_t d = 0)
+	EvalInfo(int16_t v = 0, ZobKey z = 0, uint16_t d = 0)
   	: posValue(v),
     	zobKey(z),
     	depth(d)
@@ -81,13 +81,13 @@ const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE b
 // smallSlidingPiecePos = A4, bigSlidingPiecePos = G4
 // smallPinPos is Bitboard with bits on A4 to B4 set
 // bigPinPos is Bitboard with bits on D4 to G4 set
-struct pinInfo {
+struct PinInfo {
         Square smallSlidingPiecePos;
         Square bigSlidingPiecePos;
         Bitboard smallPinPos;
         Bitboard bigPinPos;
 
-        pinInfo(Square small = INVALID_SQUARE, Square big = INVALID_SQUARE, const Bitboard& spos = 0, const Bitboard& bpos = 0)
+        PinInfo(Square small = INVALID_SQUARE, Square big = INVALID_SQUARE, const Bitboard& spos = 0, const Bitboard& bpos = 0)
         : smallSlidingPiecePos(small),
         bigSlidingPiecePos(big),
         smallPinPos(spos),

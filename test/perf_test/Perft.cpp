@@ -12,27 +12,27 @@ uint64_t Perft::analyze(PositionState& pos, uint16_t depth) const
 		return 1;
 	}
 
-	moves_array& possibleMoves = MemPool::instance()->get_moves_array(depth);
+	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();
-	if (pos.white_to_play()) {
-		MoveGenerator::instance()->generate_white_moves(pos, possibleMoves);
+	if (pos.whiteToPlay()) {
+		MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves);
 	}
 	else {
-		MoveGenerator::instance()->generate_black_moves(pos, possibleMoves);
+		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
 	}
 
 	if (depth == 1) {
 		return possibleMoves.size();
 	}
 
-	uint64_t move_count = 0;
+	uint64_t moveCount = 0;
 	for (unsigned int i = 0; i < possibleMoves.size(); ++i) {
-		pos.make_move(possibleMoves[i]);
-		move_count += analyze(pos, depth - 1);
-		pos.undo_move();
+		pos.makeMove(possibleMoves[i]);
+		moveCount += analyze(pos, depth - 1);
+		pos.undoMove();
 	}
 	
-	return move_count;
+	return moveCount;
 }
 
 Perft::Perft()

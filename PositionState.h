@@ -29,13 +29,13 @@ public:
 	Checks all the rules of the game for legality of the move
 	even if it involves capture of the opponent piece
 	*/
-	bool moveIsLegal(const moveInfo& move) const;
+	bool moveIsLegal(const MoveInfo& move) const;
 	
 	/*
 	Makes a move if the move if legal according to the moveIsLegal
 	method
 	*/
-	void makeMove(const moveInfo& move);
+	void makeMove(const MoveInfo& move);
 
 	/*
 	Makes an undo move of the last made move, by reverting all
@@ -48,7 +48,7 @@ public:
 	   In order for this function to work the updateDirectCheckArray()
 	   and updateDiscoveredChecks() should be invoked first.
 	*/
-	bool moveChecksOpponentKing(const moveInfo& move) const;
+	bool moveChecksOpponentKing(const MoveInfo& move) const;
 	
 	void updateDirectCheckArray();
 	void updateDiscoveredChecks();
@@ -104,37 +104,39 @@ private:
 	void initEnPassantFileFEN(const std::string& fen, unsigned int& charCount);
 	void initMoveCountFEN(const std::string& fen, unsigned int& charCount);
 
-	bool pawnMoveIsLegal(const moveInfo& move, bool& isEnPassantCapture) const;
-	bool knightMoveIsLegal(const moveInfo& move) const;
-	bool bishopMoveIsLegal(const moveInfo& move) const;
-	bool rookMoveIsLegal(const moveInfo& move) const;
-	bool queenMoveIsLegal(const moveInfo& move) const;
-	bool kingMoveIsLegal(const moveInfo& move) const;
-	bool enPassantCaptureIsLegal(const moveInfo& move) const;
-	bool castlingIsLegal(const moveInfo& move) const;
+	bool isPossibleCastlingMove(const MoveInfo& move) const;
+
+	bool pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCapture) const;
+	bool knightMoveIsLegal(const MoveInfo& move) const;
+	bool bishopMoveIsLegal(const MoveInfo& move) const;
+	bool rookMoveIsLegal(const MoveInfo& move) const;
+	bool queenMoveIsLegal(const MoveInfo& move) const;
+	bool kingMoveIsLegal(const MoveInfo& move) const;
+	bool enPassantCaptureIsLegal(const MoveInfo& move) const;
+	bool castlingIsLegal(const MoveInfo& move) const;
 	
 	Bitboard squaresUnderAttack(Color attackedColor) const;
 
-	void makeLazyMove(const moveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const;
-	void undoLazyMove(const moveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const;
+	void makeLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const;
+	void undoLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const;
 
-	void makeNormalMove(const moveInfo& move);
-	void makeCastlingMove(const moveInfo& move);
-	void makeEnPassantMove(const moveInfo& move);
-	void makeEnPassantCapture(const moveInfo& move);
-	void makePromotionMove(const moveInfo& move);
+	void makeNormalMove(const MoveInfo& move);
+	void makeCastlingMove(const MoveInfo& move);
+	void makeEnPassantMove(const MoveInfo& move);
+	void makeEnPassantCapture(const MoveInfo& move);
+	void makePromotionMove(const MoveInfo& move);
 
-	void updateCastlingRights(const moveInfo& move);
+	void updateCastlingRights(const MoveInfo& move);
 
 	void addPieceToBitboards(Square sq, Color clr);
 	void removePieceFromBitboards(Square sq, Color clr);
 
-	void updateNonDiagPinStatus(pinInfo& pin, Color clr) const;
-	void updateDiagPinStatus(pinInfo& pin, Color clr) const;
+	void updateNonDiagPinStatus(PinInfo& pin, Color clr) const;
+	void updateDiagPinStatus(PinInfo& pin, Color clr) const;
 	
-	bool moveOpensDiscoveredCheck(const moveInfo& move) const;
-	bool castlingChecksOpponentKing(const moveInfo& move) const;
-	bool enPassantCaptureDiscoveresCheck(const moveInfo& move) const;
+	bool moveOpensDiscoveredCheck(const MoveInfo& move) const;
+	bool castlingChecksOpponentKing(const MoveInfo& move) const;
+	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move) const;
 
 	int calculatePstValue(Piece p, Square s) const;
 	void updateGameStatus();
@@ -146,7 +148,7 @@ private:
 	void constructEnPassantFileFEN(std::string& fen) const;
 	void constructMoveCountFEN(std::string& fen) const;
 	
-	struct undoMoveInfo {
+	struct UndoMoveInfo {
 		Square from;
 		Square to;
 		Piece movedPiece;
@@ -159,32 +161,32 @@ private:
 		bool blackRightCastling;
 	};
 
-	void undoNormalMove(const undoMoveInfo& move);
-	void undoCastlingMove(const undoMoveInfo& move);
-	void undoEnPassantMove(const undoMoveInfo& move);
-	void undoEnPassantCapture(const undoMoveInfo& move);
-	void undoPromotionMove(const undoMoveInfo& move);
+	void undoNormalMove(const UndoMoveInfo& move);
+	void undoCastlingMove(const UndoMoveInfo& move);
+	void undoEnPassantMove(const UndoMoveInfo& move);
+	void undoEnPassantCapture(const UndoMoveInfo& move);
+	void undoPromotionMove(const UndoMoveInfo& move);
 
-	void revertCastlingRights(const undoMoveInfo& move);
+	void revertCastlingRights(const UndoMoveInfo& move);
 
 	class MoveStack {
 		public:
 			MoveStack();
-			undoMoveInfo* getNextItem();
-			const undoMoveInfo* pop();
+			UndoMoveInfo* getNextItem();
+			const UndoMoveInfo* pop();
 			bool isEmpty() const;
 			uint32_t getSize() const;
 		
 		private:
-			undoMoveInfo _moveStack[MOVE_STACK_CAPACITY];
+			UndoMoveInfo _moveStack[MOVE_STACK_CAPACITY];
 			uint32_t _stackSize;
 	};
 	
-	struct statePinInfo {
-		pinInfo rankPin;
-		pinInfo filePin;
-		pinInfo diagA1h8Pin;
-		pinInfo diagA8h1Pin;
+	struct StatePinInfo {
+		PinInfo rankPin;
+		PinInfo filePin;
+		PinInfo diagA1h8Pin;
+		PinInfo diagA8h1Pin;
 	};
 
 
@@ -214,7 +216,7 @@ private:
 
 	// Complete info of the positions where pinned pieces 
 	// can be located and appropriate sliding piece positions
-	statePinInfo _statePinInfo;
+	StatePinInfo _statePinInfo;
 
 	const BitboardImpl* _bitboardImpl;
 	const ZobKeyImpl* _zobKeyImpl;

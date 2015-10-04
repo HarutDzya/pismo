@@ -8,9 +8,9 @@
 namespace pismo
 {
 
-moveInfo Core::think(PositionState& pos, uint16_t depth)
+MoveInfo Core::think(PositionState& pos, uint16_t depth)
 {
-	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
+	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();	
 	pos.whiteToPlay() ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
 	       	MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves); 
@@ -19,7 +19,7 @@ moveInfo Core::think(PositionState& pos, uint16_t depth)
 		return MATE_MOVE; 
 	}
 
-	moveInfo move = possibleMoves[0];
+	MoveInfo move = possibleMoves[0];
 	int16_t score = -MAX_SCORE;
 	if (possibleMoves.size() == 1) {
 		return move;
@@ -49,7 +49,7 @@ moveInfo Core::think(PositionState& pos, uint16_t depth)
 		}
 	}
 	
-	evalInfo eval(score, pos.getZobKey(), depth);
+	EvalInfo eval(score, pos.getZobKey(), depth);
 	_transTable->push(eval);
 
 	return move;
@@ -57,7 +57,7 @@ moveInfo Core::think(PositionState& pos, uint16_t depth)
 
 int16_t Core::minimax(PositionState& pos, uint16_t depth, bool whiteToPlay)
 {
-	evalInfo eval;
+	EvalInfo eval;
 	if(_transTable->contains(pos, eval) && eval.depth >= depth) {
 		return eval.posValue;
 	}
@@ -71,7 +71,7 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool whiteToPlay)
 		return val;
 	}
 
-	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
+	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();
 	whiteToPlay ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
 	       MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves); 
@@ -90,7 +90,7 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool whiteToPlay)
 			}
 		}
 
-		evalInfo eval(score, pos.getZobKey(), depth);
+		EvalInfo eval(score, pos.getZobKey(), depth);
 		_transTable->forcePush(eval);
 
 		return score;
@@ -106,7 +106,7 @@ int16_t Core::minimax(PositionState& pos, uint16_t depth, bool whiteToPlay)
 			}
 		}
 
-		evalInfo eval(score, pos.getZobKey(), depth);
+		EvalInfo eval(score, pos.getZobKey(), depth);
 		_transTable->forcePush(eval);
 
 		return score;

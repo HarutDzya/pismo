@@ -64,10 +64,10 @@ public:
 	Bitboard getPawnWhiteCheckingPos(Square kingPos) const;
 	Bitboard getPawnBlackCheckingPos(Square kingPos) const;
 
-	const pinInfo& getRankPinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-	const pinInfo& getFilePinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-	const pinInfo& getDiagA1h8PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-	const pinInfo& getDiagA8h1PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const PinInfo& getRankPinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const PinInfo& getFilePinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const PinInfo& getDiagA1h8PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
+	const PinInfo& getDiagA8h1PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
 
 	void getEnPassantPinInfo(Square from, Square to, const Bitboard& occupiedSquares, Square& leftPos, Square& rightPos) const;
 
@@ -128,10 +128,10 @@ private:
 	Bitboard _attackingPosBoardPawnWhite[NUMBER_OF_SQUARES - 16];
 	Bitboard _attackingPosBoardPawnBlack[NUMBER_OF_SQUARES - 16];
 
-	pinInfo _rankPinInfo[NUMBER_OF_SQUARES][256];
-	pinInfo _filePinInfo[NUMBER_OF_SQUARES][256];
-	pinInfo _diagA1h8PinInfo[NUMBER_OF_SQUARES][256];
-	pinInfo _diagA8h1PinInfo[NUMBER_OF_SQUARES][256];
+	PinInfo _rankPinInfo[NUMBER_OF_SQUARES][256];
+	PinInfo _filePinInfo[NUMBER_OF_SQUARES][256];
+	PinInfo _diagA1h8PinInfo[NUMBER_OF_SQUARES][256];
+	PinInfo _diagA8h1PinInfo[NUMBER_OF_SQUARES][256];
 };
 }
 

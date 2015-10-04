@@ -374,7 +374,7 @@ void PositionState::initMoveCountFEN(const std::string& fen, unsigned int& charC
 	}
 }
 
-bool PositionState::moveIsLegal(const moveInfo& move) const
+bool PositionState::moveIsLegal(const MoveInfo& move) const
 {
 	assert(move.from != move.to);
 	Piece pfrom = _board[move.from  / 8][move.from % 8];
@@ -406,7 +406,7 @@ bool PositionState::moveIsLegal(const moveInfo& move) const
 					result = queenMoveIsLegal(move);
 					break;
 				case KING_WHITE:
-					if (std::abs(move.from % 8 - move.to % 8) > 1) {
+					if (isPossibleCastlingMove(move)) {
 						return castlingIsLegal(move);
 					}
 					else { 
@@ -448,7 +448,7 @@ bool PositionState::moveIsLegal(const moveInfo& move) const
 					result = queenMoveIsLegal(move);
 					break;
 				case KING_BLACK:
-					if (std::abs(move.from % 8 - move.to % 8) > 1) { 
+					if (isPossibleCastlingMove(move)) { 
 						return castlingIsLegal(move);
 					}
 					else { 
@@ -471,7 +471,19 @@ bool PositionState::moveIsLegal(const moveInfo& move) const
 	return result;
 }
 
-bool PositionState::pawnMoveIsLegal(const moveInfo& move, bool& isEnPassantCapture) const
+bool PositionState::isPossibleCastlingMove(const MoveInfo& move) const
+{
+	if ((_whiteToPlay && _board[move.from / 8][move.from % 8] == KING_WHITE) ||
+			(!_whiteToPlay && _board[move.from / 8][move.from % 8] == KING_BLACK)) {
+		if (std::abs(move.from % 8 - move.to % 8) == 2) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool PositionState::pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCapture) const
 {
 	isEnPassantCapture = false;
 	if (_whiteToPlay) {
@@ -529,7 +541,7 @@ bool PositionState::pawnMoveIsLegal(const moveInfo& move, bool& isEnPassantCaptu
 	return false;
 }
 
-bool PositionState::enPassantCaptureIsLegal(const moveInfo& move) const
+bool PositionState::enPassantCaptureIsLegal(const MoveInfo& move) const
 {
 	if (_enPassantFile != -1) {
 		if (_whiteToPlay) {
@@ -563,7 +575,7 @@ bool PositionState::enPassantCaptureIsLegal(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::knightMoveIsLegal(const moveInfo& move) const
+bool PositionState::knightMoveIsLegal(const MoveInfo& move) const
 {
 	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalKnightMoves(move.from)) {
 		return true;
@@ -571,7 +583,7 @@ bool PositionState::knightMoveIsLegal(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::bishopMoveIsLegal(const moveInfo& move) const
+bool PositionState::bishopMoveIsLegal(const MoveInfo& move) const
 {
 	if((_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _bitboardImpl->getLegalDiagA1h8Moves(move.from, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8))
 	|| (_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _bitboardImpl->getLegalDiagA8h1Moves(move.from, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1))) {
@@ -580,7 +592,7 @@ bool PositionState::bishopMoveIsLegal(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::rookMoveIsLegal(const moveInfo& move) const
+bool PositionState::rookMoveIsLegal(const MoveInfo& move) const
 {
 	if((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalRankMoves(move.from, _whitePieces | _blackPieces))
 	|| (_bitboardImpl->squareToBitboardTranspose(move.to) & _bitboardImpl->getLegalFileMoves(move.from, _whitePiecesTranspose | _blackPiecesTranspose))) {
@@ -589,7 +601,7 @@ bool PositionState::rookMoveIsLegal(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::queenMoveIsLegal(const moveInfo& move) const
+bool PositionState::queenMoveIsLegal(const MoveInfo& move) const
 {
 	if((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalRankMoves(move.from, _whitePieces | _blackPieces))
 	|| (_bitboardImpl->squareToBitboardTranspose(move.to) & _bitboardImpl->getLegalFileMoves(move.from, _whitePiecesTranspose | _blackPiecesTranspose)) 
@@ -600,7 +612,7 @@ bool PositionState::queenMoveIsLegal(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::kingMoveIsLegal(const moveInfo& move) const
+bool PositionState::kingMoveIsLegal(const MoveInfo& move) const
 {
 	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalKingMoves(move.from)) {
 		return true;
@@ -608,7 +620,7 @@ bool PositionState::kingMoveIsLegal(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::castlingIsLegal(const moveInfo& move) const
+bool PositionState::castlingIsLegal(const MoveInfo& move) const
 {
 	if (_whiteToPlay) {
 		if (move.from == E1 && move.to == C1) {
@@ -725,7 +737,7 @@ Bitboard PositionState::squaresUnderAttack(Color attackedColor) const
 // Castling move and also promotion are not considered here,
 // therefore pawns can appear at the first and last ranks due to this move
 // This should be always used in conjunction with undoLazyMove 
-void PositionState::makeLazyMove(const moveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const
+void PositionState::makeLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const
 {
 	PositionState * nonConstThis = const_cast<PositionState *>(this);
 	capturedPiece = _board[move.to / 8][move.to % 8];
@@ -768,7 +780,7 @@ void PositionState::makeLazyMove(const moveInfo& move, bool isEnPassantCapture, 
 }
 
 // Reverses the lazy move done by makeLazyMove
-void PositionState::undoLazyMove(const moveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const
+void PositionState::undoLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const
 {
 	PositionState * nonConstThis = const_cast<PositionState *>(this);
 	if (_whiteToPlay) {
@@ -860,7 +872,7 @@ void PositionState::updateDiscoveredChecks()
 	}
 }
 
-void PositionState::updateNonDiagPinStatus(pinInfo& pin, Color clr) const
+void PositionState::updateNonDiagPinStatus(PinInfo& pin, Color clr) const
 {
 	Piece slidePiece;
 	Piece queenPiece;
@@ -886,7 +898,7 @@ void PositionState::updateNonDiagPinStatus(pinInfo& pin, Color clr) const
 	}
 }
 
-void PositionState::updateDiagPinStatus(pinInfo& pin, Color clr) const
+void PositionState::updateDiagPinStatus(PinInfo& pin, Color clr) const
 {
 	Piece slidePiece;
 	Piece queenPiece;
@@ -912,7 +924,7 @@ void PositionState::updateDiagPinStatus(pinInfo& pin, Color clr) const
 	}
 }
 
-bool PositionState::moveChecksOpponentKing(const moveInfo& move) const
+bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[pfrom]) {
@@ -931,7 +943,7 @@ bool PositionState::moveChecksOpponentKing(const moveInfo& move) const
 		}
 	}
 		
-	if ((pfrom == KING_WHITE || pfrom == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
+	if (isPossibleCastlingMove(move)) {
 		if (castlingChecksOpponentKing(move)) {
 			return true;
 		}
@@ -940,7 +952,7 @@ bool PositionState::moveChecksOpponentKing(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::moveOpensDiscoveredCheck(const moveInfo& move) const
+bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move) const
 {
 	// TODO: Check whether move.from is possible pin position for appropriate king position
 	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
@@ -987,7 +999,7 @@ bool PositionState::moveOpensDiscoveredCheck(const moveInfo& move) const
 	return false;
 }
 
-bool PositionState::castlingChecksOpponentKing(const moveInfo& move) const
+bool PositionState::castlingChecksOpponentKing(const MoveInfo& move) const
 {
 	if (_whiteToPlay) {
 		if (_blackKingPosition / 8 != 0) {
@@ -1032,7 +1044,7 @@ bool PositionState::castlingChecksOpponentKing(const moveInfo& move) const
 	return false;
 }
 			
-bool PositionState::enPassantCaptureDiscoveresCheck(const moveInfo& move) const
+bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move) const
 {
 	if (_whiteToPlay && _blackKingPosition / 8 == 4) {
 		Square leftPos;
@@ -1074,11 +1086,11 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const moveInfo& move) const
 	return false;
 }
 
-void PositionState::makeMove(const moveInfo& move)
+void PositionState::makeMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	Piece pto = _board[move.to / 8][move.to % 8];
-	undoMoveInfo* undoMove = _moveStack.getNextItem();
+	UndoMoveInfo* undoMove = _moveStack.getNextItem();
 	undoMove->from = move.from;
 	undoMove->to = move.to;
 	undoMove->movedPiece = pfrom;
@@ -1106,7 +1118,7 @@ void PositionState::makeMove(const moveInfo& move)
 			undoMove->moveType = NORMAL_MOVE;
 		}
 	}
-	else if ((pfrom == KING_WHITE || pfrom == KING_BLACK) && std::abs(move.from % 8 - move.to % 8) > 1) {
+	else if (isPossibleCastlingMove(move)) {
 		makeCastlingMove(move);
 		undoMove->moveType = CASTLING_MOVE;
 	}		
@@ -1123,7 +1135,7 @@ void PositionState::makeMove(const moveInfo& move)
 	_zobKey ^= _zobKeyImpl->getIfBlackToPlayKey();
 }
 
-void PositionState::makeNormalMove(const moveInfo& move)
+void PositionState::makeNormalMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	Piece pto = _board[move.to / 8][move.to % 8];
@@ -1168,7 +1180,7 @@ void PositionState::makeNormalMove(const moveInfo& move)
 }
 
 //Castling is assumed to be King's move
-void PositionState::makeCastlingMove(const moveInfo& move)
+void PositionState::makeCastlingMove(const MoveInfo& move)
 {
 	if (_whiteToPlay) {
 		assert(move.from == E1);
@@ -1243,7 +1255,7 @@ void PositionState::makeCastlingMove(const moveInfo& move)
 	}	
 }
 
-void PositionState::makeEnPassantMove(const moveInfo& move)
+void PositionState::makeEnPassantMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_whiteToPlay) {
@@ -1268,7 +1280,7 @@ void PositionState::makeEnPassantMove(const moveInfo& move)
 	_zobKey ^= _zobKeyImpl->getEnPassantKey(_enPassantFile);
 }
 
-void PositionState::makeEnPassantCapture(const moveInfo& move)
+void PositionState::makeEnPassantCapture(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_whiteToPlay) {
@@ -1302,7 +1314,7 @@ void PositionState::makeEnPassantCapture(const moveInfo& move)
 	}
 }
 
-void PositionState::makePromotionMove(const moveInfo& move)
+void PositionState::makePromotionMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	Piece pto = _board[move.to / 8][move.to % 8];
@@ -1350,7 +1362,7 @@ void PositionState::makePromotionMove(const moveInfo& move)
 
 // Updates castling variables by checking whether king and rooks 
 // are their designated positions after the move
-void PositionState::updateCastlingRights(const moveInfo& move)
+void PositionState::updateCastlingRights(const MoveInfo& move)
 {
 	if (_whiteToPlay) {
 		if (move.from == E1) {
@@ -1479,7 +1491,7 @@ void PositionState::updateGameStatus()
 
 void PositionState::undoMove()
 {
-	const undoMoveInfo* move = _moveStack.pop();
+	const UndoMoveInfo* move = _moveStack.pop();
 	switch(move->moveType) {
 		case NORMAL_MOVE: 
 			undoNormalMove(*move);
@@ -1508,7 +1520,7 @@ void PositionState::undoMove()
 	_zobKey ^= _zobKeyImpl->getIfBlackToPlayKey();
 }
 
-void PositionState::undoNormalMove(const undoMoveInfo& move)
+void PositionState::undoNormalMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {			
 		removePieceFromBitboards(move.to, BLACK);
@@ -1550,7 +1562,7 @@ void PositionState::undoNormalMove(const undoMoveInfo& move)
 	}
 }
 
-void PositionState::undoCastlingMove(const undoMoveInfo& move)
+void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {
 		assert(move.from == E8);
@@ -1627,7 +1639,7 @@ void PositionState::undoCastlingMove(const undoMoveInfo& move)
 	}	
 }
 
-void PositionState::undoEnPassantMove(const undoMoveInfo& move)
+void PositionState::undoEnPassantMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {
 		removePieceFromBitboards(move.to, BLACK);
@@ -1651,7 +1663,7 @@ void PositionState::undoEnPassantMove(const undoMoveInfo& move)
 	_enPassantFile = move.enPassantFile;
 }
 
-void PositionState::undoEnPassantCapture(const undoMoveInfo& move)
+void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {
 		removePieceFromBitboards(move.to, BLACK);
@@ -1686,7 +1698,7 @@ void PositionState::undoEnPassantCapture(const undoMoveInfo& move)
 	}
 }
 
-void PositionState::undoPromotionMove(const undoMoveInfo& move)
+void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {
 		assert(move.from >= A2 && move.from <= H2);
@@ -1732,7 +1744,7 @@ void PositionState::undoPromotionMove(const undoMoveInfo& move)
 	}
 }
 
-void PositionState::revertCastlingRights(const undoMoveInfo& move)
+void PositionState::revertCastlingRights(const UndoMoveInfo& move)
 {
 
 	if (!_whiteLeftCastling && move.whiteLeftCastling) {
@@ -1771,13 +1783,13 @@ uint32_t PositionState::MoveStack::getSize() const
 // Returns the pointer to the next item which should be updated
 // and then pushed into stack
 // The value held in the variable to which the pointer points to is undefined  
-PositionState::undoMoveInfo* PositionState::MoveStack::getNextItem()
+PositionState::UndoMoveInfo* PositionState::MoveStack::getNextItem()
 {
 	assert(_stackSize != MOVE_STACK_CAPACITY);
 	return _moveStack + (_stackSize++);
 }
 
-const PositionState::undoMoveInfo* PositionState::MoveStack::pop()
+const PositionState::UndoMoveInfo* PositionState::MoveStack::pop()
 {
 	assert(!isEmpty());
 	return _moveStack + (--_stackSize);
@@ -2061,7 +2073,7 @@ void PositionState::printPossibleMoves(Square from) const
 	std::cout << "Possible moves" << std::endl;
 	for (int i = 7; i >= 0; --i) {
 		for(int j = 0; j < 8; ++j) {
-			moveInfo move = {from, (Square) (i * 8 + j), promoted};
+			MoveInfo move = {from, (Square) (i * 8 + j), promoted};
 			if (moveIsLegal(move)) {
 				std::cout << "L ";
 			}

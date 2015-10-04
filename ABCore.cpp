@@ -7,9 +7,9 @@
 
 namespace pismo
 {
-moveInfo ABCore::think(PositionState& pos, uint16_t depth)
+MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 {
-	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
+	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();
 	pos.whiteToPlay() ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
 		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
@@ -22,7 +22,7 @@ moveInfo ABCore::think(PositionState& pos, uint16_t depth)
 		return possibleMoves[0];
 	}
 
-	moveInfo move;
+	MoveInfo move;
 	int16_t score;
 	if (pos.whiteToPlay()) {
 		score = -MAX_SCORE;
@@ -49,7 +49,7 @@ moveInfo ABCore::think(PositionState& pos, uint16_t depth)
 		}
 	}
 	
-	evalInfo eval(score, pos.getZobKey(), depth);
+	EvalInfo eval(score, pos.getZobKey(), depth);
 	_transTable->push(eval);
 
 	return move;
@@ -101,12 +101,12 @@ int16_t ABCore::alphaBeta(PositionState& pos, uint16_t depth, int16_t alpha, int
 		return quiescenceSearch(pos, depth, alpha, beta, whiteToPlay);
 	}
 
-	evalInfo eval;
+	EvalInfo eval;
 	if (_transTable->contains(pos, eval) && eval.depth >= depth) {
 		return eval.posValue;
 	}
 
-	movesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
+	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
 	possibleMoves.clear();
 	whiteToPlay ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
 		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
@@ -162,7 +162,7 @@ int16_t ABCore::alphaBeta(PositionState& pos, uint16_t depth, int16_t alpha, int
 int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t alpha, int16_t beta, bool whiteToPlay)
 {
 	//TODO : Consider check evasions
-	evalInfo eval;
+	EvalInfo eval;
 	int16_t val;
 	if (_transTable->contains(pos, eval) && eval.depth >= 0) {
 		val = eval.posValue;
@@ -189,7 +189,7 @@ int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t al
 		if (val > currentAlpha) {
 			currentAlpha = val;
 		}
-		movesArray possibleMoves; //TODO: Implement memory pool for quiescence search
+		MovesArray possibleMoves; //TODO: Implement memory pool for quiescence search
 		//MoveGenerator::instance()->generateWhiteNonQuietMoves(pos, possibleMoves);
 		int16_t score;
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
@@ -213,7 +213,7 @@ int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t al
 		if (val < currentBeta) {
 			currentBeta = val;
 		}
-		movesArray possibleMoves; //TODO: Implement memory pool for quiescence search
+		MovesArray possibleMoves; //TODO: Implement memory pool for quiescence search
 		//MoveGenerator::instance()->generateBlackNonQuietMoves(pos, possibleMoves);
 		int16_t score;
 		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {

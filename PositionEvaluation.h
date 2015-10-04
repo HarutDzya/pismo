@@ -50,11 +50,11 @@ private:
 
 	unsigned int hashFunction(const ZobKey& materialZobKey) const;
 
-	struct materialInfo {
+	struct MaterialInfo {
 		int16_t materialValue;
 		ZobKey materialZobKey;
 
-		materialInfo(int16_t mv = 0, ZobKey mz = 0)
+		MaterialInfo(int16_t mv = 0, ZobKey mz = 0)
 		: materialValue(mv),
 		materialZobKey(mz)
 	 	{
@@ -64,7 +64,7 @@ private:
 	//position value in centi pawns
 	int16_t _posValue;
 
-	std::vector<materialInfo> _materialHash;
+	std::vector<MaterialInfo> _materialHash;
 };
 
 }

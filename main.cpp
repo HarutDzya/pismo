@@ -6,7 +6,7 @@
 #include "MemPool.h"
 
 void printBitboard(const pismo::Bitboard& board);
-void printGeneratedMoves(const pismo::movesArray& generatedMoves);
+void printGeneratedMoves(const pismo::MovesArray& generatedMoves);
 
 int main()
 {
@@ -69,7 +69,7 @@ int main()
 			std::cin >> sqfrom >> sqto;
 			std::getline(std::cin, prom);
 			prom.erase(0, 1);
-			moveInfo move;
+			MoveInfo move;
 			if(prom == "QW") {
 				move.from = boardRep[sqfrom];
 				move.to = boardRep[sqto];
@@ -101,7 +101,7 @@ int main()
 			else {
 				std::cout << "Move is illegal" << std::endl;
 				//pos.printPossibleMoves(move.from);
-				movesArray possibleMoves;
+				MovesArray possibleMoves;
 				if (pos.whiteToPlay()) {
 					MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves);
 					printGeneratedMoves(possibleMoves);
@@ -117,7 +117,7 @@ int main()
 			pos.printBoard();
 		} 
 		else if (choice == "t") {
-			moveInfo mv = p->think(pos, 5);
+			MoveInfo mv = p->think(pos, 5);
 			pos.makeMove(mv);
 			pos.printBoard();
 			std::cout << "Move: " <<  squareToNotation[mv.from] << "->" << squareToNotation[mv.to] << "\n" << std::endl;
@@ -152,11 +152,11 @@ void printBitboard(const pismo::Bitboard& board)
 	}
 }
 
-void printGeneratedMoves(const pismo::movesArray& generatedMoves)
+void printGeneratedMoves(const pismo::MovesArray& generatedMoves)
 {
 	std::cout << "Possible moves are the following" << std::endl; 
 	for (std::size_t moveCount = 0; moveCount < generatedMoves.size(); ++moveCount) {
-		pismo::moveInfo move = generatedMoves[moveCount];
+		pismo::MoveInfo move = generatedMoves[moveCount];
 		std::cout << std::string(1, ('A' + move.from % 8)) + std::string(1, ('1' + move.from / 8)) << "	";
 		std::cout << std::string(1, ('A' + move.to % 8)) + std::string(1, ('1' + move.to / 8)) << "	";
 		switch(move.promoted) {

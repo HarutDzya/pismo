@@ -32,7 +32,7 @@ void PositionEvaluation::evalMaterial(const PositionState& pos)
 		for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
 			materialValue += pos.getPieceCount((Piece) piece) * PIECE_VALUES[piece];
 		}
-		_materialHash[index] = materialInfo(materialValue, pos.getMaterialZobKey());
+		_materialHash[index] = MaterialInfo(materialValue, pos.getMaterialZobKey());
 	}
 	
 	_posValue += materialValue;
