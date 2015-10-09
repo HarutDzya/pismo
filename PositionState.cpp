@@ -935,7 +935,11 @@ bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 		return true;
 	}
 
-	// TODO: Consider discovered check for enPassant capture
+	if ((pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) && ((move.to - move.from) / 8 != 0) && _board[move.to / 8][move.to % 8] == ETY_SQUARE) {
+	   if (enPassantCaptureDiscoveresCheck(move)) {
+		   return true;
+	   }
+	}	   
 
 	if (move.promoted != ETY_SQUARE) {
 		if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[move.promoted]) {
@@ -954,43 +958,53 @@ bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 
 bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move) const
 {
-	// TODO: Check whether move.from is possible pin position for appropriate king position
-	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_whiteToPlay) {
+		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
+			return false;
+		}
+	}
+	else {
+		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
+			return false;
+		}
+	}
+
+	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.rankPin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.rankPin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.filePin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.filePin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA1h8Pin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA1h8Pin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA8h1Pin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA8h1Pin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.bigPinPos)) {
 			return true;
 		}

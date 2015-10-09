@@ -25,6 +25,8 @@ BitboardImpl::BitboardImpl()
 	initFilePinInfo();
 	initDiagA1h8PinInfo();
 	initDiagA8h1PinInfo();
+
+	initSlidingPosBoard();
 }
 
 // Returns the bitboard with sq Square filled 
@@ -194,6 +196,13 @@ void BitboardImpl::getEnPassantPinInfo(Square from, Square to, const Bitboard& o
 	rightPos = (lsbPos != -1) ? (Square) ((from / 8) * 8 + (leftPin + lsbPos + 1)) : INVALID_SQUARE;
 }
 
+// Returns the bitboard of positions where sliding piece can move from square from
+// when it is the only piece on the board, it should be used for finding
+// possible moves which open discovered check or the movement of pinned piece
+Bitboard BitboardImpl::getSlidingPieceMoves(Square from) const
+{
+	return _slidingPosBoard[from];
+}
 
 // Returns the converted normal bitboard from transpose bitboard
 Bitboard BitboardImpl::bitboardTransposeToBitboard(const Bitboard& boardTranspose) const
@@ -677,6 +686,24 @@ void BitboardImpl::initDiagA8h1PinInfo()
 				_diagA8h1PinInfo[sq][diagOccup] = PinInfo();
 			}
 		}
+	}
+}
+
+// Initializes _slidingPosBoard array for each square to the Bitboard  
+// of possible positions where sliding piece can move 
+// from appropriate square
+// This is used to identify whether move can potentially
+// classify for opening discovered check or pinned piece move
+void BitboardImpl::initSlidingPosBoard ()
+{
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		Bitboard slidePos = 0;
+		Square from = (Square) sq;
+		slidePos |= getLegalRankMoves(from, squareToBitboard(from));
+		slidePos |= bitboardTransposeToBitboard(getLegalFileMoves(from, squareToBitboardTranspose(from)));
+		slidePos |= bitboardDiagA1h8ToBitboard(getLegalDiagA1h8Moves(from, squareToBitboardDiagA1h8(from)));
+		slidePos |= bitboardDiagA8h1ToBitboard(getLegalDiagA8h1Moves(from, squareToBitboardDiagA8h1(from)));
+		_slidingPosBoard[sq] = slidePos;
 	}
 }
 

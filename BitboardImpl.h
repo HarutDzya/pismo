@@ -71,6 +71,7 @@ public:
 
 	void getEnPassantPinInfo(Square from, Square to, const Bitboard& occupiedSquares, Square& leftPos, Square& rightPos) const;
 
+	Bitboard getSlidingPieceMoves(Square from) const;
 
 	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
 	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
@@ -102,6 +103,8 @@ private:
 	void initDiagA1h8PinInfo();
 	void initDiagA8h1PinInfo();
 
+	void initSlidingPosBoard();
+
 	Bitrank movePosRank(unsigned int position, Bitrank rankOccup) const;
 	void setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank & leftPin, Bitrank& rightPin) const;
 	int findLsbSet(Bitrank rank) const;
@@ -132,6 +135,8 @@ private:
 	PinInfo _filePinInfo[NUMBER_OF_SQUARES][256];
 	PinInfo _diagA1h8PinInfo[NUMBER_OF_SQUARES][256];
 	PinInfo _diagA8h1PinInfo[NUMBER_OF_SQUARES][256];
+	
+	Bitboard _slidingPosBoard[NUMBER_OF_SQUARES];
 };
 }
 
