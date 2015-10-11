@@ -85,10 +85,17 @@ int main()
 				move.to = boardRep[sqto];
 				move.promoted = ETY_SQUARE;
 			}
+			pos.updateStatePinInfo();
+			if (pos.pseudomoveIsLegalMove(move)) {
+				std::cout << "Pseudomove is legal move" << std::endl;
+			}
+			else {
+				std::cout << "Pseudomove is illegal move" << std::endl;
+			}
   		
 			if (pos.moveIsLegal(move)) {
 				pos.updateDirectCheckArray();
-				pos.updateDiscoveredChecks();
+				pos.updateDiscoveredChecksInfo();
 				if (pos.moveChecksOpponentKing(move)) {
 					std::cout << "Move checks opponent king" << std::endl;
 				}

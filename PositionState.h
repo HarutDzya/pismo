@@ -46,13 +46,23 @@ public:
 	/* Checks to see whether the move checks opponent king
 	   by either direct check or discovered check.
 	   In order for this function to work the updateDirectCheckArray()
-	   and updateDiscoveredChecks() should be invoked first.
+	   and updateDiscoveredChecksInfo() should be invoked first.
 	*/
 	bool moveChecksOpponentKing(const MoveInfo& move) const;
 	
 	void updateDirectCheckArray();
-	void updateDiscoveredChecks();
+	void updateDiscoveredChecksInfo();
 
+	/* Checks to see whether pseudomove is legal
+	   by checking whether the move is not pinned
+	   piece move which opens check
+	   In order for this function to work the updateStatePinInfo()
+	   should be invoked first.
+	*/
+	bool pseudomoveIsLegalMove(const MoveInfo& move) const;
+
+	void updateStatePinInfo();	
+	     
 	
 	/*
 	Prints board for white pieces using information from 
@@ -214,6 +224,11 @@ private:
 	// positions from which it can attack the king	
 	Bitboard _directCheck[PIECE_NB];
 
+	// Complete info of the positions where piece can
+    // can be located to open discovered check and 
+	// appropirate sliding piece positions
+	StatePinInfo _stateDiscCheckInfo;
+
 	// Complete info of the positions where pinned pieces 
 	// can be located and appropriate sliding piece positions
 	StatePinInfo _statePinInfo;
@@ -229,6 +244,9 @@ private:
 	//Shows white and black king position after the move
 	Square _whiteKingPosition;
 	Square _blackKingPosition;
+
+	// Shows whether moving side king is under check
+	bool _kingUnderCheck;
 
 	// true if appropriate castling is allowed
 	bool _whiteLeftCastling;

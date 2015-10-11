@@ -24,6 +24,7 @@ _whiteToPlay(true),
 _enPassantFile(-1),
 _whiteKingPosition(E1),
 _blackKingPosition(E8),
+_kingUnderCheck(false),
 _whiteLeftCastling(false),
 _whiteRightCastling(false),
 _blackLeftCastling(false),
@@ -848,27 +849,27 @@ void PositionState::updateDirectCheckArray()
 	}
 }
 
-void PositionState::updateDiscoveredChecks()
+void PositionState::updateDiscoveredChecksInfo()
 {
 	if (_whiteToPlay) {
-		_statePinInfo.rankPin = _bitboardImpl->getRankPinInfo(_blackKingPosition, _whitePieces | _blackPieces);
-		_statePinInfo.filePin = _bitboardImpl->getFilePinInfo(_blackKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
-		_statePinInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_blackKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-		_statePinInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_blackKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
-		updateNonDiagPinStatus(_statePinInfo.rankPin, WHITE);
-		updateNonDiagPinStatus(_statePinInfo.filePin, WHITE);
-		updateDiagPinStatus(_statePinInfo.diagA1h8Pin, WHITE);
-		updateDiagPinStatus(_statePinInfo.diagA8h1Pin, WHITE);
+		_stateDiscCheckInfo.rankPin = _bitboardImpl->getRankPinInfo(_blackKingPosition, _whitePieces | _blackPieces);
+		_stateDiscCheckInfo.filePin = _bitboardImpl->getFilePinInfo(_blackKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
+		_stateDiscCheckInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_blackKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
+		_stateDiscCheckInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_blackKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+		updateNonDiagPinStatus(_stateDiscCheckInfo.rankPin, WHITE);
+		updateNonDiagPinStatus(_stateDiscCheckInfo.filePin, WHITE);
+		updateDiagPinStatus(_stateDiscCheckInfo.diagA1h8Pin, WHITE);
+		updateDiagPinStatus(_stateDiscCheckInfo.diagA8h1Pin, WHITE);
 	}
 	else {
-		_statePinInfo.rankPin = _bitboardImpl->getRankPinInfo(_whiteKingPosition, _whitePieces | _blackPieces);
-		_statePinInfo.filePin = _bitboardImpl->getFilePinInfo(_whiteKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
-		_statePinInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_whiteKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-		_statePinInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_whiteKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
-		updateNonDiagPinStatus(_statePinInfo.rankPin, BLACK);
-		updateNonDiagPinStatus(_statePinInfo.filePin, BLACK);
-		updateDiagPinStatus(_statePinInfo.diagA1h8Pin, BLACK);
-		updateDiagPinStatus(_statePinInfo.diagA8h1Pin, BLACK);
+		_stateDiscCheckInfo.rankPin = _bitboardImpl->getRankPinInfo(_whiteKingPosition, _whitePieces | _blackPieces);
+		_stateDiscCheckInfo.filePin = _bitboardImpl->getFilePinInfo(_whiteKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
+		_stateDiscCheckInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_whiteKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
+		_stateDiscCheckInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_whiteKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+		updateNonDiagPinStatus(_stateDiscCheckInfo.rankPin, BLACK);
+		updateNonDiagPinStatus(_stateDiscCheckInfo.filePin, BLACK);
+		updateDiagPinStatus(_stateDiscCheckInfo.diagA1h8Pin, BLACK);
+		updateDiagPinStatus(_stateDiscCheckInfo.diagA8h1Pin, BLACK);
 	}
 }
 
@@ -969,43 +970,43 @@ bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move) const
 		}
 	}
 
-	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.rankPin.smallSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.smallPinPos)) {
+	if (_stateDiscCheckInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.smallSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboard(move.from) & _stateDiscCheckInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _stateDiscCheckInfo.rankPin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.rankPin.bigSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.bigPinPos)) {
+	if (_stateDiscCheckInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.bigSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboard(move.from) & _stateDiscCheckInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _stateDiscCheckInfo.rankPin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.filePin.smallSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.smallPinPos)) {
+	if (_stateDiscCheckInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.filePin.smallSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.filePin.bigSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.bigPinPos)) {
+	if (_stateDiscCheckInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.filePin.bigSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA1h8Pin.smallSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.smallPinPos)) {
+	if (_stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA1h8Pin.bigSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.bigPinPos)) {
+	if (_stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA8h1Pin.smallSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.smallPinPos)) {
+	if (_stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _statePinInfo.diagA8h1Pin.bigSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.bigPinPos)) {
+	if (_stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos) {
+		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos)) {
 			return true;
 		}
 	}
@@ -1100,6 +1101,88 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move) const
 	return false;
 }
 
+void PositionState::updateStatePinInfo()
+{
+	if (_whiteToPlay) {
+		_statePinInfo.rankPin = _bitboardImpl->getRankPinInfo(_whiteKingPosition, _whitePieces | _blackPieces);
+		_statePinInfo.filePin = _bitboardImpl->getFilePinInfo(_whiteKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
+		_statePinInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_whiteKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
+		_statePinInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_whiteKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+		updateNonDiagPinStatus(_statePinInfo.rankPin, BLACK);
+		updateNonDiagPinStatus(_statePinInfo.filePin, BLACK);
+		updateDiagPinStatus(_statePinInfo.diagA1h8Pin, BLACK);
+		updateDiagPinStatus(_statePinInfo.diagA8h1Pin, BLACK);
+	}
+	else {
+		_statePinInfo.rankPin = _bitboardImpl->getRankPinInfo(_blackKingPosition, _whitePieces | _blackPieces);
+		_statePinInfo.filePin = _bitboardImpl->getFilePinInfo(_blackKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
+		_statePinInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_blackKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
+		_statePinInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_blackKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+		updateNonDiagPinStatus(_statePinInfo.rankPin, WHITE);
+		updateNonDiagPinStatus(_statePinInfo.filePin, WHITE);
+		updateDiagPinStatus(_statePinInfo.diagA1h8Pin, WHITE);
+		updateDiagPinStatus(_statePinInfo.diagA8h1Pin, WHITE);
+	}
+}
+
+bool PositionState::pseudomoveIsLegalMove(const MoveInfo& move) const
+{
+	if (_whiteToPlay) {
+		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
+			return true;
+		}
+	}
+	else {
+		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
+			return true;
+		}
+	}
+
+	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.smallPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.bigPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.smallPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.bigPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.smallPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.bigPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.smallPinPos)) {
+			return false;
+		}
+	}
+	if (_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.bigPinPos)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
 void PositionState::makeMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
@@ -1114,6 +1197,14 @@ void PositionState::makeMove(const MoveInfo& move)
 	undoMove->whiteRightCastling = _whiteRightCastling;
 	undoMove->blackLeftCastling = _blackLeftCastling;
 	undoMove->blackRightCastling = _blackRightCastling;
+	
+	if (moveChecksOpponentKing(move)) {
+		_kingUnderCheck = true;
+	}
+	else {
+		_kingUnderCheck = false;
+	}
+
 	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
 		if(move.to >= A8 || move.to <= H1) {
 			makePromotionMove(move);
