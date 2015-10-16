@@ -1138,6 +1138,7 @@ bool PositionState::pseudomoveIsLegalMove(const MoveInfo& move) const
 		}
 	}
 
+	//TODO: there should be faster way than checking 8 conditions separately as below (e.g. comparing move.from with king pos)
 	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.smallPinPos)) {
 			return false;
