@@ -936,6 +936,7 @@ bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 		return true;
 	}
 
+	//TODO: there should be faster way than checking 8 conditions separately as below (e.g. comparing move.from with king pos)
 	if ((pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) && ((move.to - move.from) / 8 != 0) && _board[move.to / 8][move.to % 8] == ETY_SQUARE) {
 	   if (enPassantCaptureDiscoveresCheck(move)) {
 		   return true;
