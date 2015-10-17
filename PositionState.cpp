@@ -20,6 +20,8 @@ _blackPiecesDiagA1h8(0),
 _blackPiecesDiagA8h1(0),
 _bitboardImpl(new BitboardImpl()),
 _zobKeyImpl(new ZobKeyImpl()),
+_evasionPos(0),
+_isDoubleCheck(false),
 _whiteToPlay(true),
 _enPassantFile(-1),
 _whiteKingPosition(E1),
@@ -925,19 +927,79 @@ void PositionState::updateDiagPinStatus(PinInfo& pin, Color clr) const
 	}
 }
 
+void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
+{
+	Piece pfrom = _board[move.from / 8][move.from % 8];
+	_evasionPos = 0;
+	_kingUnderCheck = false;
+	_isDoubleCheck = false;
+	Square kingSq = _whiteToPlay ? _blackKingPosition : _whiteKingPosition;
+		
+	if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[pfrom]) {
+		if (pfrom == ROOK_WHITE || pfrom == BISHOP_WHITE || pfrom == QUEEN_WHITE ||
+			pfrom == ROOK_BLACK || pfrom == BISHOP_BLACK || pfrom == QUEEN_BLACK) {
+				_evasionPos |= _bitboardImpl->getPieceToKingPosBoard(move.to, kingSq);
+		}
+		else {
+			_evasionPos |= _bitboardImpl->squareToBitboard(move.to);
+		}
+		 _kingUnderCheck = true;
+	}	   
+		
+	Square slidingPiecePos;	
+	if (moveOpensDiscoveredCheck(move, slidingPiecePos)) {
+		if (_kingUnderCheck) {
+			_isDoubleCheck = true;
+			return;
+		}
+		_evasionPos |= _bitboardImpl->getPieceToKingPosBoard(slidingPiecePos, kingSq);
+		_kingUnderCheck = true;
+	}
+
+	if ((pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) && ((move.to - move.from) / 8 != 0) && _board[move.to / 8][move.to % 8] == ETY_SQUARE) {
+		if (enPassantCaptureDiscoveresCheck(move, slidingPiecePos)) {
+			if (_kingUnderCheck) {
+				_isDoubleCheck = true;
+				return;
+			}
+			_evasionPos |= _bitboardImpl->getPieceToKingPosBoard(slidingPiecePos, kingSq);
+			_kingUnderCheck = true;
+		}
+	}	   
+
+	if (move.promoted != ETY_SQUARE) {
+		if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[move.promoted]) {
+			if (_kingUnderCheck) {
+				_isDoubleCheck = true;
+				return;
+			}
+			_evasionPos |= _bitboardImpl->getPieceToKingPosBoard(move.to, kingSq);
+			_kingUnderCheck = true;
+		}
+	}
+		
+	if (isPossibleCastlingMove(move)) {
+		if (castlingChecksOpponentKing(move, slidingPiecePos)) {
+			_kingUnderCheck = true;
+			_evasionPos |= _bitboardImpl->getPieceToKingPosBoard(slidingPiecePos, kingSq);
+		}
+	}
+}
+
 bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[pfrom]) {
 		return true;
 	}	   
-	
-	if (moveOpensDiscoveredCheck(move)) {
+
+	Square slidingPiecePos;	
+	if (moveOpensDiscoveredCheck(move, slidingPiecePos)) {
 		return true;
 	}
 
 	if ((pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) && ((move.to - move.from) / 8 != 0) && _board[move.to / 8][move.to % 8] == ETY_SQUARE) {
-	   if (enPassantCaptureDiscoveresCheck(move)) {
+	   if (enPassantCaptureDiscoveresCheck(move, slidingPiecePos)) {
 		   return true;
 	   }
 	}	   
@@ -949,7 +1011,7 @@ bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 	}
 		
 	if (isPossibleCastlingMove(move)) {
-		if (castlingChecksOpponentKing(move)) {
+		if (castlingChecksOpponentKing(move, slidingPiecePos)) {
 			return true;
 		}
 	}
@@ -957,8 +1019,9 @@ bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 	return false;
 }
 
-bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move) const
+bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const
 {
+	slidingPiecePos = INVALID_SQUARE;
 	if (_whiteToPlay) {
 		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
 			return false;
@@ -972,41 +1035,49 @@ bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move) const
 
 	if (_stateDiscCheckInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboard(move.from) & _stateDiscCheckInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _stateDiscCheckInfo.rankPin.smallPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.rankPin.smallSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboard(move.from) & _stateDiscCheckInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _stateDiscCheckInfo.rankPin.bigPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.rankPin.bigSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.filePin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.smallPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.filePin.smallSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.filePin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.bigPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.filePin.bigSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos)) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos;
 			return true;
 		}
 	}
@@ -1014,24 +1085,27 @@ bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move) const
 	return false;
 }
 
-bool PositionState::castlingChecksOpponentKing(const MoveInfo& move) const
+bool PositionState::castlingChecksOpponentKing(const MoveInfo& move, Square& slidingPiecePos) const
 {
 	if (_whiteToPlay) {
 		if (_blackKingPosition / 8 != 0) {
 			if (move.to == C1) {
 				if (_bitboardImpl->squareToBitboard(D1) & _directCheck[ROOK_WHITE]) {
+					slidingPiecePos = D1;
 					return true;
 				}
 			}
 			else {
 				assert (move.to == G1);
 				if (_bitboardImpl->squareToBitboard(F1) & _directCheck[ROOK_WHITE]) {
+					slidingPiecePos = F1;
 					return true;
 				}
 			}
 		}
 		else {
 			if (_bitboardImpl->squareToBitboard(E1) & _directCheck[ROOK_WHITE]) {
+				slidingPiecePos = (move.to > move.from) ? F1 : D1;
 				return true;
 			}
 		}
@@ -1040,42 +1114,47 @@ bool PositionState::castlingChecksOpponentKing(const MoveInfo& move) const
 		if (_whiteKingPosition / 8 != 7) {
 			if (move.to == C8) {
 				if (_bitboardImpl->squareToBitboard(D8) & _directCheck[ROOK_BLACK]) {
+					slidingPiecePos = D8;
 					return true;
 				}
 			}
 			else {
 				assert (move.to == G8);
 				if (_bitboardImpl->squareToBitboard(F8) & _directCheck[ROOK_BLACK]) {
+					slidingPiecePos = F8;
 					return true;
 				}
 			}
 		}
 		else {
 			if (_bitboardImpl->squareToBitboard(E8) & _directCheck[ROOK_WHITE]) {
+				slidingPiecePos = (move.to > move.from) ? F8: D8;
 				return true;
 			}
 		}
 	}
+	slidingPiecePos = INVALID_SQUARE;
 	return false;
 }
 			
-bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move) const
+bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const
 {
 	if (_whiteToPlay && _blackKingPosition / 8 == 4) {
 		Square leftPos;
 		Square rightPos;
 		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _whitePieces | _blackPieces, leftPos, rightPos);
-		if (leftPos == INVALID_SQUARE || rightPos == INVALID_SQUARE) {
-			return false;
-		}
-		if (leftPos == _blackKingPosition) {
-			if (_board[rightPos / 8][rightPos % 8] == ROOK_WHITE || _board[rightPos / 8][rightPos % 8] == QUEEN_WHITE) {
-				return true;
+		if (leftPos != INVALID_SQUARE && rightPos != INVALID_SQUARE) {
+			if (leftPos == _blackKingPosition) {
+				if (_board[rightPos / 8][rightPos % 8] == ROOK_WHITE || _board[rightPos / 8][rightPos % 8] == QUEEN_WHITE) {
+					slidingPiecePos = rightPos;
+					return true;
+				}
 			}
-		}
-		if (rightPos == _blackKingPosition) {
-			if (_board[leftPos / 8][leftPos % 8] == ROOK_WHITE || _board[leftPos / 8][leftPos % 8] == QUEEN_WHITE) {
-				return true;
+			if (rightPos == _blackKingPosition) {
+				if (_board[leftPos / 8][leftPos % 8] == ROOK_WHITE || _board[leftPos / 8][leftPos % 8] == QUEEN_WHITE) {
+					slidingPiecePos = leftPos;
+					return true;
+				}
 			}
 		}
 	}
@@ -1083,21 +1162,60 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move) const
 		Square leftPos;
 		Square rightPos;
 		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _whitePieces | _blackPieces, leftPos, rightPos);
-		if (leftPos == INVALID_SQUARE || rightPos == INVALID_SQUARE) {
-			return false;
-		}
-		if (leftPos == _whiteKingPosition) {
-			if (_board[rightPos / 8][rightPos % 8] == ROOK_BLACK || _board[rightPos / 8][rightPos % 8] == QUEEN_BLACK) {
-				return true;
+		if (leftPos != INVALID_SQUARE && rightPos != INVALID_SQUARE) {
+			if (leftPos == _whiteKingPosition) {
+				if (_board[rightPos / 8][rightPos % 8] == ROOK_BLACK || _board[rightPos / 8][rightPos % 8] == QUEEN_BLACK) {
+					slidingPiecePos = rightPos;
+					return true;
+				}
 			}
-		}
-		if (rightPos == _whiteKingPosition) {
-			if (_board[leftPos / 8][leftPos % 8] == ROOK_BLACK || _board[leftPos / 8][leftPos % 8] == QUEEN_BLACK) {
-				return true;
+			if (rightPos == _whiteKingPosition) {
+				if (_board[leftPos / 8][leftPos % 8] == ROOK_BLACK || _board[leftPos / 8][leftPos % 8] == QUEEN_BLACK) {
+					slidingPiecePos = leftPos;
+					return true;
+				}
 			}
 		}
 	}
 
+	Square capturedPawnPos = (move.to > move.from) ? (Square) (move.to - 8) : (Square) (move.to + 8);
+	
+	slidingPiecePos = INVALID_SQUARE;
+	if (_whiteToPlay) {
+		if (!(_bitboardImpl->squareToBitboard(capturedPawnPos) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
+			return false;
+		}
+	}
+	else {
+		if (!(_bitboardImpl->squareToBitboard(capturedPawnPos) & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
+			return false;
+		}
+	}
+	
+	if (_stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+		if (_bitboardImpl->squareToBitboardDiagA1h8(capturedPawnPos) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos;
+			return true;
+		}
+	}
+	if (_stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+		if (_bitboardImpl->squareToBitboardDiagA1h8(capturedPawnPos) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos;
+			return true;
+		}
+	}
+	if (_stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+		if (_bitboardImpl->squareToBitboardDiagA8h1(capturedPawnPos) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos;
+			return true;
+		}
+	}
+	if (_stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+		if (_bitboardImpl->squareToBitboardDiagA8h1(capturedPawnPos) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos) {
+			slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos;
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -1179,6 +1297,7 @@ bool PositionState::pseudomoveIsLegalMove(const MoveInfo& move) const
 		}
 	}
 
+	// TODO: Add pinned en passant horizontal move case
 	return true;
 }
 

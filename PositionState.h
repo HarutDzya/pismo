@@ -143,10 +143,11 @@ private:
 
 	void updateNonDiagPinStatus(PinInfo& pin, Color clr) const;
 	void updateDiagPinStatus(PinInfo& pin, Color clr) const;
-	
-	bool moveOpensDiscoveredCheck(const MoveInfo& move) const;
-	bool castlingChecksOpponentKing(const MoveInfo& move) const;
-	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move) const;
+
+	void updateMoveChecksOpponentKing(const MoveInfo& move);	
+	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;
+	bool castlingChecksOpponentKing(const MoveInfo& move, Square& slidingPiecePos) const;
+	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const;
 
 	int calculatePstValue(Piece p, Square s) const;
 	void updateGameStatus();
@@ -235,6 +236,14 @@ private:
 
 	const BitboardImpl* _bitboardImpl;
 	const ZobKeyImpl* _zobKeyImpl;
+
+	// Bitboard of the positions where the piece should move
+	// to stop it's king check, if possible otherwise 0
+	Bitboard _evasionPos;
+
+	// Shows whether king is under double check
+	// in which case only the king move can save the game
+	bool _isDoubleCheck;
 
 	//true - if white's move, false - black's move
 	bool _whiteToPlay;

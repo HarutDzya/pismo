@@ -1,4 +1,6 @@
 #include "BitboardImpl.h"
+#include "PossibleMoves.h"
+#include <vector>
 #include <assert.h>
 
 namespace pismo
@@ -27,6 +29,8 @@ BitboardImpl::BitboardImpl()
 	initDiagA8h1PinInfo();
 
 	initSlidingPosBoard();
+
+	initPieceToKingPosBoard();
 }
 
 // Returns the bitboard with sq Square filled 
@@ -202,6 +206,13 @@ void BitboardImpl::getEnPassantPinInfo(Square from, Square to, const Bitboard& o
 Bitboard BitboardImpl::getSlidingPieceMoves(Square from) const
 {
 	return _slidingPosBoard[from];
+}
+
+// Returns the board of positions where the piece with the same color as king is to move
+// to block the check made by sliding piece on square from
+Bitboard BitboardImpl::getPieceToKingPosBoard(Square from, Square kingSq) const
+{
+	return _pieceToKingPosBoard[from][kingSq];
 }
 
 // Returns the converted normal bitboard from transpose bitboard
@@ -694,7 +705,7 @@ void BitboardImpl::initDiagA8h1PinInfo()
 // from appropriate square
 // This is used to identify whether move can potentially
 // classify for opening discovered check or pinned piece move
-void BitboardImpl::initSlidingPosBoard ()
+void BitboardImpl::initSlidingPosBoard()
 {
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
 		Bitboard slidePos = 0;
@@ -706,6 +717,91 @@ void BitboardImpl::initSlidingPosBoard ()
 		_slidingPosBoard[sq] = slidePos;
 	}
 }
+
+// Initializes _pieceToKingPosBoard array to bitboards of positions
+// in the ray between piece and the king, plus the piece position
+// For example, if the piece is on A1 and the king is on E5
+// then the positions on the diagonal from A1 to E5 (excluding E5) are set
+// If the piece and the king are not on the ray initializes the bitboard
+// to 0
+void BitboardImpl::initPieceToKingPosBoard()
+{
+	for (unsigned int pieceSq = A1; pieceSq < NUMBER_OF_SQUARES; ++ pieceSq) {
+		for (unsigned int kingSq = A1; kingSq < NUMBER_OF_SQUARES; ++kingSq) {
+			_pieceToKingPosBoard[pieceSq][kingSq] = 0;
+		}
+	}
+	PossibleMoves posMoves;
+
+	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+		Square pieceSq = (Square) sq;
+
+		const std::vector<Square>& kingLeftRankPos = posMoves.possibleLeftRankMoves(pieceSq);
+		for (unsigned int i = 0; i < kingLeftRankPos.size(); ++i) {
+			Square kingSq = kingLeftRankPos[i];
+			Square movePieceSq = (Square) (kingSq + 1);
+			Bitboard pos = getLegalRankMoves(movePieceSq, squareToBitboard(pieceSq) | squareToBitboard(movePieceSq) | squareToBitboard(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (pos ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+	
+		const std::vector<Square>& kingRightRankPos = posMoves.possibleRightRankMoves(pieceSq);
+		for (unsigned int i = 0; i < kingRightRankPos.size(); ++i) {
+			Square kingSq = kingRightRankPos[i];
+			Square movePieceSq = (Square) (pieceSq + 1);
+			Bitboard pos = getLegalRankMoves(movePieceSq, squareToBitboard(pieceSq) | squareToBitboard(movePieceSq) | squareToBitboard(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (pos ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+
+		const std::vector<Square>& kingUpFilePos = posMoves.possibleUpFileMoves(pieceSq);
+		for (unsigned int i = 0; i < kingUpFilePos.size(); ++i) {
+			Square kingSq = kingUpFilePos[i];
+			Square movePieceSq = (Square) (pieceSq + 8);
+			Bitboard pos = getLegalFileMoves(movePieceSq, squareToBitboardTranspose(pieceSq) | squareToBitboardTranspose(movePieceSq) | squareToBitboardTranspose(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (bitboardTransposeToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+		
+		const std::vector<Square>& kingDownFilePos = posMoves.possibleDownFileMoves(pieceSq);
+		for (unsigned int i = 0; i < kingDownFilePos.size(); ++i) {
+			Square kingSq = kingDownFilePos[i];
+			Square movePieceSq = (Square) (kingSq + 8);
+			Bitboard pos = getLegalFileMoves(movePieceSq, squareToBitboardTranspose(pieceSq) | squareToBitboardTranspose(movePieceSq) | squareToBitboardTranspose(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (bitboardTransposeToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+		
+		const std::vector<Square>& kingUpDiagA1h8Pos = posMoves.possibleUpDiagA1h8Moves(pieceSq);
+		for (unsigned int i = 0; i < kingUpDiagA1h8Pos.size(); ++i) {
+			Square kingSq = kingUpDiagA1h8Pos[i];
+			Square movePieceSq = (Square) (pieceSq + 9);
+			Bitboard pos = getLegalDiagA1h8Moves(movePieceSq, squareToBitboardDiagA1h8(pieceSq) | squareToBitboardDiagA1h8(movePieceSq) | squareToBitboardDiagA1h8(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (bitboardDiagA1h8ToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+
+		const std::vector<Square>& kingDownDiagA1h8Pos = posMoves.possibleDownDiagA1h8Moves(pieceSq);
+		for (unsigned int i = 0; i < kingDownDiagA1h8Pos.size(); ++i) {
+			Square kingSq = kingDownDiagA1h8Pos[i];
+			Square movePieceSq = (Square) (kingSq + 9);
+			Bitboard pos = getLegalDiagA1h8Moves(movePieceSq, squareToBitboardDiagA1h8(pieceSq) | squareToBitboardDiagA1h8(movePieceSq) | squareToBitboardDiagA1h8(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (bitboardDiagA1h8ToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+
+		const std::vector<Square>& kingUpDiagA8h1Pos = posMoves.possibleUpDiagA8h1Moves(pieceSq);
+		for (unsigned int i = 0; i < kingUpDiagA8h1Pos.size(); ++i) {
+			Square kingSq = kingUpDiagA8h1Pos[i];
+			Square movePieceSq = (Square) (pieceSq + 7);
+			Bitboard pos = getLegalDiagA8h1Moves(movePieceSq, squareToBitboardDiagA8h1(pieceSq) | squareToBitboardDiagA8h1(movePieceSq) | squareToBitboardDiagA8h1(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (bitboardDiagA8h1ToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+
+		const std::vector<Square>& kingDownDiagA8h1Pos = posMoves.possibleDownDiagA8h1Moves(pieceSq);
+		for (unsigned int i = 0; i < kingDownDiagA8h1Pos.size(); ++i) {
+			Square kingSq = kingDownDiagA8h1Pos[i];
+			Square movePieceSq = (Square) (kingSq + 7);
+			Bitboard pos = getLegalDiagA8h1Moves(movePieceSq, squareToBitboardDiagA8h1(pieceSq) | squareToBitboardDiagA8h1(movePieceSq) | squareToBitboardDiagA8h1(kingSq));
+			_pieceToKingPosBoard[pieceSq][kingSq] = (bitboardDiagA8h1ToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(movePieceSq);
+		}
+	}
+}
+
 
 // Returns Bitrank of possible moves for rankOccup occupied bitrank when the piece is at position
 // for example for the Bitrank 10101011 and the position 3 it returns 00110110

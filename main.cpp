@@ -27,7 +27,7 @@ int main()
 
 	MemPool::instance()->initMovesArray();
 	PositionState pos;
-	
+
 	/*std::vector<std::pair<Square, Piece> > pcs;
 	for (int i = 0; i < 8; ++i) {
 		pcs.push_back(std::pair<Square, Piece>((Square)(8 + i), PAWN_WHITE));

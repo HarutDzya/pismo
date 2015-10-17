@@ -73,6 +73,8 @@ public:
 
 	Bitboard getSlidingPieceMoves(Square from) const;
 
+	Bitboard getPieceToKingPosBoard(Square from, Square kingSq) const;
+
 	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
 	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
 	Bitboard bitboardDiagA8h1ToBitboard(const Bitboard& boardDiagA8h1) const;
@@ -104,6 +106,8 @@ private:
 	void initDiagA8h1PinInfo();
 
 	void initSlidingPosBoard();
+
+	void initPieceToKingPosBoard();
 
 	Bitrank movePosRank(unsigned int position, Bitrank rankOccup) const;
 	void setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank & leftPin, Bitrank& rightPin) const;
@@ -137,6 +141,8 @@ private:
 	PinInfo _diagA8h1PinInfo[NUMBER_OF_SQUARES][256];
 	
 	Bitboard _slidingPosBoard[NUMBER_OF_SQUARES];
+
+	Bitboard _pieceToKingPosBoard[NUMBER_OF_SQUARES][NUMBER_OF_SQUARES];
 };
 }
 

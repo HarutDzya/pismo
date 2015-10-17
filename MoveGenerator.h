@@ -5,6 +5,16 @@
 
 namespace pismo
 {
+enum MoveGenerationStage {
+	CAPTURING_MOVES = 0, CHECKING_MOVES,
+   	QUITE_MOVES, EVASION_MOVES
+}; //TODO: Later add KILLER_MOVES
+
+enum SearchType {
+	USUAL_SEARCH = 0,
+	EVASION_SEARCH,
+	QUITE_SEARCH
+};
 
 class PositionState;
 class PossibleMoves;
@@ -33,6 +43,9 @@ private:
 	void generateDiagA8h1Moves(Square from, const PositionState& pos, MovesArray& generatedMoves);
 
 	const PossibleMoves* _possibleMoves;
+
+	MoveGenerationStage _nextStage;
+	SearchType _searchType;
 };
 
 }
