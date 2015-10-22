@@ -165,7 +165,7 @@ private:
 	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const;
 
 	bool pinMoveOpensCheck(const MoveInfo& move) const;
-	bool pinEnPassantMoveOpensCheck(const MoveInfo& move) const;
+	bool pinEnPassantCaptureOpensCheck(const MoveInfo& move) const;
 
 	int calculatePstValue(Piece p, Square s) const;
 	void updateGameStatus();

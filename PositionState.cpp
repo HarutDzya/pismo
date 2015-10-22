@@ -1453,11 +1453,15 @@ bool PositionState::pseudomoveIsLegalMove(const MoveInfo& move) const
 		return false;
 	}
 
-	if (!pinMoveOpensCheck(move) || !pinEnPassantMoveOpensCheck(move)) {
-		return true;
+	if (pinMoveOpensCheck(move)) {
+	   return false;
 	}
 
-	return false;
+	if (moveIsEnPassantCapture(move) && pinEnPassantCaptureOpensCheck(move)) {
+		return false;
+	}
+
+	return true;
 }
 
 bool PositionState::pinMoveOpensCheck(const MoveInfo& move) const
@@ -1518,7 +1522,7 @@ bool PositionState::pinMoveOpensCheck(const MoveInfo& move) const
 	return false;
 }
 
-bool PositionState::pinEnPassantMoveOpensCheck(const MoveInfo& move) const
+bool PositionState::pinEnPassantCaptureOpensCheck(const MoveInfo& move) const
 {
 	if (_whiteToPlay && _whiteKingPosition / 8 == 4) {
 		Square leftPos;
