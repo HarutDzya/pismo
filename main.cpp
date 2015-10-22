@@ -86,6 +86,7 @@ int main()
 				move.promoted = ETY_SQUARE;
 			}
 			pos.updateStatePinInfo();
+			pos.updateSquaresUnderAttack();
 			if (pos.pseudomoveIsLegalMove(move)) {
 				std::cout << "Pseudomove is legal move" << std::endl;
 			}

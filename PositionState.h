@@ -30,6 +30,12 @@ public:
 	even if it involves capture of the opponent piece
 	*/
 	bool moveIsLegal(const MoveInfo& move) const;
+
+	/*
+	Checks all the rules of the game for legality of the move
+	except the issue whther the king is under check after move
+	*/
+	bool moveIsPseudoLegal(const MoveInfo& move) const;
 	
 	/*
 	Makes a move if the move if legal according to the moveIsLegal
@@ -62,7 +68,14 @@ public:
 	bool pseudomoveIsLegalMove(const MoveInfo& move) const;
 
 	void updateStatePinInfo();	
-	     
+	void updateSquaresUnderAttack();
+
+	/* Checks whether the move is evasion move, namely
+	   king move is always evasion move, for other 
+	   pieces it is evasion move if it stops the check
+	   of the king
+	*/
+	bool isEvasionMove(const MoveInfo& move) const;
 	
 	/*
 	Prints board for white pieces using information from 
@@ -114,7 +127,9 @@ private:
 	void initEnPassantFileFEN(const std::string& fen, unsigned int& charCount);
 	void initMoveCountFEN(const std::string& fen, unsigned int& charCount);
 
-	bool isPossibleCastlingMove(const MoveInfo& move) const;
+	bool moveIsCastling(const MoveInfo& move) const;
+	bool moveIsEnPassantCapture(const MoveInfo& move) const;
+	bool pieceIsSlidingPiece(Piece piece) const;
 
 	bool pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCapture) const;
 	bool knightMoveIsLegal(const MoveInfo& move) const;
@@ -148,6 +163,9 @@ private:
 	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool castlingChecksOpponentKing(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const;
+
+	bool pinMoveOpensCheck(const MoveInfo& move) const;
+	bool pinEnPassantMoveOpensCheck(const MoveInfo& move) const;
 
 	int calculatePstValue(Piece p, Square s) const;
 	void updateGameStatus();
@@ -239,7 +257,10 @@ private:
 
 	// Bitboard of the positions where the piece should move
 	// to stop it's king check, if possible otherwise 0
-	Bitboard _evasionPos;
+	Bitboard _absolutePinsPos;
+
+	// Bitboard of the attacked squares for the piece to move
+	Bitboard _attackedSquares;
 
 	// Shows whether king is under double check
 	// in which case only the king move can save the game
@@ -247,6 +268,7 @@ private:
 
 	//true - if white's move, false - black's move
 	bool _whiteToPlay;
+	
 	// the file number of possible enPassant, -1 if none
 	int _enPassantFile;
 	
