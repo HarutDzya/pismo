@@ -557,12 +557,12 @@ bool PositionState::moveIsCastling(const MoveInfo& move) const
 bool PositionState::moveIsEnPassantCapture(const MoveInfo& move) const
 {
 	if (_whiteToPlay) {
-		if (_board[move.from / 8][move.from % 8] == PAWN_WHITE && _board[move.to / 8][move.to % 8] == ETY_SQUARE && (move.to - move.from) / 8 != 0) {
+		if (_board[move.from / 8][move.from % 8] == PAWN_WHITE && _board[move.to / 8][move.to % 8] == ETY_SQUARE && (move.to - move.from) % 8 != 0) {
 			return true;
 		}
 	}
 	else {
-		if (_board[move.from / 8][move.from % 8] == PAWN_BLACK && _board[move.to / 8][move.to % 8] == ETY_SQUARE && (move.from - move.to) / 8 != 0) {
+		if (_board[move.from / 8][move.from % 8] == PAWN_BLACK && _board[move.to / 8][move.to % 8] == ETY_SQUARE && (move.from - move.to) % 8 != 0) {
 			return true;
 		}
 	}
@@ -1428,7 +1428,7 @@ bool PositionState::isEvasionMove(const MoveInfo& move) const
 		return true;
 	}
 	else if (!_isDoubleCheck) {
-		if (_bitboardImpl->squareToBitboard(move.to) && _absolutePinsPos) {
+		if (_bitboardImpl->squareToBitboard(move.to) & _absolutePinsPos) {
 			return true;
 		}
 	}

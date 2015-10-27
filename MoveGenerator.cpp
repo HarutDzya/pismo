@@ -106,7 +106,7 @@ void MoveGenerator::generatePawnMoves(Square from, Color clr, const PositionStat
 		if(from >= A7 && from <= H7) {
 			for (std::size_t moveCount = 0; moveCount < whitePawnMoves.size(); ++moveCount) {
 				MoveInfo currentMove = {from, whitePawnMoves[moveCount], KNIGHT_WHITE};
-				if (pos.moveIsLegal(currentMove)) {
+				if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 					generatedMoves.push_back(currentMove);
 					currentMove.promoted = BISHOP_WHITE;
 					generatedMoves.push_back(currentMove);
@@ -120,7 +120,7 @@ void MoveGenerator::generatePawnMoves(Square from, Color clr, const PositionStat
 		else {
 			for (std::size_t moveCount = 0; moveCount < whitePawnMoves.size(); ++moveCount) {
 				MoveInfo currentMove = {from, whitePawnMoves[moveCount], ETY_SQUARE};
-				if (pos.moveIsLegal(currentMove)) {
+				if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 					generatedMoves.push_back(currentMove);
 				}
 			}
@@ -131,7 +131,7 @@ void MoveGenerator::generatePawnMoves(Square from, Color clr, const PositionStat
 		if(from >= A2 && from <= H2) {
 			for (std::size_t moveCount = 0; moveCount < blackPawnMoves.size(); ++moveCount) {
 				MoveInfo currentMove = {from, blackPawnMoves[moveCount], KNIGHT_BLACK};
-				if (pos.moveIsLegal(currentMove)) {
+				if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 					generatedMoves.push_back(currentMove);
 					currentMove.promoted = BISHOP_BLACK;
 					generatedMoves.push_back(currentMove);
@@ -145,7 +145,7 @@ void MoveGenerator::generatePawnMoves(Square from, Color clr, const PositionStat
 		else {
 			for (std::size_t moveCount = 0; moveCount < blackPawnMoves.size(); ++moveCount) {
 				MoveInfo currentMove = {from, blackPawnMoves[moveCount], ETY_SQUARE};
-				if (pos.moveIsLegal(currentMove)) {
+				if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 					generatedMoves.push_back(currentMove);
 				}
 			}
@@ -160,7 +160,7 @@ void MoveGenerator::generateKnightMoves(Square from, const PositionState& pos, M
 	const std::vector<Square>& knightMoves = _possibleMoves->possibleKnightMoves(from);
 	for (std::size_t moveCount  = 0; moveCount < knightMoves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, knightMoves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 	}
@@ -173,7 +173,7 @@ void MoveGenerator::generateKingMoves(Square from, const PositionState& pos, Mov
 	const std::vector<Square>& kingMoves = _possibleMoves->possibleKingMoves(from);
 	for (std::size_t moveCount  = 0; moveCount < kingMoves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, kingMoves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 	}
@@ -187,7 +187,7 @@ void MoveGenerator::generateRankMoves(Square from, const PositionState& pos, Mov
 	const std::vector<Square>& leftRankMoves = _possibleMoves->possibleLeftRankMoves(from);
 	for(std::size_t moveCount = 0; moveCount < leftRankMoves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, leftRankMoves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -197,7 +197,7 @@ void MoveGenerator::generateRankMoves(Square from, const PositionState& pos, Mov
 	const std::vector<Square>& rightRankMoves = _possibleMoves->possibleRightRankMoves(from);
 	for(std::size_t moveCount = 0; moveCount < rightRankMoves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, rightRankMoves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -214,7 +214,7 @@ void MoveGenerator::generateFileMoves(Square from, const PositionState& pos, Mov
 	const std::vector<Square>& upFileMoves = _possibleMoves->possibleUpFileMoves(from);
 	for(std::size_t moveCount = 0; moveCount < upFileMoves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, upFileMoves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -224,7 +224,7 @@ void MoveGenerator::generateFileMoves(Square from, const PositionState& pos, Mov
 	const std::vector<Square>& downFileMoves = _possibleMoves->possibleDownFileMoves(from);
 	for(std::size_t moveCount = 0; moveCount < downFileMoves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, downFileMoves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -241,7 +241,7 @@ void MoveGenerator::generateDiagA1h8Moves(Square from, const PositionState& pos,
 	const std::vector<Square>& upDiagA1h8Moves = _possibleMoves->possibleUpDiagA1h8Moves(from);
 	for(std::size_t moveCount = 0; moveCount < upDiagA1h8Moves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, upDiagA1h8Moves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -251,7 +251,7 @@ void MoveGenerator::generateDiagA1h8Moves(Square from, const PositionState& pos,
 	const std::vector<Square>& downDiagA1h8Moves = _possibleMoves->possibleDownDiagA1h8Moves(from);
 	for(std::size_t moveCount = 0; moveCount < downDiagA1h8Moves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, downDiagA1h8Moves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -268,7 +268,7 @@ void MoveGenerator::generateDiagA8h1Moves(Square from, const PositionState& pos,
 	const std::vector<Square>& upDiagA8h1Moves = _possibleMoves->possibleUpDiagA8h1Moves(from);
 	for(std::size_t moveCount = 0; moveCount < upDiagA8h1Moves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, upDiagA8h1Moves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
@@ -278,7 +278,7 @@ void MoveGenerator::generateDiagA8h1Moves(Square from, const PositionState& pos,
 	const std::vector<Square>& downDiagA8h1Moves = _possibleMoves->possibleDownDiagA8h1Moves(from);
 	for(std::size_t moveCount = 0; moveCount < downDiagA8h1Moves.size(); ++moveCount) {
 		MoveInfo currentMove = {from, downDiagA8h1Moves[moveCount], ETY_SQUARE};
-		if (pos.moveIsLegal(currentMove)) {
+		if (pos.moveIsPseudoLegal(currentMove) && pos.pseudomoveIsLegalMove(currentMove)) {
 			generatedMoves.push_back(currentMove);
 		}
 		if (pos.getBoard()[currentMove.to / 8][currentMove.to % 8] != ETY_SQUARE) {
