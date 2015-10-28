@@ -87,7 +87,7 @@ int main()
 			}
 			pos.updateStatePinInfo();
 			pos.updateSquaresUnderAttack();
-			if (pos.pseudomoveIsLegalMove(move)) {
+			if (pos.pseudoMoveIsLegalMove(move)) {
 				std::cout << "Pseudomove is legal move" << std::endl;
 			}
 			else {

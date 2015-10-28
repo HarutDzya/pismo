@@ -59,13 +59,13 @@ public:
 	void updateDirectCheckArray();
 	void updateDiscoveredChecksInfo();
 
-	/* Checks to see whether pseudomove is legal
+	/* Checks to see whether pseudoMove is legal
 	   by checking whether the move is not pinned
 	   piece move which opens check
 	   In order for this function to work the updateStatePinInfo()
 	   should be invoked first.
 	*/
-	bool pseudomoveIsLegalMove(const MoveInfo& move) const;
+	bool pseudoMoveIsLegalMove(const MoveInfo& move) const;
 
 	void updateStatePinInfo();	
 	void updateSquaresUnderAttack();
@@ -126,6 +126,7 @@ private:
 	void initCastlingRightsFEN(const std::string& fen, unsigned int& charCount);
 	void initEnPassantFileFEN(const std::string& fen, unsigned int& charCount);
 	void initMoveCountFEN(const std::string& fen, unsigned int& charCount);
+	void updateCheckStatus();
 
 	bool moveIsCastling(const MoveInfo& move) const;
 	bool moveIsEnPassantCapture(const MoveInfo& move) const;
@@ -139,6 +140,7 @@ private:
 	bool kingMoveIsLegal(const MoveInfo& move) const;
 	bool enPassantCaptureIsLegal(const MoveInfo& move) const;
 	bool castlingIsLegal(const MoveInfo& move) const;
+	bool castlingIsPseudoLegal(const MoveInfo& move) const;
 	
 	Bitboard squaresUnderAttack(Color attackedColor) const;
 
@@ -163,7 +165,9 @@ private:
 	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool castlingChecksOpponentKing(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const;
+	bool promotionMoveChecksOpponentKing(const MoveInfo& move) const;
 
+	bool kingPseudoMoveIsLegal(const MoveInfo& move) const;
 	bool pinMoveOpensCheck(const MoveInfo& move) const;
 	bool pinEnPassantCaptureOpensCheck(const MoveInfo& move) const;
 
