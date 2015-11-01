@@ -382,17 +382,14 @@ void PositionState::initMoveCountFEN(const std::string& fen, unsigned int& charC
 
 void PositionState::updateCheckStatus()
 {
-	Bitboard occupiedBitboard = (_whitePieces | _blackPieces);
-	Bitboard occupiedBitboardTranspose = (_whitePiecesTranspose | _blackPiecesTranspose);
-	Bitboard occupiedBitboardDiagA1h8 = (_whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-	Bitboard occupiedBitboardDiagA8h1 = (_whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+	Bitboard occupiedSquares = (_whitePieces | _blackPieces);
 	
 	if(_whiteToPlay) {
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			Square pieceSq = (Square) sq;
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getLegalPawnBlackAttackingMoves(pieceSq)) {
+					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getPawnBlackAttackingMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
@@ -404,7 +401,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KNIGHT_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getLegalKnightMoves(pieceSq)) {
+					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getKnightMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
@@ -416,8 +413,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case BISHOP_BLACK:
-					if ((_bitboardImpl->squareToBitboardDiagA1h8(_whiteKingPosition) & _bitboardImpl->getLegalDiagA1h8Moves(pieceSq, occupiedBitboardDiagA1h8)) || 
-					   (_bitboardImpl->squareToBitboardDiagA8h1(_whiteKingPosition) & _bitboardImpl->getLegalDiagA8h1Moves(pieceSq, occupiedBitboardDiagA8h1))) {
+					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) { 
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -429,8 +425,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case ROOK_BLACK:
-					if ((_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getLegalRankMoves(pieceSq, occupiedBitboard)) || 
-					   (_bitboardImpl->squareToBitboardTranspose(_whiteKingPosition) & _bitboardImpl->getLegalFileMoves(pieceSq, occupiedBitboardTranspose))) {
+					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) { 
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -442,10 +437,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case QUEEN_BLACK:
-					if ((_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getLegalRankMoves(pieceSq, occupiedBitboard)) || 
-					   (_bitboardImpl->squareToBitboardTranspose(_whiteKingPosition) & _bitboardImpl->getLegalFileMoves(pieceSq, occupiedBitboardTranspose)) ||
-					   (_bitboardImpl->squareToBitboardDiagA1h8(_whiteKingPosition) & _bitboardImpl->getLegalDiagA1h8Moves(pieceSq, occupiedBitboardDiagA1h8)) || 
-					   (_bitboardImpl->squareToBitboardDiagA8h1(_whiteKingPosition) & _bitboardImpl->getLegalDiagA8h1Moves(pieceSq, occupiedBitboardDiagA8h1))) {
+					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) { 
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -457,7 +449,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KING_BLACK:	
-					assert(!(_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getLegalKingMoves(pieceSq)));
+					assert(!(_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getKingMoves(pieceSq)));
 					break;
 				default:
 					break;
@@ -469,7 +461,7 @@ void PositionState::updateCheckStatus()
 			Square pieceSq = (Square) sq;
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getLegalPawnWhiteAttackingMoves(pieceSq)) {
+					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getPawnWhiteAttackingMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
@@ -481,7 +473,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KNIGHT_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getLegalKnightMoves(pieceSq)) {
+					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getKnightMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
@@ -493,8 +485,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case BISHOP_WHITE:
-					if ((_bitboardImpl->squareToBitboardDiagA1h8(_blackKingPosition) & _bitboardImpl->getLegalDiagA1h8Moves(pieceSq, occupiedBitboardDiagA1h8)) || 
-					   (_bitboardImpl->squareToBitboardDiagA8h1(_blackKingPosition) & _bitboardImpl->getLegalDiagA8h1Moves(pieceSq, occupiedBitboardDiagA8h1))) {
+					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -506,8 +497,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case ROOK_WHITE:
-					if ((_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getLegalRankMoves(pieceSq, occupiedBitboard)) || 
-					   (_bitboardImpl->squareToBitboardTranspose(_blackKingPosition) & _bitboardImpl->getLegalFileMoves(pieceSq, occupiedBitboardTranspose))) {
+					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -519,10 +509,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case QUEEN_WHITE:
-					if ((_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getLegalRankMoves(pieceSq, occupiedBitboard)) || 
-					   (_bitboardImpl->squareToBitboardTranspose(_blackKingPosition) & _bitboardImpl->getLegalFileMoves(pieceSq, occupiedBitboardTranspose)) ||
-					   (_bitboardImpl->squareToBitboardDiagA1h8(_blackKingPosition) & _bitboardImpl->getLegalDiagA1h8Moves(pieceSq, occupiedBitboardDiagA1h8)) || 
-					   (_bitboardImpl->squareToBitboardDiagA8h1(_blackKingPosition) & _bitboardImpl->getLegalDiagA8h1Moves(pieceSq, occupiedBitboardDiagA8h1))) {
+					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -534,7 +521,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KING_BLACK:	
-					assert(!(_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getLegalKingMoves(pieceSq)));
+					assert(!(_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getKingMoves(pieceSq)));
 					break;
 				default:
 					break;
@@ -762,7 +749,7 @@ bool PositionState::pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCaptu
 			return true;
 		}
 		// Checks for usual capture movement of the pawn
-		else if ((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalPawnWhiteAttackingMoves(move.from)) && (_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
+		else if ((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getPawnWhiteAttackingMoves(move.from)) && (_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
@@ -788,7 +775,7 @@ bool PositionState::pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCaptu
 			return true;
 		}
 		// Checks for usual capture movement of the pawn
-		else if ((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalPawnBlackAttackingMoves(move.from)) && (_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
+		else if ((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getPawnBlackAttackingMoves(move.from)) && (_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
@@ -838,7 +825,7 @@ bool PositionState::enPassantCaptureIsLegal(const MoveInfo& move) const
 
 bool PositionState::knightMoveIsLegal(const MoveInfo& move) const
 {
-	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalKnightMoves(move.from)) {
+	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getKnightMoves(move.from)) {
 		return true;
 	}
 	return false;
@@ -846,8 +833,7 @@ bool PositionState::knightMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::bishopMoveIsLegal(const MoveInfo& move) const
 {
-	if((_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _bitboardImpl->getLegalDiagA1h8Moves(move.from, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8))
-	|| (_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _bitboardImpl->getLegalDiagA8h1Moves(move.from, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1))) {
+	if(_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->bishopAttackFrom(move.from, _whitePieces | _blackPieces)) {
 		return true;
 	}
 	return false;
@@ -855,8 +841,7 @@ bool PositionState::bishopMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::rookMoveIsLegal(const MoveInfo& move) const
 {
-	if((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalRankMoves(move.from, _whitePieces | _blackPieces))
-	|| (_bitboardImpl->squareToBitboardTranspose(move.to) & _bitboardImpl->getLegalFileMoves(move.from, _whitePiecesTranspose | _blackPiecesTranspose))) {
+	if(_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->rookAttackFrom(move.from, _whitePieces | _blackPieces)) {
 		return true;
 	}
 	return false;
@@ -864,10 +849,7 @@ bool PositionState::rookMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::queenMoveIsLegal(const MoveInfo& move) const
 {
-	if((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalRankMoves(move.from, _whitePieces | _blackPieces))
-	|| (_bitboardImpl->squareToBitboardTranspose(move.to) & _bitboardImpl->getLegalFileMoves(move.from, _whitePiecesTranspose | _blackPiecesTranspose)) 
-	|| (_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _bitboardImpl->getLegalDiagA1h8Moves(move.from, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8))
-	|| (_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _bitboardImpl->getLegalDiagA8h1Moves(move.from, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1))) {
+	if(_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->queenAttackFrom(move.from, _whitePieces | _blackPieces)) {
 		return true;
 	}
 	return false;
@@ -875,7 +857,7 @@ bool PositionState::queenMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::kingMoveIsLegal(const MoveInfo& move) const
 {
-	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getLegalKingMoves(move.from)) {
+	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getKingMoves(move.from)) {
 		return true;
 	}
 	return false;
@@ -951,42 +933,31 @@ bool PositionState::castlingIsPseudoLegal(const MoveInfo& move) const
 // occupied bitboard to eliminate self pinning
 void PositionState::updateSquaresUnderAttack()
 {
-	Bitboard attackedBitboard = 0;
-	Bitboard attackedBitboardTranspose = 0;
-	Bitboard attackedBitboardDiagA1h8 = 0;
-	Bitboard attackedBitboardDiagA8h1 = 0;
+	_attackedSquares = 0;
 	
 	Square kingSq = (_whiteToPlay) ? _whiteKingPosition : _blackKingPosition;
-	Bitboard occupiedBitboard = (_whitePieces | _blackPieces) ^ _bitboardImpl->squareToBitboard(kingSq);
-	Bitboard occupiedBitboardTranspose = (_whitePiecesTranspose | _blackPiecesTranspose) ^ _bitboardImpl->squareToBitboardTranspose(kingSq);
-	Bitboard occupiedBitboardDiagA1h8 = (_whitePiecesDiagA1h8 | _blackPiecesDiagA1h8) ^ _bitboardImpl->squareToBitboardDiagA1h8(kingSq);
-	Bitboard occupiedBitboardDiagA8h1 = (_whitePiecesDiagA8h1 | _blackPiecesDiagA8h1) ^ _bitboardImpl->squareToBitboardDiagA8h1(kingSq);
+	Bitboard occupiedSquares = (_whitePieces | _blackPieces) ^ _bitboardImpl->squareToBitboard(kingSq);
 	
 	if(_whiteToPlay) {
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalPawnBlackAttackingMoves((Square) sq);
+					_attackedSquares |= _bitboardImpl->getPawnBlackAttackingMoves((Square) sq);
 					break;
 				case KNIGHT_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalKnightMoves((Square) sq);
+					_attackedSquares |= _bitboardImpl->getKnightMoves((Square) sq);
 					break;
 				case BISHOP_BLACK:
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, occupiedBitboardDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, occupiedBitboardDiagA8h1);
+					_attackedSquares |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case ROOK_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, occupiedBitboard);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, occupiedBitboardTranspose);
+					_attackedSquares |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case QUEEN_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, occupiedBitboard);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, occupiedBitboardTranspose);
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, occupiedBitboardDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, occupiedBitboardDiagA8h1);
+					_attackedSquares |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case KING_BLACK:	
-					attackedBitboard |= _bitboardImpl->getLegalKingMoves((Square) sq);
+					_attackedSquares |= _bitboardImpl->getKingMoves((Square) sq);
 					break;
 				default:
 					break;
@@ -997,35 +968,28 @@ void PositionState::updateSquaresUnderAttack()
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalPawnWhiteAttackingMoves((Square) sq);
+					_attackedSquares |= _bitboardImpl->getPawnWhiteAttackingMoves((Square) sq);
 					break;
 				case KNIGHT_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalKnightMoves((Square) sq);
+					_attackedSquares |= _bitboardImpl->getKnightMoves((Square) sq);
 					break;
 				case BISHOP_WHITE:
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, occupiedBitboardDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, occupiedBitboardDiagA8h1);
+					_attackedSquares |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case ROOK_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, occupiedBitboard);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, occupiedBitboardTranspose);
+					_attackedSquares |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case QUEEN_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, occupiedBitboard);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, occupiedBitboardTranspose);
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, occupiedBitboardDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, occupiedBitboardDiagA8h1);
+					_attackedSquares |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case KING_WHITE:	
-					attackedBitboard |= _bitboardImpl->getLegalKingMoves((Square) sq);
+					_attackedSquares |= _bitboardImpl->getKingMoves((Square) sq);
 					break;
 				default:
 					break;
 			}
 		}
 	}
-		
-	_attackedSquares = (attackedBitboard | _bitboardImpl->bitboardTransposeToBitboard(attackedBitboardTranspose) | _bitboardImpl->bitboardDiagA1h8ToBitboard(attackedBitboardDiagA1h8) | _bitboardImpl->bitboardDiagA8h1ToBitboard(attackedBitboardDiagA8h1));
 }
 
 // Returns a bitboard with the bit set at the positions where the 
@@ -1033,34 +997,28 @@ void PositionState::updateSquaresUnderAttack()
 Bitboard PositionState::squaresUnderAttack(Color attackedColor) const
 {
 	Bitboard attackedBitboard = 0;
-	Bitboard attackedBitboardTranspose = 0;
-	Bitboard attackedBitboardDiagA1h8 = 0;
-	Bitboard attackedBitboardDiagA8h1 = 0;
+	Bitboard occupiedSquares = _whitePieces | _blackPieces;
+
 	if(attackedColor == BLACK) {
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalPawnWhiteAttackingMoves((Square) sq);
+					attackedBitboard |= _bitboardImpl->getPawnWhiteAttackingMoves((Square) sq);
 					break;
 				case KNIGHT_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalKnightMoves((Square) sq);
+					attackedBitboard |= _bitboardImpl->getKnightMoves((Square) sq);
 					break;
 				case BISHOP_WHITE:
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+					attackedBitboard |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case ROOK_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, _whitePieces | _blackPieces);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, _whitePiecesTranspose | _blackPiecesTranspose);
+					attackedBitboard |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case QUEEN_WHITE:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, _whitePieces | _blackPieces);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, _whitePiecesTranspose | _blackPiecesTranspose);
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+					attackedBitboard |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case KING_WHITE:	
-					attackedBitboard |= _bitboardImpl->getLegalKingMoves((Square) sq);
+					attackedBitboard |= _bitboardImpl->getKingMoves((Square) sq);
 					break;
 				default:
 					break;
@@ -1071,35 +1029,28 @@ Bitboard PositionState::squaresUnderAttack(Color attackedColor) const
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalPawnBlackAttackingMoves((Square) sq);
+					attackedBitboard |= _bitboardImpl->getPawnBlackAttackingMoves((Square) sq);
 					break;
 				case KNIGHT_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalKnightMoves((Square) sq);
+					attackedBitboard |= _bitboardImpl->getKnightMoves((Square) sq);
 					break;
 				case BISHOP_BLACK:
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+					attackedBitboard |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case ROOK_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, _whitePieces | _blackPieces);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, _whitePiecesTranspose | _blackPiecesTranspose);
+					attackedBitboard |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case QUEEN_BLACK:
-					attackedBitboard |= _bitboardImpl->getLegalRankMoves((Square) sq, _whitePieces | _blackPieces);
-					attackedBitboardTranspose |= _bitboardImpl->getLegalFileMoves((Square) sq, _whitePiecesTranspose | _blackPiecesTranspose);
-					attackedBitboardDiagA1h8 |= _bitboardImpl->getLegalDiagA1h8Moves((Square) sq, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-					attackedBitboardDiagA8h1 |= _bitboardImpl->getLegalDiagA8h1Moves((Square) sq, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
+					attackedBitboard |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
 					break;
 				case KING_BLACK:	
-					attackedBitboard |= _bitboardImpl->getLegalKingMoves((Square) sq);
+					attackedBitboard |= _bitboardImpl->getKingMoves((Square) sq);
 					break;
 				default:
 					break;
 			}
 		}
 	}	
-
-	attackedBitboard |= (_bitboardImpl->bitboardTransposeToBitboard(attackedBitboardTranspose) | _bitboardImpl->bitboardDiagA1h8ToBitboard(attackedBitboardDiagA1h8) | _bitboardImpl->bitboardDiagA8h1ToBitboard(attackedBitboardDiagA8h1));
 
 	if (attackedColor == BLACK) {
 		return attackedBitboard & (~_whitePieces);
@@ -1198,30 +1149,24 @@ void PositionState::undoLazyMove(const MoveInfo& move, bool isEnPassantCapture, 
 
 void PositionState::updateDirectCheckArray()
 {
+	Bitboard occupiedSquares = _whitePieces | _blackPieces;
 	if (_whiteToPlay) {
 		_directCheck[KING_WHITE] = 0;
-		_directCheck[KNIGHT_WHITE] = _bitboardImpl->getLegalKnightMoves(_blackKingPosition);
+		_directCheck[KNIGHT_WHITE] = _bitboardImpl->getKnightMoves(_blackKingPosition);
 		_directCheck[PAWN_WHITE] = _bitboardImpl->getPawnWhiteCheckingPos(_blackKingPosition);
-		Bitboard rankAttack = _bitboardImpl->getLegalRankMoves(_blackKingPosition, _whitePieces | _blackPieces);
-		Bitboard fileAttack = _bitboardImpl->bitboardTransposeToBitboard(_bitboardImpl->getLegalFileMoves(_blackKingPosition, _whitePiecesTranspose | _blackPiecesTranspose));
-		Bitboard diagA1h8Attack = _bitboardImpl->bitboardDiagA1h8ToBitboard(_bitboardImpl->getLegalDiagA1h8Moves(_blackKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8));
-		Bitboard diagA8h1Attack = _bitboardImpl->bitboardDiagA8h1ToBitboard(_bitboardImpl->getLegalDiagA8h1Moves(_blackKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1));
-		_directCheck[ROOK_WHITE] = rankAttack | fileAttack;
-		_directCheck[BISHOP_WHITE] = diagA1h8Attack | diagA8h1Attack;
-		_directCheck[QUEEN_WHITE] = rankAttack | fileAttack | diagA1h8Attack | diagA8h1Attack;
+		_directCheck[ROOK_WHITE] = _bitboardImpl->rookAttackFrom(_blackKingPosition, occupiedSquares);
+		_directCheck[BISHOP_WHITE] = _bitboardImpl->bishopAttackFrom(_blackKingPosition, occupiedSquares);
+		_directCheck[QUEEN_WHITE] = _bitboardImpl->queenAttackFrom(_blackKingPosition, occupiedSquares);
 	}
 	else {
 		_directCheck[KING_BLACK] = 0;
-		_directCheck[KNIGHT_BLACK] = _bitboardImpl->getLegalKnightMoves(_whiteKingPosition);
+		_directCheck[KNIGHT_BLACK] = _bitboardImpl->getKnightMoves(_whiteKingPosition);
 		_directCheck[PAWN_BLACK] = _bitboardImpl->getPawnBlackCheckingPos(_whiteKingPosition);
-		Bitboard rankAttack = _bitboardImpl->getLegalRankMoves(_whiteKingPosition, _whitePieces | _blackPieces);
-		Bitboard fileAttack = _bitboardImpl->bitboardTransposeToBitboard(_bitboardImpl->getLegalFileMoves(_whiteKingPosition, _whitePiecesTranspose | _blackPiecesTranspose));
-		Bitboard diagA1h8Attack = _bitboardImpl->bitboardDiagA1h8ToBitboard(_bitboardImpl->getLegalDiagA1h8Moves(_whiteKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8));
-		Bitboard diagA8h1Attack = _bitboardImpl->bitboardDiagA8h1ToBitboard(_bitboardImpl->getLegalDiagA8h1Moves(_whiteKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1));
-		_directCheck[ROOK_BLACK] = rankAttack | fileAttack;
-		_directCheck[BISHOP_BLACK] = diagA1h8Attack | diagA8h1Attack;
-		_directCheck[QUEEN_BLACK] = rankAttack | fileAttack | diagA1h8Attack | diagA8h1Attack;
-	}
+		_directCheck[ROOK_BLACK] = _bitboardImpl->rookAttackFrom(_whiteKingPosition, occupiedSquares);
+		_directCheck[BISHOP_BLACK] = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, occupiedSquares);
+		_directCheck[QUEEN_BLACK] = _bitboardImpl->queenAttackFrom(_whiteKingPosition, occupiedSquares);
+
+		}
 }
 
 void PositionState::updateDiscoveredChecksInfo()

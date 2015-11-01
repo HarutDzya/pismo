@@ -3,8 +3,8 @@ CFLAGS = -Wall -g -c -I. -I../../
 LFLAGS = -g
 SRC_PATH = ../../
 
-all: Perft.o main.o PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o MemPool.o
-	$(CC) $(LFLAGS) main.o Perft.o PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o MemPool.o
+all: Perft.o main.o PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o MemPool.o
+	$(CC) $(LFLAGS) main.o Perft.o PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o MemPool.o
 
 main.o: main.cpp 
 	$(CC) $(CFLAGS) main.cpp -o main.o
@@ -21,6 +21,9 @@ MoveGenerator.o: $(SRC_PATH)/MoveGenerator.cpp
 BitboardImpl.o: $(SRC_PATH)/BitboardImpl.cpp
 	$(CC) $(CFLAGS) $(SRC_PATH)/BitboardImpl.cpp -o BitboardImpl.o
 
+MagicMoves.o : $(SRC_PATH)/MagicMoves.cpp
+	$(CC) $(CFLAGS) $(SRC_PATH)/MagicMoves.cpp -o MagicMoves.o
+
 PossibleMoves.o: $(SRC_PATH)/PossibleMoves.cpp
 	$(CC) $(CFLAGS) $(SRC_PATH)/PossibleMoves.cpp -o PossibleMoves.o
 
@@ -31,5 +34,5 @@ MemPool.o: $(SRC_PATH)/MemPool.cpp
 	$(CC) $(CFLAGS) $(SRC_PATH)/MemPool.cpp -o MemPool.o
 
 clean:
-	rm -rf main.o Perft.o PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o MemPool.o a.out a.exe
+	rm -rf main.o Perft.o PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o  PossibleMoves.o ZobKeyImpl.o MemPool.o a.out a.exe
 

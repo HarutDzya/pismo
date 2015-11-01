@@ -2,8 +2,8 @@ CC = g++
 CFLAGS = -Wall -g -c
 LFLAGS = -g
 
-all: PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o main.o
-	$(CC) $(LFLAGS) main.o PositionState.o MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o
+all: PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o main.o
+	$(CC) $(LFLAGS) main.o PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o
 
 PositionState.o: PositionState.cpp 
 	$(CC) $(CFLAGS) PositionState.cpp -o PositionState.o
@@ -13,6 +13,9 @@ MoveGenerator.o: MoveGenerator.cpp
 
 BitboardImpl.o: BitboardImpl.cpp
 	$(CC) $(CFLAGS) BitboardImpl.cpp -o BitboardImpl.o
+
+MagicMoves.o: MagicMoves.cpp
+	$(CC) $(CFLAGS) MagicMoves.cpp -o MagicMoves.o
 
 PossibleMoves.o: PossibleMoves.cpp
 	$(CC) $(CFLAGS) PossibleMoves.cpp -o PossibleMoves.o
@@ -39,4 +42,4 @@ main.o: main.cpp
 	$(CC) $(CFLAGS) main.cpp -o main.o
 
 clean:
-	rm -rf main.o PositionState.o  MoveGenerator.o BitboardImpl.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o a.out a.exe
+	rm -rf main.o PositionState.o  MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o a.out a.exe

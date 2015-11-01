@@ -1,5 +1,6 @@
 #include "BitboardImpl.h"
 #include "PossibleMoves.h"
+#include "MagicMoves.h"
 #include <vector>
 #include <assert.h>
 
@@ -12,6 +13,8 @@ BitboardImpl::BitboardImpl()
 	initSquareToBitboardTranspose();
 	initSquareToBitboardA1h8();
 	initSquareToBitboardA8h1();
+
+	initmagicmoves();
 
 	initMovePosBoardRank();
 	initMovePosBoardFile();
@@ -59,7 +62,7 @@ Bitboard BitboardImpl::squareToBitboardDiagA8h1(Square sq) const
 
 // Returns the bitboard for possible rank moves from Square from. 
 // The occupiedSquares bitboard is the unrotated bitboard with occupied squares bit set to one
-Bitboard BitboardImpl::getLegalRankMoves(Square from, const Bitboard& occupiedSquares) const
+Bitboard BitboardImpl::getRankMoves(Square from, const Bitboard& occupiedSquares) const
 {
 	Bitrank rankOccup = occupiedSquares >> (from / 8) * 8;
 	return _movePosBoardRank[from][rankOccup];
@@ -67,7 +70,7 @@ Bitboard BitboardImpl::getLegalRankMoves(Square from, const Bitboard& occupiedSq
 
 // Returns the transposed bitboard for possible file moves from Square from. 
 // The occupiedSquares bitboard is the transposed bitboard with occupied squares bit set to one
-Bitboard BitboardImpl::getLegalFileMoves(Square from, const Bitboard& occupiedSquares) const
+Bitboard BitboardImpl::getFileMoves(Square from, const Bitboard& occupiedSquares) const
 {
 	Bitrank fileOccup = occupiedSquares >> (squareToSquareTranspose(from) / 8) * 8;
 	return _movePosBoardFile[from][fileOccup];
@@ -75,7 +78,7 @@ Bitboard BitboardImpl::getLegalFileMoves(Square from, const Bitboard& occupiedSq
 
 // Returns the 45 angle rotated bitboard for possible a1h8 diagonal moves from Square from. 
 // The occupiedSquares bitboard is the 45 angle rotated bitboard with occupied squares bit set to one
-Bitboard BitboardImpl::getLegalDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const
+Bitboard BitboardImpl::getDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const
 {
 	Bitrank diagOccup = occupiedSquares >> (squareToSquareA1h8(from) / 8) * 8;
 	return _movePosBoardDiagA1h8[from][diagOccup];
@@ -83,34 +86,55 @@ Bitboard BitboardImpl::getLegalDiagA1h8Moves(Square from, const Bitboard& occupi
 
 // Returns the -45 angle rotated bitboard for possible a8h1 diagonal moves from Square from. 
 // The occupiedSquares bitboard is the -45 angle rotated bitboard with occupied squares bit set to one
-Bitboard BitboardImpl::getLegalDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const
+Bitboard BitboardImpl::getDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const
 {
 	Bitrank diagOccup = occupiedSquares >> (squareToSquareA8h1(from) / 8) * 8;
 	return _movePosBoardDiagA8h1[from][diagOccup];
 }
 
 // Returns bitboard of possible knight moves from square from
-Bitboard BitboardImpl::getLegalKnightMoves(Square from) const 
+Bitboard BitboardImpl::getKnightMoves(Square from) const 
 {
 	return _movePosBoardKnight[from];
 }
 
 // Returns bitboard of possible king moves from square from
-Bitboard BitboardImpl::getLegalKingMoves(Square from) const
+Bitboard BitboardImpl::getKingMoves(Square from) const
 {
 	return _movePosBoardKing[from];
 }
 
 // Returns bitboard of possible white pawn attacking moves from square from
-Bitboard BitboardImpl::getLegalPawnWhiteAttackingMoves(Square from) const
+Bitboard BitboardImpl::getPawnWhiteAttackingMoves(Square from) const
 {
 	return _attackingPosBoardPawnWhite[from - A2];
 }
 
 // Returns bitboard of possible black pawn attacking moves from square from
-Bitboard BitboardImpl::getLegalPawnBlackAttackingMoves(Square from) const
+Bitboard BitboardImpl::getPawnBlackAttackingMoves(Square from) const
 {
 	return _attackingPosBoardPawnBlack[from - A2];
+}
+
+// Returns bitboard of possible rook moves from square from when 
+// occupiedSquares shows the occupancy. Uses magic bitboards for evaluation.
+Bitboard BitboardImpl::rookAttackFrom(Square from, const Bitboard& occupiedSquares) const
+{
+	return Rmagic(from, occupiedSquares);
+}
+
+// Returns bitboard of possible bishop moves from square from when 
+// occupiedSquares shows the occupancy. Uses magic bitboards for evaluation.
+Bitboard BitboardImpl::bishopAttackFrom(Square from, const Bitboard& occupiedSquares) const
+{
+	return Bmagic(from, occupiedSquares);
+}
+
+// Returns bitboard of possible queen moves from square from when 
+// occupiedSquares shows the occupancy. Uses magic bitboards for evluation.
+Bitboard BitboardImpl::queenAttackFrom(Square from, const Bitboard& occupiedSquares) const
+{
+	return Qmagic(from, occupiedSquares);
 }
 
 // Returns the bitboard of possible white pawn positions from where it can 
@@ -710,10 +734,10 @@ void BitboardImpl::initSlidingPosBoard()
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
 		Bitboard slidePos = 0;
 		Square from = (Square) sq;
-		slidePos |= getLegalRankMoves(from, squareToBitboard(from));
-		slidePos |= bitboardTransposeToBitboard(getLegalFileMoves(from, squareToBitboardTranspose(from)));
-		slidePos |= bitboardDiagA1h8ToBitboard(getLegalDiagA1h8Moves(from, squareToBitboardDiagA1h8(from)));
-		slidePos |= bitboardDiagA8h1ToBitboard(getLegalDiagA8h1Moves(from, squareToBitboardDiagA8h1(from)));
+		slidePos |= getRankMoves(from, squareToBitboard(from));
+		slidePos |= bitboardTransposeToBitboard(getFileMoves(from, squareToBitboardTranspose(from)));
+		slidePos |= bitboardDiagA1h8ToBitboard(getDiagA1h8Moves(from, squareToBitboardDiagA1h8(from)));
+		slidePos |= bitboardDiagA8h1ToBitboard(getDiagA8h1Moves(from, squareToBitboardDiagA8h1(from)));
 		_slidingPosBoard[sq] = slidePos;
 	}
 }

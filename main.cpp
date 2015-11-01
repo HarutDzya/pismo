@@ -55,7 +55,7 @@ int main()
 	pos.initPositionFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
 	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
-		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game)" << std::endl;
+		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
 	std::string choice;
 
  	Core* p = new Core();

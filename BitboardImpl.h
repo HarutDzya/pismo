@@ -51,15 +51,19 @@ public:
 	Bitboard squareToBitboardDiagA1h8(Square sq) const;
 	Bitboard squareToBitboardDiagA8h1(Square sq) const;
 	
-	Bitboard getLegalRankMoves(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard getLegalFileMoves(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard getLegalDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard getLegalDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getRankMoves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getFileMoves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard getDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const;
 
-	Bitboard getLegalKnightMoves(Square from) const;
-	Bitboard getLegalKingMoves(Square from) const;
-	Bitboard getLegalPawnWhiteAttackingMoves(Square from) const;
-	Bitboard getLegalPawnBlackAttackingMoves(Square from) const;
+	Bitboard getKnightMoves(Square from) const;
+	Bitboard getKingMoves(Square from) const;
+	Bitboard getPawnWhiteAttackingMoves(Square from) const;
+	Bitboard getPawnBlackAttackingMoves(Square from) const;
+
+	Bitboard rookAttackFrom(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard bishopAttackFrom(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard queenAttackFrom(Square from, const Bitboard& occupiedSquares) const;
 
 	Bitboard getPawnWhiteCheckingPos(Square kingPos) const;
 	Bitboard getPawnBlackCheckingPos(Square kingPos) const;
