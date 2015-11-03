@@ -2,6 +2,7 @@
 #define UTILS_H_
 
 #include <stdint.h>
+#include <string>
 
 namespace pismo
 {
@@ -42,9 +43,15 @@ struct MoveInfo {
 	Square from;
 	Square to;
 	Piece promoted;
+  MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE)
+    : from(f)
+    , to(t)
+    , promoted(p)
+  {
+  }
 };
 
-const MoveInfo MATE_MOVE = {INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE};
+const MoveInfo MATE_MOVE(INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE);
 
 struct EvalInfo
 {
@@ -95,6 +102,9 @@ struct PinInfo {
         {
         }
 };
+
+std::string moveToNotation(const MoveInfo& move);
+
 }
 
 #endif //UTILS_H_

@@ -14,7 +14,7 @@ public:
 	 * Counts the leaf nodes of the game for PositionState
 	 * pos at the depth
 	 */
-	uint64_t analyze(PositionState& pos, uint16_t depth) const;
+	uint64_t analyze(PositionState& pos, uint16_t depth, bool begin = false) const;
 
 	Perft();
 

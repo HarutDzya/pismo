@@ -1290,7 +1290,14 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 				_isDoubleCheck = true;
 				return;
 			}
-			_absolutePinsPos |= _bitboardImpl->getSquaresBetween(move.to, kingSq);
+
+			if (pieceIsSlidingPiece(move.promoted)) {
+				_absolutePinsPos |= _bitboardImpl->getSquaresBetween(move.to, kingSq);
+			}
+			else {
+				//promoted knight gives check
+				_absolutePinsPos = _bitboardImpl->squareToBitboard(move.to);
+			}
 			_kingUnderCheck = true;
 		}
 	}
@@ -2749,7 +2756,7 @@ void PositionState::printPossibleMoves(Square from) const
 	std::cout << "Possible moves" << std::endl;
 	for (int i = 7; i >= 0; --i) {
 		for(int j = 0; j < 8; ++j) {
-			MoveInfo move = {from, (Square) (i * 8 + j), promoted};
+			MoveInfo move(from, (Square) (i * 8 + j), promoted);
 			if (moveIsLegal(move)) {
 				std::cout << "L ";
 			}

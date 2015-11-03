@@ -6,7 +6,7 @@
 namespace pismo
 {
 
-uint64_t Perft::analyze(PositionState& pos, uint16_t depth) const
+uint64_t Perft::analyze(PositionState& pos, uint16_t depth, bool begin) const
 {
 	if (depth == 0) {
 		return 1;
@@ -33,7 +33,12 @@ uint64_t Perft::analyze(PositionState& pos, uint16_t depth) const
 		pos.updateDirectCheckArray();
 		pos.updateDiscoveredChecksInfo();
 		pos.makeMove(possibleMoves[i]);
-		moveCount += analyze(pos, depth - 1);
+    uint64_t mc = analyze(pos, depth - 1);
+		moveCount += mc;
+    if (begin)
+    {
+      //std::cout << "Move: " << pismo::moveToNotation(possibleMoves[i]) << "    " << mc << "   FEN: " << pos.getStateFEN() << std::endl;
+    }
 		pos.undoMove();
 	}
 	

@@ -1,45 +1,32 @@
 CC = g++
-CFLAGS = -Wall -g -c
+CFLAGS = -Wall -O3 -g 
 LFLAGS = -g
 
-all: PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o main.o
-	$(CC) $(LFLAGS) main.o PositionState.o MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o
+SRCS = PositionState.cpp \
+			MoveGenerator.cpp \
+			BitboardImpl.cpp \
+			MagicMoves.cpp \
+			PossibleMoves.cpp \
+			ZobKeyImpl.cpp \
+			TranspositionTable.cpp \
+			PositionEvaluation.cpp \
+			Core.cpp \
+			ABCore.cpp \
+			MemPool.cpp \
+			main.cpp \
+			Utils.cpp
 
-PositionState.o: PositionState.cpp 
-	$(CC) $(CFLAGS) PositionState.cpp -o PositionState.o
+OBJS = ${SRCS:.cpp=.o}
 
-MoveGenerator.o: MoveGenerator.cpp
-	$(CC) $(CFLAGS) MoveGenerator.cpp -o MoveGenerator.o
 
-BitboardImpl.o: BitboardImpl.cpp
-	$(CC) $(CFLAGS) BitboardImpl.cpp -o BitboardImpl.o
+all: $(OBJS)
+	$(CC) $(OBJS) -o a.out
 
-MagicMoves.o: MagicMoves.cpp
-	$(CC) $(CFLAGS) MagicMoves.cpp -o MagicMoves.o
+$(OBJS): %.o: %.cpp
+	$(CC) -c $(CFLAGS) $< -o $@
 
-PossibleMoves.o: PossibleMoves.cpp
-	$(CC) $(CFLAGS) PossibleMoves.cpp -o PossibleMoves.o
 
-ZobKeyImpl.o: ZobKeyImpl.cpp
-	$(CC) $(CFLAGS) ZobKeyImpl.cpp -o ZobKeyImpl.o
-
-TranspositionTable.o: TranspositionTable.cpp
-	$(CC) $(CFLAGS) TranspositionTable.cpp -o TranspositionTable.o
-
-PositionEvaluation.o: PositionEvaluation.cpp
-	$(CC) $(CFLAGS) PositionEvaluation.cpp -o PositionEvaluation.o
-
-Core.o: Core.cpp
-	$(CC) $(CFLAGS) Core.cpp -o Core.o
-
-ABCore.o: ABCore.cpp
-	$(CC) $(CFLAGS) ABCore.cpp -o ABCore.o
-
-MemPool.o: MemPool.cpp
-	$(CC) $(CFLAGS) MemPool.cpp -o MemPool.o
-
-main.o: main.cpp 
-	$(CC) $(CFLAGS) main.cpp -o main.o
 
 clean:
-	rm -rf main.o PositionState.o  MoveGenerator.o BitboardImpl.o MagicMoves.o PossibleMoves.o ZobKeyImpl.o TranspositionTable.o PositionEvaluation.o Core.o ABCore.o MemPool.o a.out a.exe
+	rm -f *.o a.out
+

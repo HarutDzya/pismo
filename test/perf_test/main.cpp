@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 				pos.initPositionFEN(fen);
 				pismo::Perft perft;
 				std::time_t start = time(NULL);
-				uint64_t moveCount = perft.analyze(pos, depth);
+				uint64_t moveCount = perft.analyze(pos, depth, true);
 				std::time_t end = time(NULL);
 				if (moveCount == goldenOutput) {
 					ofStream << "PASSED: ";
