@@ -8,7 +8,7 @@ namespace pismo
 {
 typedef uint64_t Bitboard;
 typedef uint64_t ZobKey;
- 
+
 enum Color { 
 	WHITE = 0, 
 	BLACK
@@ -33,6 +33,7 @@ enum Square {
 	NUMBER_OF_SQUARES, // = 64
 	INVALID_SQUARE
 };
+
 
 enum MoveType {
 	NORMAL_MOVE = 0, PROMOTION_MOVE, CASTLING_MOVE,
@@ -104,6 +105,8 @@ struct PinInfo {
 };
 
 std::string moveToNotation(const MoveInfo& move);
+
+extern uint64_t squareToBitboard[NUMBER_OF_SQUARES];
 
 }
 
