@@ -18,40 +18,9 @@ int main()
 		}
 	} 
 
-	std::map<Square, std::string> squareToNotation;
-	for (int i = 0; i < 8; ++i) {
-		for(int j = 0; j < 8; ++j) {
-			squareToNotation[(Square)(i * 8 + j)] = std::string(1, ('A' + j)) + std::string(1, ('1' + i));
-		}
-	} 
-
 	MemPool::instance()->initMovesArray();
 	PositionState pos;
 
-	/*std::vector<std::pair<Square, Piece> > pcs;
-	for (int i = 0; i < 8; ++i) {
-		pcs.push_back(std::pair<Square, Piece>((Square)(8 + i), PAWN_WHITE));
-		pcs.push_back(std::pair<Square, Piece>((Square)(6 * 8 + i), PAWN_BLACK));
-	}
-	pcs.push_back(std::pair<Square, Piece>(B1, KNIGHT_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(G1, KNIGHT_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(B8, KNIGHT_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(G8, KNIGHT_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(E1, KING_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(E8, KING_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(A1, ROOK_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(H1, ROOK_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(A8, ROOK_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(H8, ROOK_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(C1, BISHOP_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(F1, BISHOP_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(C8, BISHOP_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(F8, BISHOP_BLACK));
-	pcs.push_back(std::pair<Square, Piece>(D1, QUEEN_WHITE));
-	pcs.push_back(std::pair<Square, Piece>(D8, QUEEN_BLACK));
-	*/
-
-	//pos.initPosition(pcs);
 	pos.initPositionFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
 	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
@@ -128,7 +97,7 @@ int main()
 			MoveInfo mv = p->think(pos, 5);
 			pos.makeMove(mv);
 			pos.printBoard();
-			std::cout << "Move: " <<  squareToNotation[mv.from] << "->" << squareToNotation[mv.to] << "\n" << std::endl;
+			std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;
 		}
     else if (choice == "f") {
       std::cout << pos.getStateFEN() << std::endl;
