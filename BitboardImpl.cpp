@@ -6,6 +6,17 @@
 
 namespace pismo
 {
+Bitboard squareToBitboard[NUMBER_OF_SQUARES] =
+{
+	1L << 0,  1L << 1,  1L << 2,  1L << 3,  1L << 4,  1L << 5,  1L << 6,  1L << 7,
+	1L << 8,  1L << 9,  1L << 10, 1L << 11, 1L << 12, 1L << 13, 1L << 14, 1L << 15,
+	1L << 16, 1L << 17, 1L << 18, 1L << 19, 1L << 20, 1L << 21, 1L << 22, 1L << 23,
+	1L << 24, 1L << 25, 1L << 26, 1L << 27, 1L << 28, 1L << 29, 1L << 30, 1L << 31,
+	1L << 32, 1L << 33, 1L << 34, 1L << 35, 1L << 36, 1L << 37, 1L << 38, 1L << 39,
+	1L << 40, 1L << 41, 1L << 42, 1L << 43, 1L << 44, 1L << 45, 1L << 46, 1L << 47,
+	1L << 48, 1L << 49, 1L << 50, 1L << 51, 1L << 52, 1L << 53, 1L << 54, 1L << 55,
+	1L << 56, 1L << 57, 1L << 58, 1L << 59, 1L << 60, 1L << 61, 1L << 62, 1L << 63
+};
 
 BitboardImpl::BitboardImpl()
 {
@@ -86,27 +97,101 @@ Bitboard BitboardImpl::getDiagA8h1Moves(Square from, const Bitboard& occupiedSqu
 }
 
 // Returns bitboard of possible knight moves from square from
-Bitboard BitboardImpl::getKnightMoves(Square from) const 
+Bitboard BitboardImpl::knightAttackFrom(Square from) const 
 {
 	return _movePosBoardKnight[from];
 }
 
+// Returns bitboard of positions of the knights which attack the square to
+// knightsPos shows all the knight positions of appropriate color
+Bitboard BitboardImpl::knightsAttackTo(Square to, const Bitboard& knightsPos) const
+{
+	return _movePosBoardKnight[to] & knightsPos;
+}
+
 // Returns bitboard of possible king moves from square from
-Bitboard BitboardImpl::getKingMoves(Square from) const
+Bitboard BitboardImpl::kingAttackFrom(Square from) const
 {
 	return _movePosBoardKing[from];
 }
 
+// Returns bitboard of position of the king which attacks the square to
+// kingPos shows the king positions of appropriate color
+Bitboard BitboardImpl::kingAttackTo(Square to, const Bitboard& kingPos) const
+{
+	return _movePosBoardKing[to] & kingPos;
+}
+
 // Returns bitboard of possible white pawn attacking moves from square from
-Bitboard BitboardImpl::getPawnWhiteAttackingMoves(Square from) const
+Bitboard BitboardImpl::pawnWhiteAttackFrom(Square from) const
 {
 	return _attackingPosBoardPawnWhite[from - A2];
 }
 
+// Returns the bitboard of possible white pawn positions from where it can 
+// attack the position to
+Bitboard BitboardImpl::pawnsWhiteAttackTo(Square to) const
+{
+	if (to >= A4) {
+		return _attackingPosBoardPawnWhite[to - A4];
+	}
+	else if (to >= A3) {
+		return _attackingPosBoardPawnBlack[to - A2];
+	}
+	else {
+		return 0;
+	}
+}
+
+// Returns the bitboard of white pawn positions which attack the square to 
+// pawnsWhitePos shows white pawn positions
+Bitboard BitboardImpl::pawnsWhiteAttackTo(Square to, const Bitboard& pawnsWhitePos) const
+{
+	if (to >= A4) {
+		return _attackingPosBoardPawnWhite[to - A4] & pawnsWhitePos;
+	}
+	else if (to >= A3) {
+		return _attackingPosBoardPawnBlack[to - A2] & pawnsWhitePos;
+	}
+	else {
+		return 0;
+	}
+}
+
 // Returns bitboard of possible black pawn attacking moves from square from
-Bitboard BitboardImpl::getPawnBlackAttackingMoves(Square from) const
+Bitboard BitboardImpl::pawnBlackAttackFrom(Square from) const
 {
 	return _attackingPosBoardPawnBlack[from - A2];
+}
+
+// Returns the bitboard of possible black pawn positions from where it can
+// attack the position to
+Bitboard BitboardImpl::pawnsBlackAttackTo(Square to) const
+{
+	if (to <= H5) {
+		return _attackingPosBoardPawnBlack[to + A2];
+	}
+	else if (to <= H6) {
+		return _attackingPosBoardPawnWhite[to - A2];
+	}
+	else {
+		return 0;
+	}
+}
+
+// Returns the bitboard of black pawn positions which attack the square to 
+// pawnsBlackPos shows black pawn positions
+Bitboard BitboardImpl::pawnsBlackAttackTo(Square to, const Bitboard& pawnsBlackPos) const
+{
+	if (to <= H5) {
+		return _attackingPosBoardPawnBlack[to + A2] & pawnsBlackPos;
+	}
+	else if (to <= H6) {
+		return _attackingPosBoardPawnWhite[to - A2] & pawnsBlackPos;
+	}
+	else {
+		return 0;
+	}
 }
 
 // Returns bitboard of possible rook moves from square from when 
@@ -116,11 +201,11 @@ Bitboard BitboardImpl::rookAttackFrom(Square from, const Bitboard& occupiedSquar
 	return Rmagic(from, occupiedSquares);
 }
 
-// Returns bitboard of positions of the rook which attack the square to
-// occupiedSquares shows the occupancy, rookPos shows all the rook positions of appropriate color 
-Bitboard BitboardImpl::rookAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& rookPos) const
+// Returns bitboard of positions of the rooks which attack the square to
+// occupiedSquares shows the occupancy, rooksPos shows all the rook positions of appropriate color 
+Bitboard BitboardImpl::rooksAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& rooksPos) const
 {
-	return Rmagic(to, occupiedSquares) & rookPos;
+	return Rmagic(to, occupiedSquares) & rooksPos;
 }
 
 // Returns bitboard of possible bishop moves from square from when 
@@ -130,11 +215,11 @@ Bitboard BitboardImpl::bishopAttackFrom(Square from, const Bitboard& occupiedSqu
 	return Bmagic(from, occupiedSquares);
 }
 
-// Returns bitboard of positions of the bishop which attack the square to
-// occupiedSquares shows the occupancy, bishopPos shows all the bishop positions of appropriate color 
-Bitboard BitboardImpl::bishopAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopPos) const
+// Returns bitboard of positions of the bishops which attack the square to
+// occupiedSquares shows the occupancy, bishopsPos shows all the bishop positions of appropriate color 
+Bitboard BitboardImpl::bishopsAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopsPos) const
 {
-	return Bmagic(to, occupiedSquares) & bishopPos;
+	return Bmagic(to, occupiedSquares) & bishopsPos;
 }
 
 // Returns bitboard of possible queen moves from square from when 
@@ -144,42 +229,11 @@ Bitboard BitboardImpl::queenAttackFrom(Square from, const Bitboard& occupiedSqua
 	return Qmagic(from, occupiedSquares);
 }
 
-// Returns bitboard of positions of the queen which attack the square to
-// occupiedSquares shows the occupancy, queenPos shows all the queen positions of appropriate color 
-Bitboard BitboardImpl::queenAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queenPos) const
+// Returns bitboard of positions of the queens which attack the square to
+// occupiedSquares shows the occupancy, queensPos shows all the queen positions of appropriate color 
+Bitboard BitboardImpl::queensAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queensPos) const
 {
-	return Qmagic(to, occupiedSquares) & queenPos;
-}
-
-
-// Returns the bitboard of possible white pawn positions from where it can 
-// check the king at position kingPos
-Bitboard BitboardImpl::getPawnWhiteCheckingPos(Square kingPos) const
-{
-	if (kingPos >= A4) {
-		return _attackingPosBoardPawnWhite[kingPos - A4];
-	}
-	else if (kingPos >= A3) {
-		return _attackingPosBoardPawnBlack[kingPos - A2];
-	}
-	else {
-		return 0;
-	}
-}
-
-// Returns the bitboard of possible black pawn positions from where it can
-// check the king at position kingPos
-Bitboard BitboardImpl::getPawnBlackCheckingPos(Square kingPos) const
-{
-	if (kingPos <= H5) {
-		return _attackingPosBoardPawnBlack[kingPos + A2];
-	}
-	else if (kingPos <= H6) {
-		return _attackingPosBoardPawnWhite[kingPos - A2];
-	}
-	else {
-		return 0;
-	}
+	return Qmagic(to, occupiedSquares) & queensPos;
 }
 
 // Returns PinInfo for the rank ray when the king is at position kingSq

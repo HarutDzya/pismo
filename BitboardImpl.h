@@ -39,7 +39,9 @@ const Bitboard KING_MOVES_H2 = 0x0000000000C040C0; // Bitboard for possible move
 
 const Bitrank OCCUPATION_FROM_LSB[] =
 	{0x00, 0x01, 0x03, 0x07, 0x0F, 
-	0x1F, 0x3F, 0x7F, 0xFF}; 
+	0x1F, 0x3F, 0x7F, 0xFF};
+
+extern Bitboard squareToBitboard[NUMBER_OF_SQUARES];
 
 class BitboardImpl
 {
@@ -55,20 +57,23 @@ public:
 	Bitboard getDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const;
 	Bitboard getDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const;
 
-	Bitboard getKnightMoves(Square from) const;
-	Bitboard getKingMoves(Square from) const;
-	Bitboard getPawnWhiteAttackingMoves(Square from) const;
-	Bitboard getPawnBlackAttackingMoves(Square from) const;
-
+	Bitboard knightAttackFrom(Square from) const;
+	Bitboard knightsAttackTo(Square to, const Bitboard& knightsPos) const;
+	Bitboard kingAttackFrom(Square from) const;
+	Bitboard kingAttackTo(Square to, const Bitboard& kingPos) const;
+	Bitboard pawnWhiteAttackFrom(Square from) const;
+	Bitboard pawnsWhiteAttackTo(Square to) const;
+	Bitboard pawnsWhiteAttackTo(Square to, const Bitboard& pawnsWhitePos) const;
+	Bitboard pawnBlackAttackFrom(Square from) const;
+	Bitboard pawnsBlackAttackTo(Square to) const;
+	Bitboard pawnsBlackAttackTo(Square to, const Bitboard& pawnsBlackPos) const;
 	Bitboard rookAttackFrom(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard rookAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& rookPos) const;
+	Bitboard rooksAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& rooksPos) const;
 	Bitboard bishopAttackFrom(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard bishopAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopPos) const;
+	Bitboard bishopsAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopsPos) const;
 	Bitboard queenAttackFrom(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard queenAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queenPos) const;
+	Bitboard queensAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queensPos) const;
 
-	Bitboard getPawnWhiteCheckingPos(Square kingPos) const;
-	Bitboard getPawnBlackCheckingPos(Square kingPos) const;
 
 	const PinInfo& getRankPinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
 	const PinInfo& getFilePinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
@@ -81,9 +86,6 @@ public:
 
 	Bitboard getSquaresBetween(Square from, Square kingSq) const;
 
-	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
-	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
-	Bitboard bitboardDiagA8h1ToBitboard(const Bitboard& boardDiagA8h1) const;
 
 //private member functions
 private:
@@ -118,7 +120,10 @@ private:
 	void setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank & leftPin, Bitrank& rightPin) const;
 	int findLsbSet(Bitrank rank) const;
 	int findMsbSet(Bitrank rank) const;
-	
+
+	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
+	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
+	Bitboard bitboardDiagA8h1ToBitboard(const Bitboard& boardDiagA8h1) const;	
 	Bitboard rotateBitboardRight(const Bitboard& board, unsigned int num) const;
 
 // date members

@@ -168,6 +168,7 @@ private:
 	bool promotionMoveChecksOpponentKing(const MoveInfo& move) const;
 
 	bool kingPseudoMoveIsLegal(const MoveInfo& move) const;
+	bool squareUnderAttack(Square s) const;
 	bool pinMoveOpensCheck(const MoveInfo& move) const;
 	bool pinEnPassantCaptureOpensCheck(const MoveInfo& move) const;
 

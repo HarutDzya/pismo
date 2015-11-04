@@ -105,9 +105,6 @@ struct PinInfo {
 };
 
 std::string moveToNotation(const MoveInfo& move);
-
-extern uint64_t squareToBitboard[NUMBER_OF_SQUARES];
-
 }
 
 #endif //UTILS_H_
