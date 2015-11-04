@@ -116,11 +116,25 @@ Bitboard BitboardImpl::rookAttackFrom(Square from, const Bitboard& occupiedSquar
 	return Rmagic(from, occupiedSquares);
 }
 
+// Returns bitboard of positions of the rook which attack the square to
+// occupiedSquares shows the occupancy, rookPos shows all the rook positions of appropriate color 
+Bitboard BitboardImpl::rookAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& rookPos) const
+{
+	return Rmagic(to, occupiedSquares) & rookPos;
+}
+
 // Returns bitboard of possible bishop moves from square from when 
 // occupiedSquares shows the occupancy. Uses magic bitboards for evaluation.
 Bitboard BitboardImpl::bishopAttackFrom(Square from, const Bitboard& occupiedSquares) const
 {
 	return Bmagic(from, occupiedSquares);
+}
+
+// Returns bitboard of positions of the bishop which attack the square to
+// occupiedSquares shows the occupancy, bishopPos shows all the bishop positions of appropriate color 
+Bitboard BitboardImpl::bishopAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopPos) const
+{
+	return Bmagic(to, occupiedSquares) & bishopPos;
 }
 
 // Returns bitboard of possible queen moves from square from when 
@@ -129,6 +143,14 @@ Bitboard BitboardImpl::queenAttackFrom(Square from, const Bitboard& occupiedSqua
 {
 	return Qmagic(from, occupiedSquares);
 }
+
+// Returns bitboard of positions of the queen which attack the square to
+// occupiedSquares shows the occupancy, queenPos shows all the queen positions of appropriate color 
+Bitboard BitboardImpl::queenAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queenPos) const
+{
+	return Qmagic(to, occupiedSquares) & queenPos;
+}
+
 
 // Returns the bitboard of possible white pawn positions from where it can 
 // check the king at position kingPos

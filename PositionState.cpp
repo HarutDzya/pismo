@@ -2130,7 +2130,7 @@ void PositionState::addPieceToBitboards(Square sq, Piece p, Color clr)
 		_blackPiecesDiagA1h8 |= _bitboardImpl->squareToBitboardDiagA1h8(sq);
 		_blackPiecesDiagA8h1 |= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
-	_piecePos[p] |= _bitboardImpl->squareToBitboard(sq);	
+	_piecePos[p] |= squareToBitboard[sq];	
 }
 
 // Removes a piece from all 4 occupation bitboards in the appropriate position
@@ -2149,7 +2149,7 @@ void PositionState::removePieceFromBitboards(Square sq, Piece p, Color clr)
 		_blackPiecesDiagA1h8 ^= _bitboardImpl->squareToBitboardDiagA1h8(sq);
 		_blackPiecesDiagA8h1 ^= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
-	_piecePos[p] ^= _bitboardImpl->squareToBitboard(sq);
+	_piecePos[p] ^= squareToBitboard[sq];
 }
 
 int PositionState::calculatePstValue(Piece p, Square s) const

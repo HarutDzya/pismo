@@ -4,7 +4,7 @@
 namespace pismo
 {
 
-uint64_t squareToBitboard[NUMBER_OF_SQUARES] =
+Bitboard squareToBitboard[NUMBER_OF_SQUARES] =
 {
 	1L << 0,  1L << 1,  1L << 2,  1L << 3,  1L << 4,  1L << 5,  1L << 6,  1L << 7,
 	1L << 8,  1L << 9,  1L << 10, 1L << 11, 1L << 12, 1L << 13, 1L << 14, 1L << 15,

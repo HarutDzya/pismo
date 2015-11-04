@@ -61,8 +61,11 @@ public:
 	Bitboard getPawnBlackAttackingMoves(Square from) const;
 
 	Bitboard rookAttackFrom(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard rookAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& rookPos) const;
 	Bitboard bishopAttackFrom(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard bishopAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopPos) const;
 	Bitboard queenAttackFrom(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard queenAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queenPos) const;
 
 	Bitboard getPawnWhiteCheckingPos(Square kingPos) const;
 	Bitboard getPawnBlackCheckingPos(Square kingPos) const;
