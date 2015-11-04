@@ -33,7 +33,7 @@ uint64_t Perft::analyze(PositionState& pos, uint16_t depth, bool begin) const
 		pos.updateDirectCheckArray();
 		pos.updateDiscoveredChecksInfo();
 		pos.makeMove(possibleMoves[i]);
-    uint64_t mc = analyze(pos, depth - 1);
+		uint64_t mc = analyze(pos, depth - 1);
 		moveCount += mc;
     if (begin)
     {

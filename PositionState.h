@@ -155,8 +155,8 @@ private:
 
 	void updateCastlingRights(const MoveInfo& move);
 
-	void addPieceToBitboards(Square sq, Color clr);
-	void removePieceFromBitboards(Square sq, Color clr);
+	void addPieceToBitboards(Square sq, Piece p, Color clr);
+	void removePieceFromBitboards(Square sq, Piece p, Color clr);
 
 	void updateNonDiagPinStatus(PinInfo& pin, Color clr) const;
 	void updateDiagPinStatus(PinInfo& pin, Color clr) const;
@@ -238,6 +238,9 @@ private:
 	Bitboard _blackPiecesTranspose;
 	Bitboard _blackPiecesDiagA1h8;
 	Bitboard _blackPiecesDiagA8h1;
+
+	// Occupation bitboards for each peace
+	Bitboard _piecePos[PIECE_NB];
 
 	// Each memeber of the array shows the number of appropriate 
 	// piece available 

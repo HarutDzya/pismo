@@ -14,7 +14,7 @@ SRCS = PositionState.cpp \
 			ABCore.cpp \
 			MemPool.cpp \
 			main.cpp \
-			Utils.cpp
+			utils.cpp
 
 OBJS = ${SRCS:.cpp=.o}
 

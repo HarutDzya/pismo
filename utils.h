@@ -43,12 +43,12 @@ struct MoveInfo {
 	Square from;
 	Square to;
 	Piece promoted;
-  MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE)
-    : from(f)
-    , to(t)
-    , promoted(p)
-  {
-  }
+	MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE)
+		: from(f)
+		  , to(t)
+		  , promoted(p)
+	{
+	}
 };
 
 const MoveInfo MATE_MOVE(INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE);

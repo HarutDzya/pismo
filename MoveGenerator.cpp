@@ -30,7 +30,12 @@ MoveGenerator::MoveGenerator() :
 {
 
 }
-
+/*
+void MoveGenerator::prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove)	
+{
+	_searchType = type;
+	_cachedMove = transTableMove; 
+*/	
 void MoveGenerator::generateWhiteMoves(const PositionState& pos, MovesArray& generatedMoves)
 {
 	assert(pos.whiteToPlay());
