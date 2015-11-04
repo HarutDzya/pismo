@@ -390,10 +390,10 @@ void PositionState::updateCheckStatus()
 			Square pieceSq = (Square) sq;
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getPawnBlackAttackingMoves(pieceSq)) {
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->getPawnBlackAttackingMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
-							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
+							_absolutePinsPos = squareToBitboard[pieceSq];
 						}
 						else {
 							_isDoubleCheck = true;
@@ -402,10 +402,10 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KNIGHT_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getKnightMoves(pieceSq)) {
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->getKnightMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
-							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
+							_absolutePinsPos = squareToBitboard[pieceSq];
 						}
 						else {
 							_isDoubleCheck = true;
@@ -414,7 +414,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case BISHOP_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) { 
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -426,7 +426,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case ROOK_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) { 
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -438,7 +438,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case QUEEN_BLACK:
-					if (_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) { 
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -450,7 +450,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KING_BLACK:	
-					assert(!(_bitboardImpl->squareToBitboard(_whiteKingPosition) & _bitboardImpl->getKingMoves(pieceSq)));
+					assert(!(squareToBitboard[_whiteKingPosition] & _bitboardImpl->getKingMoves(pieceSq)));
 					break;
 				default:
 					break;
@@ -462,10 +462,10 @@ void PositionState::updateCheckStatus()
 			Square pieceSq = (Square) sq;
 			switch(_board[sq / 8][sq % 8]) {
 				case PAWN_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getPawnWhiteAttackingMoves(pieceSq)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->getPawnWhiteAttackingMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
-							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
+							_absolutePinsPos = squareToBitboard[pieceSq];
 						}
 						else {
 							_isDoubleCheck = true;
@@ -474,10 +474,10 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KNIGHT_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getKnightMoves(pieceSq)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->getKnightMoves(pieceSq)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
-							_absolutePinsPos = _bitboardImpl->squareToBitboard(pieceSq);
+							_absolutePinsPos = squareToBitboard[pieceSq];
 						}
 						else {
 							_isDoubleCheck = true;
@@ -486,7 +486,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case BISHOP_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -498,7 +498,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case ROOK_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -510,7 +510,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case QUEEN_WHITE:
-					if (_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -522,7 +522,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case KING_BLACK:	
-					assert(!(_bitboardImpl->squareToBitboard(_blackKingPosition) & _bitboardImpl->getKingMoves(pieceSq)));
+					assert(!(squareToBitboard[_blackKingPosition] & _bitboardImpl->getKingMoves(pieceSq)));
 					break;
 				default:
 					break;
@@ -540,7 +540,7 @@ bool PositionState::moveIsPseudoLegal(const MoveInfo& move) const
 	}
 	bool isEnPassantCapture;
 	if(_whiteToPlay) {
-		if((_bitboardImpl->squareToBitboard(move.from) & _blackPieces) || (_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
+		if((squareToBitboard[move.from] & _blackPieces) || (squareToBitboard[move.to] & _whitePieces)) {
 			return false;
 		}
 		else {
@@ -568,7 +568,7 @@ bool PositionState::moveIsPseudoLegal(const MoveInfo& move) const
 		}
 	}
 	else {
-		if((_bitboardImpl->squareToBitboard(move.from) & _whitePieces) || (_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
+		if((squareToBitboard[move.from] & _whitePieces) || (squareToBitboard[move.to] & _blackPieces)) {
 			return false;
 		}
 		else {
@@ -608,7 +608,7 @@ bool PositionState::moveIsLegal(const MoveInfo& move) const
 
 	bool result = false;
 	if(_whiteToPlay) {
-		if((_bitboardImpl->squareToBitboard(move.from) & _blackPieces) || (_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
+		if((squareToBitboard[move.from] & _blackPieces) || (squareToBitboard[move.to] & _whitePieces)) {
 			return false;
 		}
 		else {
@@ -644,13 +644,13 @@ bool PositionState::moveIsLegal(const MoveInfo& move) const
 			if (result) {
 				Piece capturedPiece;
 				makeLazyMove(move, isEnPassantCapture, capturedPiece);
-				result = !(_bitboardImpl->squareToBitboard(_whiteKingPosition) & squaresUnderAttack(WHITE));
+				result = !(squareToBitboard[_whiteKingPosition] & squaresUnderAttack(WHITE));
 				undoLazyMove(move, isEnPassantCapture, capturedPiece);
 			}
 		}
 	}
 	else {
-		if((_bitboardImpl->squareToBitboard(move.from) & _whitePieces) || (_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
+		if((squareToBitboard[move.from] & _whitePieces) || (squareToBitboard[move.to] & _blackPieces)) {
 			return false;
 		}
 		else {
@@ -686,7 +686,7 @@ bool PositionState::moveIsLegal(const MoveInfo& move) const
 			if (result) {
 				Piece capturedPiece;
 				makeLazyMove(move, isEnPassantCapture, capturedPiece);
-				result = !(_bitboardImpl->squareToBitboard(_blackKingPosition) & squaresUnderAttack(BLACK));
+				result = !(squareToBitboard[_blackKingPosition] & squaresUnderAttack(BLACK));
 				undoLazyMove(move, isEnPassantCapture, capturedPiece);
 			}
 		}
@@ -738,19 +738,19 @@ bool PositionState::pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCaptu
 	if (_whiteToPlay) {
 		assert(move.from > H1);
 		// Checks for single square movement of the pawn
-		if (move.to - move.from == 8 && !(_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
+		if (move.to - move.from == 8 && !(squareToBitboard[move.to] & _blackPieces)) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
 			return true;
 		}
 		// Checks for the move of pawn from game starting position
-		else if (move.to - move.from == 16 && (_bitboardImpl->squareToBitboard(move.from) & PAWN_WHITE_INIT) &&
-		!(_bitboardImpl->squareToBitboard((Square)(move.from + 8)) & (_whitePieces | _blackPieces)) && !(_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
+		else if (move.to - move.from == 16 && (squareToBitboard[move.from] & PAWN_WHITE_INIT) &&
+		!(squareToBitboard[(Square)(move.from + 8)] & (_whitePieces | _blackPieces)) && !(squareToBitboard[move.to] & _blackPieces)) {
 			return true;
 		}
 		// Checks for usual capture movement of the pawn
-		else if ((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getPawnWhiteAttackingMoves(move.from)) && (_bitboardImpl->squareToBitboard(move.to) & _blackPieces)) {
+		else if ((squareToBitboard[move.to] & _bitboardImpl->getPawnWhiteAttackingMoves(move.from)) && (squareToBitboard[move.to] & _blackPieces)) {
 			if (move.to >= A8) {
 				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
 			}
@@ -764,19 +764,19 @@ bool PositionState::pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCaptu
 	else {
 		// Checks for single square movement of the pawn
 		assert(move.from < A8);
-		if (move.from - move.to == 8 && !(_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
+		if (move.from - move.to == 8 && !(squareToBitboard[move.to] & _whitePieces)) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
 			return true;
 		}
 		// Checks for the move of pawn from game starting position
-		else if (move.from - move.to == 16 && (_bitboardImpl->squareToBitboard(move.from) & PAWN_BLACK_INIT) &&
-		!(_bitboardImpl->squareToBitboard((Square)(move.from - 8)) & (_whitePieces | _blackPieces)) && !(_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
+		else if (move.from - move.to == 16 && (squareToBitboard[move.from] & PAWN_BLACK_INIT) &&
+		!(squareToBitboard[(Square)(move.from - 8)] & (_whitePieces | _blackPieces)) && !(squareToBitboard[move.to] & _whitePieces)) {
 			return true;
 		}
 		// Checks for usual capture movement of the pawn
-		else if ((_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getPawnBlackAttackingMoves(move.from)) && (_bitboardImpl->squareToBitboard(move.to) & _whitePieces)) {
+		else if ((squareToBitboard[move.to] & _bitboardImpl->getPawnBlackAttackingMoves(move.from)) && (squareToBitboard[move.to] & _whitePieces)) {
 			if (move.to <= H1) {
 				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
 			}
@@ -826,7 +826,7 @@ bool PositionState::enPassantCaptureIsLegal(const MoveInfo& move) const
 
 bool PositionState::knightMoveIsLegal(const MoveInfo& move) const
 {
-	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getKnightMoves(move.from)) {
+	if (squareToBitboard[move.to] & _bitboardImpl->getKnightMoves(move.from)) {
 		return true;
 	}
 	return false;
@@ -834,7 +834,7 @@ bool PositionState::knightMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::bishopMoveIsLegal(const MoveInfo& move) const
 {
-	if(_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->bishopAttackFrom(move.from, _whitePieces | _blackPieces)) {
+	if(squareToBitboard[move.to] & _bitboardImpl->bishopAttackFrom(move.from, _whitePieces | _blackPieces)) {
 		return true;
 	}
 	return false;
@@ -842,7 +842,7 @@ bool PositionState::bishopMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::rookMoveIsLegal(const MoveInfo& move) const
 {
-	if(_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->rookAttackFrom(move.from, _whitePieces | _blackPieces)) {
+	if(squareToBitboard[move.to] & _bitboardImpl->rookAttackFrom(move.from, _whitePieces | _blackPieces)) {
 		return true;
 	}
 	return false;
@@ -850,7 +850,7 @@ bool PositionState::rookMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::queenMoveIsLegal(const MoveInfo& move) const
 {
-	if(_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->queenAttackFrom(move.from, _whitePieces | _blackPieces)) {
+	if(squareToBitboard[move.to] & _bitboardImpl->queenAttackFrom(move.from, _whitePieces | _blackPieces)) {
 		return true;
 	}
 	return false;
@@ -858,7 +858,7 @@ bool PositionState::queenMoveIsLegal(const MoveInfo& move) const
 
 bool PositionState::kingMoveIsLegal(const MoveInfo& move) const
 {
-	if (_bitboardImpl->squareToBitboard(move.to) & _bitboardImpl->getKingMoves(move.from)) {
+	if (squareToBitboard[move.to] & _bitboardImpl->getKingMoves(move.from)) {
 		return true;
 	}
 	return false;
@@ -937,7 +937,7 @@ void PositionState::updateSquaresUnderAttack()
 	_attackedSquares = 0;
 	
 	Square kingSq = (_whiteToPlay) ? _whiteKingPosition : _blackKingPosition;
-	Bitboard occupiedSquares = (_whitePieces | _blackPieces) ^ _bitboardImpl->squareToBitboard(kingSq);
+	Bitboard occupiedSquares = (_whitePieces | _blackPieces) ^ squareToBitboard[kingSq];
 	
 	if(_whiteToPlay) {
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
@@ -1254,12 +1254,12 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 	_isDoubleCheck = false;
 	Square kingSq = _whiteToPlay ? _blackKingPosition : _whiteKingPosition;
 		
-	if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[pfrom]) {
+	if (squareToBitboard[move.to] & _directCheck[pfrom]) {
 		if (pieceIsSlidingPiece(pfrom)) {
 				_absolutePinsPos |= _bitboardImpl->getSquaresBetween(move.to, kingSq);
 		}
 		else {
-			_absolutePinsPos |= _bitboardImpl->squareToBitboard(move.to);
+			_absolutePinsPos |= squareToBitboard[move.to];
 		}
 		 _kingUnderCheck = true;
 	}	   
@@ -1297,7 +1297,7 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 			}
 			else {
 				//promoted knight gives check
-				_absolutePinsPos = _bitboardImpl->squareToBitboard(move.to);
+				_absolutePinsPos = squareToBitboard[move.to];
 			}
 			_kingUnderCheck = true;
 		}
@@ -1314,7 +1314,7 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
-	if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[pfrom]) {
+	if (squareToBitboard[move.to] & _directCheck[pfrom]) {
 		return true;
 	}	   
 
@@ -1349,24 +1349,24 @@ bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidi
 {
 	slidingPiecePos = INVALID_SQUARE;
 	if (_whiteToPlay) {
-		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
+		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
 			return false;
 		}
 	}
 	else {
-		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
+		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
 			return false;
 		}
 	}
 
 	if (_stateDiscCheckInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.smallSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboard(move.from) & _stateDiscCheckInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _stateDiscCheckInfo.rankPin.smallPinPos)) {
+		if ((squareToBitboard[move.from] & _stateDiscCheckInfo.rankPin.smallPinPos) && !(squareToBitboard[move.to] & _stateDiscCheckInfo.rankPin.smallPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.rankPin.smallSlidingPiecePos;
 			return true;
 		}
 	}
 	if (_stateDiscCheckInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.bigSlidingPiecePos) {
-		if ((_bitboardImpl->squareToBitboard(move.from) & _stateDiscCheckInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _stateDiscCheckInfo.rankPin.bigPinPos)) {
+		if ((squareToBitboard[move.from] & _stateDiscCheckInfo.rankPin.bigPinPos) && !(squareToBitboard[move.to] & _stateDiscCheckInfo.rankPin.bigPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.rankPin.bigSlidingPiecePos;
 			return true;
 		}
@@ -1416,21 +1416,21 @@ bool PositionState::castlingChecksOpponentKing(const MoveInfo& move, Square& sli
 	if (_whiteToPlay) {
 		if (_blackKingPosition / 8 != 0) {
 			if (move.to == C1) {
-				if (_bitboardImpl->squareToBitboard(D1) & _directCheck[ROOK_WHITE]) {
+				if (squareToBitboard[D1] & _directCheck[ROOK_WHITE]) {
 					slidingPiecePos = D1;
 					return true;
 				}
 			}
 			else {
 				assert (move.to == G1);
-				if (_bitboardImpl->squareToBitboard(F1) & _directCheck[ROOK_WHITE]) {
+				if (squareToBitboard[F1] & _directCheck[ROOK_WHITE]) {
 					slidingPiecePos = F1;
 					return true;
 				}
 			}
 		}
 		else {
-			if (_bitboardImpl->squareToBitboard(E1) & _directCheck[ROOK_WHITE]) {
+			if (squareToBitboard[E1] & _directCheck[ROOK_WHITE]) {
 				slidingPiecePos = (move.to > move.from) ? F1 : D1;
 				return true;
 			}
@@ -1439,21 +1439,21 @@ bool PositionState::castlingChecksOpponentKing(const MoveInfo& move, Square& sli
 	else {
 		if (_whiteKingPosition / 8 != 7) {
 			if (move.to == C8) {
-				if (_bitboardImpl->squareToBitboard(D8) & _directCheck[ROOK_BLACK]) {
+				if (squareToBitboard[D8] & _directCheck[ROOK_BLACK]) {
 					slidingPiecePos = D8;
 					return true;
 				}
 			}
 			else {
 				assert (move.to == G8);
-				if (_bitboardImpl->squareToBitboard(F8) & _directCheck[ROOK_BLACK]) {
+				if (squareToBitboard[F8] & _directCheck[ROOK_BLACK]) {
 					slidingPiecePos = F8;
 					return true;
 				}
 			}
 		}
 		else {
-			if (_bitboardImpl->squareToBitboard(E8) & _directCheck[ROOK_WHITE]) {
+			if (squareToBitboard[E8] & _directCheck[ROOK_WHITE]) {
 				slidingPiecePos = (move.to > move.from) ? F8: D8;
 				return true;
 			}
@@ -1508,12 +1508,12 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square
 	
 	slidingPiecePos = INVALID_SQUARE;
 	if (_whiteToPlay) {
-		if (!(_bitboardImpl->squareToBitboard(capturedPawnPos) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
+		if (!(squareToBitboard[capturedPawnPos] & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
 			return false;
 		}
 	}
 	else {
-		if (!(_bitboardImpl->squareToBitboard(capturedPawnPos) & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
+		if (!(squareToBitboard[capturedPawnPos] & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
 			return false;
 		}
 	}
@@ -1547,14 +1547,14 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square
 
 bool PositionState::promotionMoveChecksOpponentKing(const MoveInfo& move) const
 {
-	if (_bitboardImpl->squareToBitboard(move.to) & _directCheck[move.promoted]) {
+	if (squareToBitboard[move.to] & _directCheck[move.promoted]) {
 			return true;
 	}
 
 	if (pieceIsSlidingPiece(move.promoted)) {
 		Square kingSq = _whiteToPlay ? _blackKingPosition : _whiteKingPosition;
-		if ((_bitboardImpl->squareToBitboard(move.from) & _directCheck[move.promoted]) &&
-				_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSquaresBetween(move.to, kingSq)) {
+		if ((squareToBitboard[move.from] & _directCheck[move.promoted]) &&
+				squareToBitboard[move.from] & _bitboardImpl->getSquaresBetween(move.to, kingSq)) {
 			return true;
 		}
 	}
@@ -1595,12 +1595,12 @@ bool PositionState::isEvasionMove(const MoveInfo& move) const
 		return true;
 	}
 	else if (!_isDoubleCheck) {
-		if (_bitboardImpl->squareToBitboard(move.to) & _absolutePinsPos) {
+		if (squareToBitboard[move.to] & _absolutePinsPos) {
 			return true;
 		}
 		if (moveIsEnPassantCapture(move)) {
 			Square capturedPiecePos = _whiteToPlay ? (Square) (move.to - 8) : (Square) (move.to + 8);
-			if (_bitboardImpl->squareToBitboard(capturedPiecePos) & _absolutePinsPos) {
+			if (squareToBitboard[capturedPiecePos] & _absolutePinsPos) {
 				return true;
 			}
 		}
@@ -1663,7 +1663,7 @@ bool PositionState::kingPseudoMoveIsLegal(const MoveInfo& move) const
 		return false;
 	}
 
-	if (!(_bitboardImpl->squareToBitboard(move.to) & _attackedSquares)) {
+	if (!(squareToBitboard[move.to] & _attackedSquares)) {
 		return true;
 	}
 
@@ -1673,24 +1673,24 @@ bool PositionState::kingPseudoMoveIsLegal(const MoveInfo& move) const
 bool PositionState::pinMoveOpensCheck(const MoveInfo& move) const
 {
 	if (_whiteToPlay) {
-		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
+		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
 			return false;
 		}
 	}
 	else {
-		if (!(_bitboardImpl->squareToBitboard(move.from) & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
+		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
 			return false;
 		}
 	}
 
 	//TODO: there should be faster way than checking 8 conditions separately as below (e.g. comparing move.from with king pos)
 	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
-		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.smallPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.smallPinPos)) {
+		if ((squareToBitboard[move.from] & _statePinInfo.rankPin.smallPinPos) && !(squareToBitboard[move.to] & _statePinInfo.rankPin.smallPinPos)) {
 			return true;
 		}
 	}
 	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE) {
-		if ((_bitboardImpl->squareToBitboard(move.from) & _statePinInfo.rankPin.bigPinPos) && !(_bitboardImpl->squareToBitboard(move.to) & _statePinInfo.rankPin.bigPinPos)) {
+		if ((squareToBitboard[move.from] & _statePinInfo.rankPin.bigPinPos) && !(squareToBitboard[move.to] & _statePinInfo.rankPin.bigPinPos)) {
 			return true;
 		}
 	}
@@ -2119,13 +2119,13 @@ void PositionState::addPieceToBitboards(Square sq, Piece p, Color clr)
 {
 	assert(clr == WHITE || clr == BLACK);
 	if (clr == WHITE) {
-		_whitePieces |= _bitboardImpl->squareToBitboard(sq);
+		_whitePieces |= squareToBitboard[sq];
 		_whitePiecesTranspose |= _bitboardImpl->squareToBitboardTranspose(sq);
 		_whitePiecesDiagA1h8 |= _bitboardImpl->squareToBitboardDiagA1h8(sq);
 		_whitePiecesDiagA8h1 |= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
 	else {
-		_blackPieces |= _bitboardImpl->squareToBitboard(sq);
+		_blackPieces |= squareToBitboard[sq];
 		_blackPiecesTranspose |= _bitboardImpl->squareToBitboardTranspose(sq);
 		_blackPiecesDiagA1h8 |= _bitboardImpl->squareToBitboardDiagA1h8(sq);
 		_blackPiecesDiagA8h1 |= _bitboardImpl->squareToBitboardDiagA8h1(sq);
@@ -2138,13 +2138,13 @@ void PositionState::removePieceFromBitboards(Square sq, Piece p, Color clr)
 {
 	assert(clr == WHITE || clr == BLACK);
 	if (clr == WHITE) {
-		_whitePieces ^= _bitboardImpl->squareToBitboard(sq);
+		_whitePieces ^= squareToBitboard[sq];
 		_whitePiecesTranspose ^= _bitboardImpl->squareToBitboardTranspose(sq);
 		_whitePiecesDiagA1h8 ^= _bitboardImpl->squareToBitboardDiagA1h8(sq);
 		_whitePiecesDiagA8h1 ^= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
 	else {
-		_blackPieces ^= _bitboardImpl->squareToBitboard(sq);
+		_blackPieces ^= squareToBitboard[sq];
 		_blackPiecesTranspose ^= _bitboardImpl->squareToBitboardTranspose(sq);
 		_blackPiecesDiagA1h8 ^= _bitboardImpl->squareToBitboardDiagA1h8(sq);
 		_blackPiecesDiagA8h1 ^= _bitboardImpl->squareToBitboardDiagA8h1(sq);

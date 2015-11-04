@@ -46,7 +46,6 @@ class BitboardImpl
 public: 
 	BitboardImpl();
 	
-	Bitboard squareToBitboard(Square sq) const;
 	Bitboard squareToBitboardTranspose(Square sq) const;
 	Bitboard squareToBitboardDiagA1h8(Square sq) const;
 	Bitboard squareToBitboardDiagA8h1(Square sq) const;
@@ -89,7 +88,6 @@ private:
 	Square squareToSquareA1h8(Square sq) const;
 	Square squareToSquareA8h1(Square sq) const;
 
-	void initSquareToBitboard();
 	void initSquareToBitboardTranspose();
 	void initSquareToBitboardA1h8();
 	void initSquareToBitboardA8h1();
@@ -123,7 +121,6 @@ private:
 // date members
 private:
 
-	Bitboard _squareToBitboard[NUMBER_OF_SQUARES];
 	Bitboard _squareToBitboardTranspose[NUMBER_OF_SQUARES];
 	Bitboard _squareToBitboardA1h8[NUMBER_OF_SQUARES];
 	Bitboard _squareToBitboardA8h1[NUMBER_OF_SQUARES];

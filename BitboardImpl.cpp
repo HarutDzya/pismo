@@ -9,7 +9,6 @@ namespace pismo
 
 BitboardImpl::BitboardImpl()
 {
-	initSquareToBitboard();
 	initSquareToBitboardTranspose();
 	initSquareToBitboardA1h8();
 	initSquareToBitboardA8h1();
@@ -34,12 +33,6 @@ BitboardImpl::BitboardImpl()
 	initSlidingPosBoard();
 
 	initSquaresBetween();
-}
-
-// Returns the bitboard with sq Square filled 
-Bitboard BitboardImpl::squareToBitboard(Square sq) const
-{
-	return _squareToBitboard[sq];
 }
 
 // Returns the transposed bitboard with sq Square filled
@@ -337,15 +330,6 @@ Square BitboardImpl::squareToSquareA8h1(Square sq) const
 	}
 	else {
 		return (Square) sqA8h1;
-	}
-}
-
-// Initializes squareToBitboard array for all squares
-void BitboardImpl::initSquareToBitboard()
-{
-	Bitboard tmp = 1;
-	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
-		_squareToBitboard[sq] = (tmp << sq);
 	}
 }
 
@@ -734,7 +718,7 @@ void BitboardImpl::initSlidingPosBoard()
 	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
 		Bitboard slidePos = 0;
 		Square from = (Square) sq;
-		slidePos |= getRankMoves(from, squareToBitboard(from));
+		slidePos |= getRankMoves(from, squareToBitboard[from]);
 		slidePos |= bitboardTransposeToBitboard(getFileMoves(from, squareToBitboardTranspose(from)));
 		slidePos |= bitboardDiagA1h8ToBitboard(getDiagA1h8Moves(from, squareToBitboardDiagA1h8(from)));
 		slidePos |= bitboardDiagA8h1ToBitboard(getDiagA8h1Moves(from, squareToBitboardDiagA8h1(from)));
@@ -763,14 +747,14 @@ void BitboardImpl::initSquaresBetween()
 		const std::vector<Square>& kingLeftRankPos = posMoves.possibleLeftRankMoves(pieceSq);
 		for (unsigned int i = 0; i < kingLeftRankPos.size(); ++i) {
 			Square kingSq = kingLeftRankPos[i];
-			Bitboard pos = squareToBitboard(pieceSq) - squareToBitboard(kingSq);
-			_squaresBetween[pieceSq][kingSq] = (pos ^ squareToBitboard(kingSq)) | squareToBitboard(pieceSq);
+			Bitboard pos = squareToBitboard[pieceSq] - squareToBitboard[kingSq];
+			_squaresBetween[pieceSq][kingSq] = (pos ^ squareToBitboard[kingSq]) | squareToBitboard[pieceSq];
 		}
 	
 		const std::vector<Square>& kingRightRankPos = posMoves.possibleRightRankMoves(pieceSq);
 		for (unsigned int i = 0; i < kingRightRankPos.size(); ++i) {
 			Square kingSq = kingRightRankPos[i];
-			Bitboard pos = squareToBitboard(kingSq) - squareToBitboard(pieceSq);
+			Bitboard pos = squareToBitboard[kingSq] - squareToBitboard[pieceSq];
 			_squaresBetween[pieceSq][kingSq] = pos; 
 		}
 
@@ -778,7 +762,7 @@ void BitboardImpl::initSquaresBetween()
 		for (unsigned int i = 0; i < kingUpFilePos.size(); ++i) {
 			Square kingSq = kingUpFilePos[i];
 			Bitboard pos = squareToBitboardTranspose(pieceSq) - squareToBitboardTranspose(kingSq);
-			_squaresBetween[pieceSq][kingSq] = (bitboardTransposeToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(pieceSq);
+			_squaresBetween[pieceSq][kingSq] = (bitboardTransposeToBitboard(pos) ^ squareToBitboard[kingSq]) | squareToBitboard[pieceSq];
 		}
 		
 		const std::vector<Square>& kingDownFilePos = posMoves.possibleDownFileMoves(pieceSq);
@@ -799,14 +783,14 @@ void BitboardImpl::initSquaresBetween()
 		for (unsigned int i = 0; i < kingDownDiagA1h8Pos.size(); ++i) {
 			Square kingSq = kingDownDiagA1h8Pos[i];
 			Bitboard pos = squareToBitboardDiagA1h8(pieceSq) - squareToBitboardDiagA1h8(kingSq);
-			_squaresBetween[pieceSq][kingSq] = (bitboardDiagA1h8ToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(pieceSq);
+			_squaresBetween[pieceSq][kingSq] = (bitboardDiagA1h8ToBitboard(pos) ^ squareToBitboard[kingSq]) | squareToBitboard[pieceSq];
 		}
 
 		const std::vector<Square>& kingUpDiagA8h1Pos = posMoves.possibleUpDiagA8h1Moves(pieceSq);
 		for (unsigned int i = 0; i < kingUpDiagA8h1Pos.size(); ++i) {
 			Square kingSq = kingUpDiagA8h1Pos[i];
 			Bitboard pos = squareToBitboardDiagA8h1(pieceSq) - squareToBitboardDiagA8h1(kingSq);
-			_squaresBetween[pieceSq][kingSq] = (bitboardDiagA8h1ToBitboard(pos) ^ squareToBitboard(kingSq)) | squareToBitboard(pieceSq);
+			_squaresBetween[pieceSq][kingSq] = (bitboardDiagA8h1ToBitboard(pos) ^ squareToBitboard[kingSq]) | squareToBitboard[pieceSq];
 		}
 
 		const std::vector<Square>& kingDownDiagA8h1Pos = posMoves.possibleDownDiagA8h1Moves(pieceSq);
