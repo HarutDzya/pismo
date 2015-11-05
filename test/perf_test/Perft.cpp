@@ -16,7 +16,6 @@ uint64_t Perft::analyze(PositionState& pos, uint16_t depth, bool begin) const
 	possibleMoves.clear();
 
 	pos.updateStatePinInfo();
-	pos.updateSquaresUnderAttack();
 	if (pos.whiteToPlay()) {
 		MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves);
 	}

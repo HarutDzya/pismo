@@ -21,7 +21,6 @@ _blackPiecesDiagA8h1(0),
 _bitboardImpl(new BitboardImpl()),
 _zobKeyImpl(new ZobKeyImpl()),
 _absolutePinsPos(0),
-_attackedSquares(0),
 _isDoubleCheck(false),
 _whiteToPlay(true),
 _enPassantFile(-1),
@@ -925,71 +924,6 @@ bool PositionState::castlingIsPseudoLegal(const MoveInfo& move) const
 		}
 		
 		return false;
-	}
-}
-
-// Updates _attackedSquares bitboard to the bit set at
-// the positions which are under attack for moving side
-// In this calculation moving side king is removed from 
-// occupied bitboard to eliminate self pinning
-void PositionState::updateSquaresUnderAttack()
-{
-	_attackedSquares = 0;
-	
-	Square kingSq = (_whiteToPlay) ? _whiteKingPosition : _blackKingPosition;
-	Bitboard occupiedSquares = (_whitePieces | _blackPieces) ^ squareToBitboard[kingSq];
-	
-	if(_whiteToPlay) {
-		for (unsigned int sq = A1; sq <= H8; ++sq) {
-			switch(_board[sq / 8][sq % 8]) {
-				case PAWN_BLACK:
-					_attackedSquares |= _bitboardImpl->pawnBlackAttackFrom((Square) sq);
-					break;
-				case KNIGHT_BLACK:
-					_attackedSquares |= _bitboardImpl->knightAttackFrom((Square) sq);
-					break;
-				case BISHOP_BLACK:
-					_attackedSquares |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case ROOK_BLACK:
-					_attackedSquares |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case QUEEN_BLACK:
-					_attackedSquares |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case KING_BLACK:	
-					_attackedSquares |= _bitboardImpl->kingAttackFrom((Square) sq);
-					break;
-				default:
-					break;
-			}
-		}
-	}
-	else {
-		for (unsigned int sq = A1; sq <= H8; ++sq) {
-			switch(_board[sq / 8][sq % 8]) {
-				case PAWN_WHITE:
-					_attackedSquares |= _bitboardImpl->pawnWhiteAttackFrom((Square) sq);
-					break;
-				case KNIGHT_WHITE:
-					_attackedSquares |= _bitboardImpl->knightAttackFrom((Square) sq);
-					break;
-				case BISHOP_WHITE:
-					_attackedSquares |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case ROOK_WHITE:
-					_attackedSquares |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case QUEEN_WHITE:
-					_attackedSquares |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case KING_WHITE:	
-					_attackedSquares |= _bitboardImpl->kingAttackFrom((Square) sq);
-					break;
-				default:
-					break;
-			}
-		}
 	}
 }
 
@@ -2403,9 +2337,10 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 
 void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 {
+	Piece promoted = _board[move.to / 8][move.to % 8];
 	if (_whiteToPlay) {
 		assert(move.from >= A2 && move.from <= H2);
-		removePieceFromBitboards(move.to, move.movedPiece, BLACK);
+		removePieceFromBitboards(move.to, promoted, BLACK);
 		addPieceToBitboards(move.from, move.movedPiece, BLACK);
 		if (move.capturedPiece != ETY_SQUARE) {
 			addPieceToBitboards(move.to, move.capturedPiece, WHITE);
@@ -2417,7 +2352,7 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 	}
 	else {
 		assert(move.from >= A7 && move.from <= H7);
-		removePieceFromBitboards(move.to, move.movedPiece, WHITE);
+		removePieceFromBitboards(move.to, promoted, WHITE);
 		addPieceToBitboards(move.from, move.movedPiece, WHITE);
 		if (move.capturedPiece != ETY_SQUARE) {
 			addPieceToBitboards(move.to, move.capturedPiece, BLACK);
@@ -2427,7 +2362,6 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 			_materialZobKey ^= _zobKeyImpl->getMaterialKey(move.capturedPiece, _pieceCount[move.capturedPiece]);
 		}
 	}
-	Piece promoted = _board[move.to / 8][move.to % 8];
 	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
 	_board[move.to / 8][move.to % 8] = move.capturedPiece;
 	_board[move.from / 8][move.from % 8] = move.movedPiece;

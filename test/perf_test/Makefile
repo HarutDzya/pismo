@@ -15,7 +15,7 @@ SRCS = ../../PositionState.cpp \
 			../../MemPool.cpp \
 			main.cpp \
 			Perft.cpp \
-			../../Utils.cpp
+			../../utils.cpp
 
 OBJS = ${SRCS:.cpp=.o}
 

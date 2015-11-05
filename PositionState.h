@@ -68,7 +68,6 @@ public:
 	bool pseudoMoveIsLegalMove(const MoveInfo& move) const;
 
 	void updateStatePinInfo();	
-	void updateSquaresUnderAttack();
 
 	/* Checks whether the move is evasion move, namely
 	   king move is always evasion move, for other 
@@ -266,9 +265,6 @@ private:
 	// Bitboard of the positions where the piece should move
 	// to stop it's king check, if possible otherwise 0
 	Bitboard _absolutePinsPos;
-
-	// Bitboard of the attacked squares for the piece to move
-	Bitboard _attackedSquares;
 
 	// Shows whether king is under double check
 	// in which case only the king move can save the game
