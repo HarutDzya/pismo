@@ -20,9 +20,9 @@ struct MovesArray
 {
 	MoveInfo* arr;
 	int _size;
-	MovesArray() : _size(0)
+	MovesArray(unsigned int maxPossibleMoves = MAX_POSSIBLE_MOVES) : _size(0)
 	{
-		arr = new MoveInfo[MAX_POSSIBLE_MOVES];
+		arr = new MoveInfo[maxPossibleMoves];
 	}
 
 	~MovesArray()
@@ -46,6 +46,13 @@ struct MovesArray
 		assert(i < _size);
 		return arr[i];
 	}
+
+	MoveInfo& operator[](uint16_t i)
+	{ 
+		assert(i < _size);
+		return arr[i];
+	}
+
 
 	uint16_t size() const
 	{

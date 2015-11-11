@@ -116,6 +116,12 @@ public:
 
 	bool whiteToPlay() const {return _whiteToPlay;}
 
+	bool kingUnderCheck() const {return _kingUnderCheck;}
+
+	bool isDoubleCheck() const {return _isDoubleCheck;}
+
+	Square movingKingPosition() const {return _whiteToPlay ? _whiteKingPosition : _blackKingPosition;}
+
 //private member functions
 private:
 	void setPiece(Square s, Piece p);
