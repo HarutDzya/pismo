@@ -69,12 +69,11 @@ public:
 
 	void updateStatePinInfo();	
 
-	/* Checks whether the move is evasion move, namely
-	   king move is always evasion move, for other 
-	   pieces it is evasion move if it stops the check
-	   of the king
-	*/
-	bool isEvasionMove(const MoveInfo& move) const;
+	/*
+	 * returns true if move covers king check
+	 * or captures the attacking piece, false otherwise
+	 */
+	bool isInterposeMove(const MoveInfo& move) const;
 	
 	/*
 	Prints board for white pieces using information from 

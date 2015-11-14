@@ -1520,23 +1520,16 @@ void PositionState::updateStatePinInfo()
 	}
 }
 
-bool PositionState::isEvasionMove(const MoveInfo& move) const
+bool PositionState::isInterposeMove(const MoveInfo& move) const
 {
-	if (_whiteToPlay && _board[move.from / 8][move.from % 8] == KING_WHITE) {
+	if (squareToBitboard[move.to] & _absolutePinsPos) {
 		return true;
 	}
-	else if (!_whiteToPlay && _board[move.from / 8][move.from % 8] == KING_BLACK) {
-		return true;
-	}
-	else if (!_isDoubleCheck) {
-		if (squareToBitboard[move.to] & _absolutePinsPos) {
+
+	if (moveIsEnPassantCapture(move)) {
+		Square capturedPiecePos = _whiteToPlay ? (Square) (move.to - 8) : (Square) (move.to + 8);
+		if (squareToBitboard[capturedPiecePos] & _absolutePinsPos) {
 			return true;
-		}
-		if (moveIsEnPassantCapture(move)) {
-			Square capturedPiecePos = _whiteToPlay ? (Square) (move.to - 8) : (Square) (move.to + 8);
-			if (squareToBitboard[capturedPiecePos] & _absolutePinsPos) {
-				return true;
-			}
 		}
 	}
 
@@ -1551,7 +1544,7 @@ bool PositionState::pseudoMoveIsLegalMove(const MoveInfo& move) const
 		return kingPseudoMoveIsLegal(move);
 	}
 
-	if (_kingUnderCheck && !isEvasionMove(move)) {
+	if ( _kingUnderCheck && (_isDoubleCheck || !isInterposeMove(move))) {
 		return false;
 	}
 
