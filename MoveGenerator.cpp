@@ -1,6 +1,7 @@
 #include "MoveGenerator.h"
 #include "PositionState.h"
 #include "PossibleMoves.h"
+#include "BitboardImpl.h"
 #include "MemPool.h"
 
 #include <assert.h>
@@ -27,6 +28,7 @@ void MoveGenerator::destroy()
 
 MoveGenerator::MoveGenerator() :
 	_possibleMoves(new PossibleMoves()),
+	_bitboardImpl(BitboardImpl::instance()),
 	_availableMoves(new MovesArray(MAX_AVAILABLE_MOVES))
 {
 
@@ -71,18 +73,13 @@ void MoveGenerator::generateAvailableMoves(const PositionState& pos)
 					generateKnightMoves((Square) from, pos);
 					break;
 				case BISHOP_WHITE:
-					generateDiagA1h8Moves((Square) from, pos);
-					generateDiagA8h1Moves((Square) from, pos);
+					generateBishopMoves((Square) from, pos);
 					break;
 				case ROOK_WHITE:
-					generateRankMoves((Square) from, pos);
-					generateFileMoves((Square) from, pos);
+					generateRookMoves((Square) from, pos);
 					break;
 				case QUEEN_WHITE:
-					generateDiagA1h8Moves((Square) from, pos);
-					generateDiagA8h1Moves((Square) from, pos);
-					generateRankMoves((Square) from, pos);
-					generateFileMoves((Square) from, pos);
+					generateQueenMoves((Square) from, pos);
 					break;
 				case KING_WHITE:
 					generateKingMoves((Square) from, pos);
@@ -101,18 +98,13 @@ void MoveGenerator::generateAvailableMoves(const PositionState& pos)
 					generateKnightMoves((Square) from, pos);
 					break;
 				case BISHOP_BLACK:
-					generateDiagA1h8Moves((Square) from, pos);
-					generateDiagA8h1Moves((Square) from, pos);
+					generateBishopMoves((Square) from, pos);
 					break;
 				case ROOK_BLACK:
-					generateRankMoves((Square) from, pos);
-					generateFileMoves((Square) from, pos);
+					generateRookMoves((Square) from, pos);
 					break;
 				case QUEEN_BLACK:
-					generateDiagA1h8Moves((Square) from, pos);
-					generateDiagA8h1Moves((Square) from, pos);
-					generateRankMoves((Square) from, pos);
-					generateFileMoves((Square) from, pos);
+					generateQueenMoves((Square) from, pos);
 					break;
 				case KING_BLACK:
 					generateKingMoves((Square) from, pos);
@@ -181,87 +173,39 @@ void MoveGenerator::generateKingMoves(Square from, const PositionState& pos)
 	}
 }
 
-// Generates all available rank moves from square from without checking any validity
+// Generates all availalble rook moves from square from without checking any validity
 // and adds these moves to _availableMoves data member
-// This function should be used for rook and queen
-void MoveGenerator::generateRankMoves(Square from, const PositionState& pos)
+void MoveGenerator::generateRookMoves(Square from, const PositionState& pos)
 {
-	const std::vector<Square>& leftRankMoves = _possibleMoves->possibleLeftRankMoves(from);
-	for(std::size_t moveCount = 0; moveCount < leftRankMoves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, leftRankMoves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[leftRankMoves[moveCount] / 8][leftRankMoves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
-	}
-	const std::vector<Square>& rightRankMoves = _possibleMoves->possibleRightRankMoves(from);
-	for(std::size_t moveCount = 0; moveCount < rightRankMoves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, rightRankMoves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[rightRankMoves[moveCount] / 8][rightRankMoves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
+	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, pos.occupiedSquares());
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE);
+		moveBoard  &= (moveBoard - 1);
 	}
 }
 
-// Generates all available file moves from square from without checking any validity
+// Generates all availalble bishop moves from square from without checking any validity
 // and adds these moves to _availableMoves data member
-// This function should be used for rook and queen
-void MoveGenerator::generateFileMoves(Square from, const PositionState& pos)
+void MoveGenerator::generateBishopMoves(Square from, const PositionState& pos)
 {
-	const std::vector<Square>& upFileMoves = _possibleMoves->possibleUpFileMoves(from);
-	for(std::size_t moveCount = 0; moveCount < upFileMoves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, upFileMoves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[upFileMoves[moveCount] / 8][upFileMoves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
-	}
-	const std::vector<Square>& downFileMoves = _possibleMoves->possibleDownFileMoves(from);
-	for(std::size_t moveCount = 0; moveCount < downFileMoves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, downFileMoves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[downFileMoves[moveCount] / 8][downFileMoves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
+	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, pos.occupiedSquares());
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE);
+		moveBoard  &= (moveBoard - 1);
 	}
 }
 
-// Generates all available A1H8 diagonal moves from square from without checking any validity
+// Generates all availalble queen moves from square from without checking any validity
 // and adds these moves to _availableMoves data member
-// This function should be used for bishop and queen
-void MoveGenerator::generateDiagA1h8Moves(Square from, const PositionState& pos)
+void MoveGenerator::generateQueenMoves(Square from, const PositionState& pos)
 {
-	const std::vector<Square>& upDiagA1h8Moves = _possibleMoves->possibleUpDiagA1h8Moves(from);
-	for(std::size_t moveCount = 0; moveCount < upDiagA1h8Moves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, upDiagA1h8Moves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[upDiagA1h8Moves[moveCount] / 8][upDiagA1h8Moves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
-	}
-	const std::vector<Square>& downDiagA1h8Moves = _possibleMoves->possibleDownDiagA1h8Moves(from);
-	for(std::size_t moveCount = 0; moveCount < downDiagA1h8Moves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, downDiagA1h8Moves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[downDiagA1h8Moves[moveCount] / 8][downDiagA1h8Moves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
-	}
-}
-
-// Generates all available A8H1 diagonal moves from square from without checking any validity
-// and adds these moves to _availableMoves data member
-// This function should be used for bishop and queen
-void MoveGenerator::generateDiagA8h1Moves(Square from, const PositionState& pos)
-{
-	const std::vector<Square>& upDiagA8h1Moves = _possibleMoves->possibleUpDiagA8h1Moves(from);
-	for(std::size_t moveCount = 0; moveCount < upDiagA8h1Moves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, upDiagA8h1Moves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[upDiagA8h1Moves[moveCount] / 8][upDiagA8h1Moves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
-	}
-	const std::vector<Square>& downDiagA8h1Moves = _possibleMoves->possibleDownDiagA8h1Moves(from);
-	for(std::size_t moveCount = 0; moveCount < downDiagA8h1Moves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, downDiagA8h1Moves[moveCount], ETY_SQUARE);
-		if (pos.getBoard()[downDiagA8h1Moves[moveCount] / 8][downDiagA8h1Moves[moveCount] % 8] != ETY_SQUARE) {
-			break;
-		}
+	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, pos.occupiedSquares());
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE);
+		moveBoard  &= (moveBoard - 1);
 	}
 }
 

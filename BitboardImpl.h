@@ -46,7 +46,8 @@ extern Bitboard squareToBitboard[NUMBER_OF_SQUARES];
 class BitboardImpl
 {
 public: 
-	BitboardImpl();
+	static const BitboardImpl* instance();
+	void destroy();
 	
 	Bitboard squareToBitboardTranspose(Square sq) const;
 	Bitboard squareToBitboardDiagA1h8(Square sq) const;
@@ -86,9 +87,16 @@ public:
 
 	Bitboard getSquaresBetween(Square from, Square kingSq) const;
 
+	int lsb(const Bitboard& board) const;
 
 //private member functions
 private:
+	BitboardImpl();
+	~BitboardImpl();
+
+	BitboardImpl(const BitboardImpl&); //non-copyable
+	BitboardImpl& operator=(const BitboardImpl&); //non-assignable
+
 	Square squareToSquareTranspose(Square sq) const;
 	Square squareToSquareA1h8(Square sq) const;
 	Square squareToSquareA8h1(Square sq) const;
@@ -116,10 +124,11 @@ private:
 
 	void initSquaresBetween();
 
+	void initBitScanTable();
+
 	Bitrank movePosRank(unsigned int position, Bitrank rankOccup) const;
 	void setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank & leftPin, Bitrank& rightPin) const;
-	int findLsbSet(Bitrank rank) const;
-	int findMsbSet(Bitrank rank) const;
+	int msb(Bitrank rank) const;
 
 	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
 	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
@@ -128,6 +137,7 @@ private:
 
 // date members
 private:
+	static BitboardImpl* _instance;
 
 	Bitboard _squareToBitboardTranspose[NUMBER_OF_SQUARES];
 	Bitboard _squareToBitboardA1h8[NUMBER_OF_SQUARES];
@@ -152,6 +162,8 @@ private:
 	Bitboard _slidingPosBoard[NUMBER_OF_SQUARES];
 
 	Bitboard _squaresBetween[NUMBER_OF_SQUARES][NUMBER_OF_SQUARES];
+
+	unsigned int _bitScanTable[NUMBER_OF_SQUARES];
 };
 }
 

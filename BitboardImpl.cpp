@@ -18,6 +18,25 @@ Bitboard squareToBitboard[NUMBER_OF_SQUARES] =
 	1UL << 56, 1UL << 57, 1UL << 58, 1UL << 59, 1UL << 60, 1UL << 61, 1UL << 62, 1UL << 63
 };
 
+const Bitboard BITSCAN_MAGIC = 0x07EDD5E59A4E28C2;
+
+BitboardImpl* BitboardImpl::_instance = 0;
+
+const BitboardImpl* BitboardImpl::instance()
+{
+	if(!_instance) {
+		_instance = new BitboardImpl();
+	}
+
+	return _instance;
+}
+
+void BitboardImpl::destroy()
+{
+	delete _instance;
+	_instance  = 0;
+}
+
 BitboardImpl::BitboardImpl()
 {
 	initSquareToBitboardTranspose();
@@ -25,6 +44,7 @@ BitboardImpl::BitboardImpl()
 	initSquareToBitboardA8h1();
 
 	initmagicmoves();
+	initBitScanTable();
 
 	initMovePosBoardRank();
 	initMovePosBoardFile();
@@ -287,8 +307,8 @@ void BitboardImpl::getEnPassantPinInfo(Square from, Square to, const Bitboard& o
 		leftPin = from % 8;
 		rightPin = to % 8;
 	}
-	int rsbPos = findMsbSet(rankOccup << (8 - rightPin));
-	int lsbPos = findLsbSet(rankOccup >> (leftPin + 1));
+	int rsbPos = msb(rankOccup << (8 - rightPin));
+	int lsbPos = lsb(rankOccup >> (leftPin + 1));
 	leftPos = (rsbPos != -1) ? (Square) ((from / 8) * 8 + (rightPin + rsbPos - 8)) : INVALID_SQUARE;
 	rightPos = (lsbPos != -1) ? (Square) ((from / 8) * 8 + (leftPin + lsbPos + 1)) : INVALID_SQUARE;
 }
@@ -306,6 +326,17 @@ Bitboard BitboardImpl::getSlidingPieceMoves(Square from) const
 Bitboard BitboardImpl::getSquaresBetween(Square from, Square kingSq) const
 {
 	return _squaresBetween[from][kingSq];
+}
+
+// Returns the least significant set bit position in the board
+// -1 if board is 0
+int BitboardImpl::lsb(const Bitboard& board) const
+{
+	if (board) {
+		return _bitScanTable[((board & (-board)) * BITSCAN_MAGIC) >> 58];
+	}
+	
+	return -1;
 }
 
 // Returns the converted normal bitboard from transpose bitboard
@@ -878,13 +909,24 @@ void BitboardImpl::initSquaresBetween()
 	}
 }
 
+// Initializes _bitscanTable array to the position of a lsb
+// for each case of the board when one bit is set to 1
+// Uses magic number to compute the index
+void BitboardImpl::initBitScanTable()
+{
+	for (unsigned int bitPos = 0; bitPos < NUMBER_OF_SQUARES; ++bitPos) {
+		Bitboard board = 1UL << bitPos;
+		_bitScanTable[(board * BITSCAN_MAGIC) >> 58] = bitPos;
+	}
+}
+
 
 // Returns Bitrank of possible moves for rankOccup occupied bitrank when the piece is at position
 // for example for the Bitrank 10101011 and the position 3 it returns 00110110
 Bitrank BitboardImpl::movePosRank(unsigned int position, Bitrank rankOccup) const
 {
-	int rightSetBit = findMsbSet(rankOccup << (8 - position));
-	int leftSetBit = findLsbSet(rankOccup >> (1 + position));
+	int rightSetBit = msb(rankOccup << (8 - position));
+	int leftSetBit = lsb(rankOccup >> (1 + position));
 	if (rightSetBit == -1 && leftSetBit == -1) {
 		return OCCUPATION_FROM_LSB[8] ^ (1 << position);
 	}
@@ -911,46 +953,21 @@ Bitrank BitboardImpl::movePosRank(unsigned int position, Bitrank rankOccup) cons
 // leftSlidePos is 7, rightPin is 00000111, rightSlidePos is 0
 void BitboardImpl::setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank& leftPin, Bitrank& rightPin) const
 {
-	int rightSetBit = findMsbSet(rankOccup << (8 - position));
+	int rightSetBit = msb(rankOccup << (8 - position));
 	int rightPinPos = (rightSetBit != -1) ? (position - 8 + rightSetBit) : -1;
-	int rightNextSetBit = (rightPinPos != -1) ? findMsbSet(rankOccup << (8 - rightPinPos)) : -1;
+	int rightNextSetBit = (rightPinPos != -1) ? msb(rankOccup << (8 - rightPinPos)) : -1;
 	rightSlidePos = (rightNextSetBit != -1) ? (rightPinPos - 8 + rightNextSetBit) : -1;
-	int leftSetBit = findLsbSet(rankOccup >> (1 + position));
+	int leftSetBit = lsb(rankOccup >> (1 + position));
 	int leftPinPos = (leftSetBit != -1) ? (position + 1 + leftSetBit) : -1;
-	int leftNextSetBit = (leftPinPos != -1) ? findLsbSet(rankOccup >> (1 + leftPinPos)) : -1;
+	int leftNextSetBit = (leftPinPos != -1) ? lsb(rankOccup >> (1 + leftPinPos)) : -1;
 	leftSlidePos = (leftNextSetBit != -1) ? (leftPinPos + 1 + leftNextSetBit) : -1;
 	leftPin = (leftSlidePos != -1) ? OCCUPATION_FROM_LSB[leftSlidePos + 1] ^ OCCUPATION_FROM_LSB[position + 1] : 0;
 	rightPin = (rightSlidePos != -1) ? OCCUPATION_FROM_LSB[position] ^ OCCUPATION_FROM_LSB[rightSlidePos] : 0;
 }
 
-// Returns the position of least significant bit set in the Bitrank
-// Uses binary search algorithm
-int BitboardImpl::findLsbSet(Bitrank rank) const 
-{
-	if (rank) {
-		if (rank & 0x01) {
-			return 0;
-		}
-		else {
-			int result = 1;
-			if ((rank & 0x0F) == 0) {
-				rank >>= 4;
-				result += 4;
-			}
-			if ((rank & 0x03) == 0) {
-				rank >>= 2;
-				result += 2;
-			}
-			return result - (rank & 0x01);
-		}
-	}
-
-	return -1;
-}
-
 // Returns the position of the most significant bit set in the Bitrank
 // Uses binary search algorithm
-int BitboardImpl::findMsbSet(Bitrank rank) const
+int BitboardImpl::msb(Bitrank rank) const
 {
 	if (rank) {
 		if (rank & 0x80) {
@@ -979,5 +996,9 @@ int BitboardImpl::findMsbSet(Bitrank rank) const
 Bitboard BitboardImpl::rotateBitboardRight(const Bitboard& board, unsigned int num) const
 {
 	return ((board >> num) | (board << (64 - num)));
+}
+
+BitboardImpl::~BitboardImpl()
+{
 }
 }

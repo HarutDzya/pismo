@@ -18,7 +18,7 @@ _blackPieces(0),
 _blackPiecesTranspose(0),
 _blackPiecesDiagA1h8(0),
 _blackPiecesDiagA8h1(0),
-_bitboardImpl(new BitboardImpl()),
+_bitboardImpl(BitboardImpl::instance()),
 _zobKeyImpl(new ZobKeyImpl()),
 _absolutePinsPos(0),
 _isDoubleCheck(false),
@@ -56,7 +56,6 @@ _fullmoveCount(1)
 
 PositionState::~PositionState()
 {
-	delete _bitboardImpl;
 	delete _zobKeyImpl;
 }
 

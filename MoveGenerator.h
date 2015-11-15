@@ -21,6 +21,7 @@ const unsigned int MAX_AVAILABLE_MOVES = 500;
 
 class PositionState;
 class PossibleMoves;
+class BitboardImpl;
 struct MovesArray;
 
 class MoveGenerator
@@ -35,6 +36,9 @@ public:
 private:
 	MoveGenerator();
 	~MoveGenerator();
+	MoveGenerator(const MoveGenerator&); //non-copyable
+	MoveGenerator& operator=(const MoveGenerator&); //non-assignable
+
 	static MoveGenerator* _instance;
 
 	void prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove);
@@ -42,11 +46,9 @@ private:
 	void generatePawnMoves(Square from, const PositionState& pos);
 	void generateKnightMoves(Square from, const PositionState& pos);
 	void generateKingMoves(Square from, const PositionState& pos);
-	void generateRankMoves(Square from, const PositionState& pos);
-	void generateFileMoves(Square from, const PositionState& pos);
-	void generateDiagA1h8Moves(Square from, const PositionState& pos);
-	void generateDiagA8h1Moves(Square from, const PositionState& pos);
-
+	void generateRookMoves(Square from, const PositionState& pos);
+	void generateBishopMoves(Square from, const PositionState& pos);
+	void generateQueenMoves(Square from, const PositionState& pos);
 
 
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
@@ -58,6 +60,7 @@ private:
 	void generateDiagA8h1Moves(Square from, const PositionState& pos, MovesArray& generatedMoves);
 
 	const PossibleMoves* _possibleMoves;
+	const BitboardImpl* _bitboardImpl;
 	MovesArray* _availableMoves;
 	unsigned int _availableMovesSize;
 

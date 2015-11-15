@@ -53,7 +53,6 @@ struct MovesArray
 		return arr[i];
 	}
 
-
 	uint16_t size() const
 	{
 		return _size;

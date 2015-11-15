@@ -121,6 +121,8 @@ public:
 
 	Square movingKingPosition() const {return _whiteToPlay ? _whiteKingPosition : _blackKingPosition;}
 
+	Bitboard occupiedSquares() const {return _whitePieces | _blackPieces;}
+
 //private member functions
 private:
 	void setPiece(Square s, Piece p);
