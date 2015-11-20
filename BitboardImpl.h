@@ -74,7 +74,8 @@ public:
 	Bitboard bishopsAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& bishopsPos) const;
 	Bitboard queenAttackFrom(Square from, const Bitboard& occupiedSquares) const;
 	Bitboard queensAttackTo(Square to, const Bitboard& occupiedSquares, const Bitboard& queensPos) const;
-
+	Bitboard pawnWhiteMovesFrom(Square from, const Bitboard& occupiedSquares) const;
+	Bitboard pawnBlackMovesFrom(Square from, const Bitboard& occupiedSquares) const;
 
 	const PinInfo& getRankPinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
 	const PinInfo& getFilePinInfo(Square kingSq, const Bitboard& occupiedSquares) const;

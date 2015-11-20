@@ -34,7 +34,7 @@ MoveGenerator::MoveGenerator() :
 
 }
 
-void MoveGenerator::prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove)	
+void MoveGenerator::prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove, MovesArray& generatedMoves)	
 {
 	_searchType = type;
 	_cachedMove = transTableMove; 
@@ -51,161 +51,246 @@ void MoveGenerator::prepareMoveGeneration(const PositionState& pos, SearchType t
 		default:
 			assert(false);
 	}
+	_positionState = &pos;
+	_availableMoves = &generatedMoves;
+}
+
+MoveInfo MoveGenerator::getTopMove()
+{	
+	if (_currentMovePos < _availableMovesSize && equal((*_availableMoves)[_currentMovePos], _cachedMove)) {
+		++_currentMovePos;
+	}
+	if (_currentMovePos == _availableMovesSize) {
+		switch(_searchType) {
+			case USUAL_SEARCH:
+				generateMovesForUsualSearch();
+				break;
+			case EVASION_SEARCH:
+				generateMovesForEvasionSearch();
+				break;
+			case QUITE_SEARCH:
+				generateMovesForQuiteSearch();
+				break;
+		}
+	}
+
+	if ( _currentMovePos < _availableMovesSize) {
+		return (*_availableMoves)[_currentMovePos++];
+	}
+
+	return MoveInfo();
+}
+
+bool MoveGenerator::equal(const MoveInfo& first, const MoveInfo& second) const
+{
+	return (first.from == second.from) && (first.to == second.to) && (first.promoted == second.promoted);
+}
+
+void MoveGenerator::generateMovesForUsualSearch()
+{
+	_currentMovePos = 0;
 	_availableMovesSize = 0;
-	if (!pos.isDoubleCheck()) {
-		generateAvailableMoves(pos);
-	}
-	else {
-		generateKingMoves(pos.movingKingPosition(), pos);
+	switch(_nextStage) {
+		case CAPTURING_MOVES:
+			generateCapturingMoves();
+			sortCapturingMoves();
+			_nextStage = CHECKING_MOVES;
+			break;
+		case CHECKING_MOVES:
+			generateCheckingMoves();
+			sortCheckingMoves();
+			_nextStage = QUITE_MOVES;
+			break;
+		case QUITE_MOVES:
+			generateQuiteMoves();
+			sortQuiteMoves();
+			_nextStage = SEARCH_FINISHED;
+			break;
+		case SEARCH_FINISHED:
+		default:
+			break;
 	}
 }
 
-
-void MoveGenerator::generateAvailableMoves(const PositionState& pos)
+void MoveGenerator::generateMovesForEvasionSearch()
 {
-	if (pos.whiteToPlay()) {
-		for (unsigned int from = A1; from <= H8; ++from) {
-			switch(pos.getBoard()[from / 8][from % 8]) {
-				case PAWN_WHITE:
-					generatePawnMoves((Square) from, pos);
-					break;
-				case KNIGHT_WHITE:
-					generateKnightMoves((Square) from, pos);
-					break;
-				case BISHOP_WHITE:
-					generateBishopMoves((Square) from, pos);
-					break;
-				case ROOK_WHITE:
-					generateRookMoves((Square) from, pos);
-					break;
-				case QUEEN_WHITE:
-					generateQueenMoves((Square) from, pos);
-					break;
-				case KING_WHITE:
-					generateKingMoves((Square) from, pos);
-				default:
-					break;
-			}
-		}
-	}
-	else {
-		for (unsigned int from = A1; from <= H8; ++from) {
-			switch(pos.getBoard()[from / 8][from % 8]) {
-				case PAWN_BLACK:
-					generatePawnMoves((Square) from, pos);
-					break;
-				case KNIGHT_BLACK:
-					generateKnightMoves((Square) from, pos);
-					break;
-				case BISHOP_BLACK:
-					generateBishopMoves((Square) from, pos);
-					break;
-				case ROOK_BLACK:
-					generateRookMoves((Square) from, pos);
-					break;
-				case QUEEN_BLACK:
-					generateQueenMoves((Square) from, pos);
-					break;
-				case KING_BLACK:
-					generateKingMoves((Square) from, pos);
-				default:
-					assert(false);
-			}
-		}
+	_currentMovePos = 0;
+	_availableMovesSize = 0;
+	switch(_nextStage) {
+		case EVASION_MOVES:
+			generateEvasionMoves();
+			sortEvasionMoves();
+			_nextStage = SEARCH_FINISHED;
+			break;
+		case SEARCH_FINISHED:
+		default:
+			break;
 	}
 }
-	
-// Generates all available pawn moves without checking any validity
-// and adds these moves to _availableMoves data member
-void MoveGenerator::generatePawnMoves(Square from, const PositionState& pos)
+
+void MoveGenerator::generateMovesForQuiteSearch()
 {
-	if (pos.whiteToPlay()) {
-		const std::vector<Square>& whitePawnMoves =  _possibleMoves->possibleWhitePawnMoves(from);
-		if(from >= A7 && from <= H7) {
-			for (std::size_t moveCount = 0; moveCount < whitePawnMoves.size(); ++moveCount) {
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, whitePawnMoves[moveCount], KNIGHT_WHITE);
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, whitePawnMoves[moveCount], BISHOP_WHITE);
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, whitePawnMoves[moveCount], ROOK_WHITE);
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, whitePawnMoves[moveCount], QUEEN_WHITE);
+	_currentMovePos = 0;
+	_availableMovesSize = 0;	
+	switch(_nextStage) {
+		case CAPTURING_MOVES:
+			generateCapturingMoves();
+			sortCapturingMoves();
+			_nextStage = CHECKING_MOVES;
+			break;
+		case CHECKING_MOVES:
+			generateCheckingMoves();
+			sortCheckingMoves();
+			_nextStage = QUITE_MOVES;
+			break;
+		case SEARCH_FINISHED:
+		default:
+			break;
+	}
+}
+
+void MoveGenerator::generateEvasionMoves()
+{
+	if(!_positionState->isDoubleCheck()) {
+		if(_positionState->whiteToPlay()) {
+			for (unsigned int sq = A1; sq <= H8; ++sq) {
+				Square from = (Square) sq;
+				switch(_positionState->getBoard()[sq / 8][sq % 8]) {
+					case PAWN_WHITE:
+						generatePawnEvasionMoves(from);
+						break;
+					case KNIGHT_WHITE:
+						generateKnightEvasionMoves(from);
+						break;
+					case BISHOP_WHITE:
+						generateBishopEvasionMoves(from);
+					case ROOK_WHITE:
+						generateRookEvasionMoves(from);
+					case QUEEN_WHITE:
+						generateQueenEvasionMoves(from);
+					default:
+						break;
+				}
 			}
 		}
 		else {
-			for (std::size_t moveCount = 0; moveCount < whitePawnMoves.size(); ++moveCount) {
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, whitePawnMoves[moveCount], ETY_SQUARE);
+			for (unsigned int sq = A1; sq <= H8; ++sq) {
+				Square from = (Square) sq;
+				switch(_positionState->getBoard()[sq / 8][sq % 8]) {
+					case PAWN_BLACK:
+						generatePawnEvasionMoves(from);
+						break;
+					case KNIGHT_BLACK:
+						generateKnightEvasionMoves(from);
+						break;
+					case BISHOP_BLACK:
+						generateBishopEvasionMoves(from);
+					case ROOK_BLACK:
+						generateRookEvasionMoves(from);
+					case QUEEN_BLACK:
+						generateQueenEvasionMoves(from);
+					default:
+						break;
+				}
 			}
+		}
+	}
+
+	generateKingEvasionMoves(_positionState->movingKingPosition());
+}
+
+
+void MoveGenerator::generateKingEvasionMoves(Square from) 
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard moveBoard = (_bitboardImpl->kingAttackFrom(from)) & ~(_positionState->whitePieces());
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			if (squareToBitboard[to] & _positionState->blackPieces()) {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+			}
+			else {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			}
+			moveBoard &= (moveBoard - 1);
 		}
 	}
 	else {
-		const std::vector<Square>& blackPawnMoves = _possibleMoves->possibleBlackPawnMoves(from);
-		if(from >= A2 && from <= H2) {
-			for (std::size_t moveCount = 0; moveCount < blackPawnMoves.size(); ++moveCount) {
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, blackPawnMoves[moveCount], KNIGHT_BLACK);
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, blackPawnMoves[moveCount], BISHOP_BLACK);
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, blackPawnMoves[moveCount], ROOK_BLACK);
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, blackPawnMoves[moveCount], QUEEN_BLACK);
-		     }
+		Bitboard moveBoard = (_bitboardImpl->kingAttackFrom(from)) & ~(_positionState->blackPieces());
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			if (squareToBitboard[to] & _positionState->whitePieces()) {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+			}
+			else {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			}
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+}
+
+void MoveGenerator::generateKnightEvasionMoves(Square from)
+{
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
+	Bitboard moveBoard = (_bitboardImpl->knightAttackFrom(from)) & (_positionState->absolutePinsPos());
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		if (squareToBitboard[to] & opponentPieces) {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		}
 		else {
-			for (std::size_t moveCount = 0; moveCount < blackPawnMoves.size(); ++moveCount) {
-				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, blackPawnMoves[moveCount], ETY_SQUARE);
-			}
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		}
+		moveBoard &= (moveBoard - 1);
 	}
 }
 
-// Generates all available knight available moves from square from without checking any validity
-// and adds these moves to _availableMoves data member
-void MoveGenerator::generateKnightMoves(Square from, const PositionState& pos)
+void MoveGenerator::generateBishopEvasionMoves(Square from)
 {
-	const std::vector<Square>& knightMoves = _possibleMoves->possibleKnightMoves(from);
-	for (std::size_t moveCount  = 0; moveCount < knightMoves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, knightMoves[moveCount], ETY_SQUARE);
-	}
-}
-
-// Generates all availalble king moves from square from without checking any validity
-// and adds these moves to _availableMoves data member
-void MoveGenerator::generateKingMoves(Square from, const PositionState& pos)
-{
-	const std::vector<Square>& kingMoves = _possibleMoves->possibleKingMoves(from);
-	for (std::size_t moveCount  = 0; moveCount < kingMoves.size(); ++moveCount) {
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, kingMoves[moveCount], ETY_SQUARE);
-	}
-}
-
-// Generates all availalble rook moves from square from without checking any validity
-// and adds these moves to _availableMoves data member
-void MoveGenerator::generateRookMoves(Square from, const PositionState& pos)
-{
-	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, pos.occupiedSquares());
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
+	Bitboard moveBoard = (_bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares())) & (_positionState->absolutePinsPos());
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE);
-		moveBoard  &= (moveBoard - 1);
+		if (squareToBitboard[to] & opponentPieces) {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		}
+		else {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		}
+		moveBoard &= (moveBoard - 1);
 	}
 }
 
-// Generates all availalble bishop moves from square from without checking any validity
-// and adds these moves to _availableMoves data member
-void MoveGenerator::generateBishopMoves(Square from, const PositionState& pos)
+void MoveGenerator::generateRookEvasionMoves(Square from)
 {
-	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, pos.occupiedSquares());
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
+	Bitboard moveBoard = (_bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares())) & (_positionState->absolutePinsPos());
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE);
-		moveBoard  &= (moveBoard - 1);
+		if (squareToBitboard[to] & opponentPieces) {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		}
+		else {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		}
+		moveBoard &= (moveBoard - 1);
 	}
 }
 
-// Generates all availalble queen moves from square from without checking any validity
-// and adds these moves to _availableMoves data member
-void MoveGenerator::generateQueenMoves(Square from, const PositionState& pos)
+void MoveGenerator::generateQueenEvasionMoves(Square from)
 {
-	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, pos.occupiedSquares());
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
+	Bitboard moveBoard = (_bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares())) & (_positionState->absolutePinsPos());
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE);
-		moveBoard  &= (moveBoard - 1);
+		if (squareToBitboard[to] & opponentPieces) {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		}
+		else {
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		}
+		moveBoard &= (moveBoard - 1);
 	}
 }
 

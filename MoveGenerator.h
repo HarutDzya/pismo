@@ -8,7 +8,7 @@ namespace pismo
 {
 enum MoveGenerationStage {
 	CAPTURING_MOVES = 0, CHECKING_MOVES,
-   	QUITE_MOVES, EVASION_MOVES
+   	QUITE_MOVES, EVASION_MOVES, SEARCH_FINISHED
 }; //TODO: Later add KILLER_MOVES
 
 enum SearchType {
@@ -30,6 +30,9 @@ public:
 	static MoveGenerator* instance();
 	void destroy();
 
+	void prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove, MovesArray& generatedMoves);
+	MoveInfo getTopMove();
+
 	void generateWhiteMoves(const PositionState& pos, MovesArray& generatedMoves);
 	void generateBlackMoves(const PositionState& pos, MovesArray& generatedMoves);
 
@@ -41,15 +44,28 @@ private:
 
 	static MoveGenerator* _instance;
 
-	void prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove);
-	void generateAvailableMoves(const PositionState& pos);
-	void generatePawnMoves(Square from, const PositionState& pos);
-	void generateKnightMoves(Square from, const PositionState& pos);
-	void generateKingMoves(Square from, const PositionState& pos);
-	void generateRookMoves(Square from, const PositionState& pos);
-	void generateBishopMoves(Square from, const PositionState& pos);
-	void generateQueenMoves(Square from, const PositionState& pos);
+	void generateMovesForUsualSearch();
+	void generateMovesForEvasionSearch();
+	void generateMovesForQuiteSearch();
 
+	void generateCapturingMoves();
+	void generateCheckingMoves();
+	void generateEvasionMoves();
+	void generateQuiteMoves();
+
+	void sortCapturingMoves();
+	void sortCheckingMoves();
+	void sortEvasionMoves();
+	void sortQuiteMoves();
+
+	bool equal(const MoveInfo& first, const MoveInfo& second) const;
+
+	void generateKingEvasionMoves(Square from);
+	void generatePawnEvasionMoves(Square from);
+	void generateKnightEvasionMoves(Square from);
+	void generateBishopEvasionMoves(Square from);
+	void generateRookEvasionMoves(Square from);
+	void generateQueenEvasionMoves(Square from);
 
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
@@ -61,7 +77,9 @@ private:
 
 	const PossibleMoves* _possibleMoves;
 	const BitboardImpl* _bitboardImpl;
+	const PositionState* _positionState;
 	MovesArray* _availableMoves;
+	unsigned int _currentMovePos;
 	unsigned int _availableMovesSize;
 
 	MoveGenerationStage _nextStage;

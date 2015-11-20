@@ -214,6 +214,37 @@ Bitboard BitboardImpl::pawnsBlackAttackTo(Square to, const Bitboard& pawnsBlackP
 	}
 }
 
+// Returns the bitboard of white pawn vertical moves from square from
+// if the occupiedSquares are occupied
+Bitboard BitboardImpl::pawnWhiteMovesFrom(Square from, const Bitboard& occupiedSquares) const
+{
+	if (from >= A2 && from <= H2) {
+		if (squareToBitboard[from + 8] & occupiedSquares) {
+			return 0;
+		}
+		else {
+			return (squareToBitboard[from + 8] | squareToBitboard[from + 16]) & ~occupiedSquares;
+		}
+	}
+	return squareToBitboard[from + 8] & ~occupiedSquares;
+}
+
+// Returns the bitboard of black pawn vertical moves from square from
+// if the occupiedSquares are occupied
+Bitboard BitboardImpl::pawnBlackMovesFrom(Square from, const Bitboard& occupiedSquares) const
+{
+	if (from >= A7 && from <= H7) {
+		if (squareToBitboard[from - 8] & occupiedSquares) {
+			return 0;
+		}
+		else {
+			return (squareToBitboard[from - 8] | squareToBitboard[from - 16]) & ~occupiedSquares;
+		}
+	}
+	return squareToBitboard[from - 8] & ~occupiedSquares;
+}
+
+
 // Returns bitboard of possible rook moves from square from when 
 // occupiedSquares shows the occupancy. Uses magic bitboards for evaluation.
 Bitboard BitboardImpl::rookAttackFrom(Square from, const Bitboard& occupiedSquares) const

@@ -36,7 +36,7 @@ enum Square {
 
 
 enum MoveType {
-	NORMAL_MOVE = 0, PROMOTION_MOVE, CASTLING_MOVE,
+	NORMAL_MOVE = 0, CAPTURE_MOVE, PROMOTION_MOVE, CASTLING_MOVE,
         EN_PASSANT_MOVE, EN_PASSANT_CAPTURE
 };	
 
@@ -44,10 +44,14 @@ struct MoveInfo {
 	Square from;
 	Square to;
 	Piece promoted;
-	MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE)
+	MoveType type;
+	uint16_t value;
+	MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE, MoveType mt = NORMAL_MOVE, uint16_t v = 0)
 		: from(f)
 		  , to(t)
 		  , promoted(p)
+		  , type(mt)
+		  , value(v)
 	{
 	}
 };

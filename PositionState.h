@@ -121,7 +121,11 @@ public:
 
 	Square movingKingPosition() const {return _whiteToPlay ? _whiteKingPosition : _blackKingPosition;}
 
+	Bitboard absolutePinsPos() const {return _absolutePinsPos;}
+
 	Bitboard occupiedSquares() const {return _whitePieces | _blackPieces;}
+	Bitboard whitePieces() const {return _whitePieces;}
+	Bitboard blackPieces() const {return _blackPieces;}
 
 //private member functions
 private:
@@ -154,6 +158,7 @@ private:
 	void undoLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const;
 
 	void makeNormalMove(const MoveInfo& move);
+	void makeCaptureMove(const MoveInfo& move);
 	void makeCastlingMove(const MoveInfo& move);
 	void makeEnPassantMove(const MoveInfo& move);
 	void makeEnPassantCapture(const MoveInfo& move);
@@ -202,6 +207,7 @@ private:
 	};
 
 	void undoNormalMove(const UndoMoveInfo& move);
+	void undoCaptureMove(const UndoMoveInfo& move);
 	void undoCastlingMove(const UndoMoveInfo& move);
 	void undoEnPassantMove(const UndoMoveInfo& move);
 	void undoEnPassantCapture(const UndoMoveInfo& move);
