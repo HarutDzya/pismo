@@ -60,12 +60,14 @@ private:
 
 	bool equal(const MoveInfo& first, const MoveInfo& second) const;
 
-	void generateKingEvasionMoves(Square from);
-	void generatePawnEvasionMoves(Square from);
-	void generateKnightEvasionMoves(Square from);
-	void generateBishopEvasionMoves(Square from);
-	void generateRookEvasionMoves(Square from);
-	void generateQueenEvasionMoves(Square from);
+	void generateKingEvasionMoves();
+	void generatePawnsEvasionMoves(Square to, MoveType type);
+	void generatePawnsWhiteEvasionMoves(Square to, MoveType type);
+	void generatePawnsBlackEvasionMoves(Square to, MoveType type);
+	void generateKnightsEvasionMoves(Square to, MoveType type);
+	void generateBishopsEvasionMoves(Square to, MoveType type);
+	void generateRooksEvasionMoves(Square to, MoveType type);
+	void generateQueensEvasionMoves(Square to, MoveType type);
 
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);

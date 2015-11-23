@@ -219,10 +219,7 @@ Bitboard BitboardImpl::pawnsBlackAttackTo(Square to, const Bitboard& pawnsBlackP
 Bitboard BitboardImpl::pawnWhiteMovesFrom(Square from, const Bitboard& occupiedSquares) const
 {
 	if (from >= A2 && from <= H2) {
-		if (squareToBitboard[from + 8] & occupiedSquares) {
-			return 0;
-		}
-		else {
+		if (squareToBitboard[from + 8] & ~occupiedSquares) {
 			return (squareToBitboard[from + 8] | squareToBitboard[from + 16]) & ~occupiedSquares;
 		}
 	}
@@ -234,16 +231,42 @@ Bitboard BitboardImpl::pawnWhiteMovesFrom(Square from, const Bitboard& occupiedS
 Bitboard BitboardImpl::pawnBlackMovesFrom(Square from, const Bitboard& occupiedSquares) const
 {
 	if (from >= A7 && from <= H7) {
-		if (squareToBitboard[from - 8] & occupiedSquares) {
-			return 0;
-		}
-		else {
+		if (squareToBitboard[from - 8] & ~occupiedSquares) {
 			return (squareToBitboard[from - 8] | squareToBitboard[from - 16]) & ~occupiedSquares;
 		}
 	}
 	return squareToBitboard[from - 8] & ~occupiedSquares;
 }
 
+// Returns the bitboard of white pawn vertical moves to square to
+// for occupiedSquares and pawnsWhitePos white pawns positions
+Bitboard BitboardImpl::pawnWhiteMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsWhitePos) const
+{
+	assert(to > H2);
+	if (to >= A4 && to <= H4) {
+		if (squareToBitboard[to - 8] & occupiedSquares) {
+			return squareToBitboard[to - 8] & pawnsWhitePos;
+		}
+		return squareToBitboard[to - 16] & pawnsWhitePos;
+	}
+
+	return squareToBitboard[to - 8] & pawnsWhitePos;
+}
+
+// Returns the bitboard of black pawn vertical moves to square to
+// for occupiedSquares and pawnsBlackPos black pawns positions
+Bitboard BitboardImpl::pawnBlackMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsBlackPos) const
+{
+	assert(to < A7);
+	if (to >= A5 && to <= H5) {
+		if (squareToBitboard[to + 8] & occupiedSquares) {
+			return squareToBitboard[to + 8] & pawnsBlackPos;
+		}
+		return squareToBitboard[to + 16] & pawnsBlackPos;
+	}
+
+	return squareToBitboard[to + 8] & pawnsBlackPos;
+}
 
 // Returns bitboard of possible rook moves from square from when 
 // occupiedSquares shows the occupancy. Uses magic bitboards for evaluation.

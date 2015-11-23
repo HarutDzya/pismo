@@ -127,6 +127,10 @@ public:
 	Bitboard whitePieces() const {return _whitePieces;}
 	Bitboard blackPieces() const {return _blackPieces;}
 
+	Bitboard const (&getPiecePos() const)[PIECE_NB] {return _piecePos;}
+
+	Square enPassantTarget() const {return _enPassantFile == -1 ? INVALID_SQUARE : (_whiteToPlay ? (Square) (A6 + _enPassantFile) : (Square) (A3 + _enPassantFile));}  
+
 //private member functions
 private:
 	void setPiece(Square s, Piece p);
