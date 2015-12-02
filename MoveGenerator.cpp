@@ -371,67 +371,88 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 void MoveGenerator::generateCapturingMoves()
 {
 	if(_positionState->whiteToPlay()) {
-		Bitboard opponentPieces = _positionState->blackPieces();
-		for (unsigned int sq = A1; sq <= H8; ++sq) {
-			Square from = (Square) sq;
-			switch (_positionState->getBoard()[sq / 8][sq % 8]) {
-				case PAWN_WHITE:
-					generatePawnWhiteCapturingMoves(from, opponentPieces);
-					break;
-				case KNIGHT_WHITE:
-					generateKnightCapturingMoves(from, opponentPieces);
-					break;
-				case ROOK_WHITE:
-					generateRookCapturingMoves(from, opponentPieces);
-					break;
-				case BISHOP_WHITE:
-					generateBishopCapturingMoves(from, opponentPieces);
-					break;
-				case QUEEN_WHITE:
-					generateQueenCapturingMoves(from, opponentPieces);
-					break;
-				case KING_WHITE:
-					generateKingCapturingMoves(from, opponentPieces);
-					break;
-				default:
-					break;
-			}
+		Bitboard pawnsWhitePos = _positionState->getPiecePos()[PAWN_WHITE];
+		while (pawnsWhitePos) {
+			Square from = (Square) _bitboardImpl->lsb(pawnsWhitePos);
+			generatePawnWhiteCapturingMoves(from);
+			pawnsWhitePos &= (pawnsWhitePos - 1);
 		}
+	
+		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_WHITE];
+		while (knightsPos) {
+			Square from = (Square) _bitboardImpl->lsb(knightsPos);
+			generateKnightCapturingMoves(from);
+			knightsPos &= (knightsPos - 1);
+		}
+		
+		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_WHITE];
+		while (rooksPos) {
+			Square from = (Square) _bitboardImpl->lsb(rooksPos);
+			generateRookCapturingMoves(from);
+			rooksPos &= (rooksPos - 1);
+		}
+
+		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_WHITE];
+		while (bishopsPos) {
+			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
+			generateBishopCapturingMoves(from);
+			bishopsPos &= (bishopsPos - 1);
+		}
+
+		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_WHITE];
+		while (queensPos) {
+			Square from = (Square) _bitboardImpl->lsb(queensPos);
+			generateQueenCapturingMoves(from);
+			queensPos &= (queensPos - 1);
+		}
+
+		generateKingCapturingMoves(_positionState->movingKingPosition());
 	}
 	else {
-		Bitboard opponentPieces = _positionState->whitePieces();
-		for (unsigned int sq = A1; sq <= H8; ++sq) {
-			Square from = (Square) sq;
-			switch (_positionState->getBoard()[sq / 8][sq % 8]) {
-				case PAWN_BLACK:
-					generatePawnBlackCapturingMoves(from, opponentPieces);
-					break;
-				case KNIGHT_BLACK:
-					generateKnightCapturingMoves(from, opponentPieces);
-					break;
-				case ROOK_BLACK:
-					generateRookCapturingMoves(from, opponentPieces);
-					break;
-				case BISHOP_BLACK:
-					generateBishopCapturingMoves(from, opponentPieces);
-					break;
-				case QUEEN_BLACK:
-					generateQueenCapturingMoves(from, opponentPieces);
-					break;
-				case KING_BLACK:
-					generateKingCapturingMoves(from, opponentPieces);
-					break;
-				default:
-					break;
-			}
+		Bitboard pawnsBlackPos = _positionState->getPiecePos()[PAWN_BLACK];
+		while (pawnsBlackPos) {
+			Square from = (Square) _bitboardImpl->lsb(pawnsBlackPos);
+			generatePawnBlackCapturingMoves(from);
+			pawnsBlackPos &= (pawnsBlackPos - 1);
 		}
+	
+		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_BLACK];
+		while (knightsPos) {
+			Square from = (Square) _bitboardImpl->lsb(knightsPos);
+			generateKnightCapturingMoves(from);
+			knightsPos &= (knightsPos - 1);
+		}
+		
+		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_BLACK];
+		while (rooksPos) {
+			Square from = (Square) _bitboardImpl->lsb(rooksPos);
+			generateRookCapturingMoves(from);
+			rooksPos &= (rooksPos - 1);
+		}
+
+		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_BLACK];
+		while (bishopsPos) {
+			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
+			generateBishopCapturingMoves(from);
+			bishopsPos &= (bishopsPos - 1);
+		}
+
+		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_BLACK];
+		while (queensPos) {
+			Square from = (Square) _bitboardImpl->lsb(queensPos);
+			generateQueenCapturingMoves(from);
+			queensPos &= (queensPos - 1);
+		}
+
+		generateKingCapturingMoves(_positionState->movingKingPosition());
 	}
 }
 
 // Generates all white pawn capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generatePawnWhiteCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	if (from >= A7) {
 		Bitboard promotionBoard = (_bitboardImpl->pawnWhiteAttackFrom(from) & opponentPieces) | _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
 		while(promotionBoard) {
@@ -460,8 +481,9 @@ void MoveGenerator::generatePawnWhiteCapturingMoves(Square from, const Bitboard&
 
 // Generates all black pawn capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generatePawnBlackCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	if (from <= H2) {
 		Bitboard promotionBoard = (_bitboardImpl->pawnBlackAttackFrom(from) & opponentPieces) | _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
 		while(promotionBoard) {
@@ -490,8 +512,9 @@ void MoveGenerator::generatePawnBlackCapturingMoves(Square from, const Bitboard&
 
 // Generates all knight capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generateKnightCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generateKnightCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -502,8 +525,9 @@ void MoveGenerator::generateKnightCapturingMoves(Square from, const Bitboard& op
 
 // Generates all rook capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generateRookCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generateRookCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -514,8 +538,9 @@ void MoveGenerator::generateRookCapturingMoves(Square from, const Bitboard& oppo
 
 // Generates all bishop capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generateBishopCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generateBishopCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -526,8 +551,9 @@ void MoveGenerator::generateBishopCapturingMoves(Square from, const Bitboard& op
 
 // Generates all queen capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generateQueenCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generateQueenCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -538,8 +564,9 @@ void MoveGenerator::generateQueenCapturingMoves(Square from, const Bitboard& opp
 
 // Generates all king capturing moves from square from
 // for opponentPieces position
-void MoveGenerator::generateKingCapturingMoves(Square from, const Bitboard& opponentPieces)
+void MoveGenerator::generateKingCapturingMoves(Square from)
 {
+	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
 	Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);

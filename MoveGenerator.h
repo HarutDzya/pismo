@@ -69,13 +69,13 @@ private:
 	void generateRooksEvasionMoves(Square to, MoveType type);
 	void generateQueensEvasionMoves(Square to, MoveType type);
 
-	void generatePawnWhiteCapturingMoves(Square from, const Bitboard& opponentPieces);
-	void generatePawnBlackCapturingMoves(Square from, const Bitboard& opponentPieces);
-	void generateKnightCapturingMoves(Square from, const Bitboard& opponentPieces);
-	void generateRookCapturingMoves(Square from, const Bitboard& opponentPieces);
-	void generateBishopCapturingMoves(Square from, const Bitboard& opponentPieces);
-	void generateQueenCapturingMoves(Square from, const Bitboard& opponentPieces);
-	void generateKingCapturingMoves(Square from, const Bitboard& opponentPieces);
+	void generatePawnWhiteCapturingMoves(Square from);
+	void generatePawnBlackCapturingMoves(Square from);
+	void generateKnightCapturingMoves(Square from);
+	void generateRookCapturingMoves(Square from);
+	void generateBishopCapturingMoves(Square from);
+	void generateQueenCapturingMoves(Square from);
+	void generateKingCapturingMoves(Square from);
 
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
