@@ -91,8 +91,8 @@ const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE b
 // for example of the rank ray case
 // if king is at C4, pawn is at B4 and E4, and ROOK is at A4 and G4
 // smallSlidingPiecePos = A4, bigSlidingPiecePos = G4
-// smallPinPos is Bitboard with bits on A4 to B4 set
-// bigPinPos is Bitboard with bits on D4 to G4 set
+// smallPinPos is Bitboard with bits on A4 to B4 set (exluding A4)
+// bigPinPos is Bitboard with bits on D4 to G4 set (excluding G4)
 struct PinInfo {
         Square smallSlidingPiecePos;
         Square bigSlidingPiecePos;

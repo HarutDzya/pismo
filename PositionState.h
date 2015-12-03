@@ -119,7 +119,12 @@ public:
 
 	bool isDoubleCheck() const {return _isDoubleCheck;}
 
-	Square movingKingPosition() const {return _whiteToPlay ? _whiteKingPosition : _blackKingPosition;}
+	Square whiteKingPosition() const {return _whiteKingPosition;}
+	Square blackKingPosition() const {return _blackKingPosition;}
+	bool whiteLeftCastling() const {return _whiteLeftCastling;}
+	bool whiteRightCastling() const {return _whiteRightCastling;}
+	bool blackLeftCastling() const {return _blackLeftCastling;}
+	bool blackRightCastling() const {return _blackRightCastling;}
 
 	Bitboard absolutePinsPos() const {return _absolutePinsPos;}
 
@@ -128,6 +133,7 @@ public:
 	Bitboard blackPieces() const {return _blackPieces;}
 
 	Bitboard const (&getPiecePos() const)[PIECE_NB] {return _piecePos;}
+	Bitboard const (&getDirectCheck() const)[PIECE_NB] {return _directCheck;}
 
 	Square enPassantTarget() const {return _enPassantFile == -1 ? INVALID_SQUARE : (_whiteToPlay ? (Square) (A6 + _enPassantFile) : (Square) (A3 + _enPassantFile));}  
 

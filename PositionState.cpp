@@ -1292,49 +1292,49 @@ bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidi
 		}
 	}
 
-	if (_stateDiscCheckInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.smallSlidingPiecePos) {
+	if (_stateDiscCheckInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
 		if ((squareToBitboard[move.from] & _stateDiscCheckInfo.rankPin.smallPinPos) && !(squareToBitboard[move.to] & _stateDiscCheckInfo.rankPin.smallPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.rankPin.smallSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.rankPin.bigSlidingPiecePos) {
+	if (_stateDiscCheckInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE) {
 		if ((squareToBitboard[move.from] & _stateDiscCheckInfo.rankPin.bigPinPos) && !(squareToBitboard[move.to] & _stateDiscCheckInfo.rankPin.bigPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.rankPin.bigSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.filePin.smallSlidingPiecePos) {
+	if (_stateDiscCheckInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.smallPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.filePin.smallSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.filePin.bigSlidingPiecePos) {
+	if (_stateDiscCheckInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.bigPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.filePin.bigSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos) {
+	if (_stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos) {
+	if (_stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos) {
+	if (_stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos;
 			return true;
 		}
 	}
-	if (_stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE && move.from != _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos) {
+	if (_stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos)) {
 			slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos;
 			return true;
@@ -1629,42 +1629,42 @@ bool PositionState::pinMoveOpensCheck(const MoveInfo& move) const
 	}
 
 	//TODO: there should be faster way than checking 8 conditions separately as below (e.g. comparing move.from with king pos)
-	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.rankPin.smallSlidingPiecePos != INVALID_SQUARE && _statePinInfo.rankPin.smallSlidingPiecePos != move.to) {
 		if ((squareToBitboard[move.from] & _statePinInfo.rankPin.smallPinPos) && !(squareToBitboard[move.to] & _statePinInfo.rankPin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.rankPin.bigSlidingPiecePos != INVALID_SQUARE && _statePinInfo.rankPin.bigSlidingPiecePos != move.to) {
 		if ((squareToBitboard[move.from] & _statePinInfo.rankPin.bigPinPos) && !(squareToBitboard[move.to] & _statePinInfo.rankPin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.filePin.smallSlidingPiecePos != INVALID_SQUARE && _statePinInfo.filePin.smallSlidingPiecePos != move.to) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.smallPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.filePin.bigSlidingPiecePos != INVALID_SQUARE && _statePinInfo.filePin.bigSlidingPiecePos != move.to) {
 		if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.bigPinPos) && !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != INVALID_SQUARE && _statePinInfo.diagA1h8Pin.smallSlidingPiecePos != move.to) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != INVALID_SQUARE && _statePinInfo.diagA1h8Pin.bigSlidingPiecePos != move.to) {
 		if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.bigPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != INVALID_SQUARE && _statePinInfo.diagA8h1Pin.smallSlidingPiecePos != move.to) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.smallPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.smallPinPos)) {
 			return true;
 		}
 	}
-	if (_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE) {
+	if (_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != INVALID_SQUARE && _statePinInfo.diagA8h1Pin.bigSlidingPiecePos != move.to) {
 		if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.bigPinPos) && !(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.bigPinPos)) {
 			return true;
 		}

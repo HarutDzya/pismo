@@ -173,8 +173,8 @@ void MoveGenerator::generateEvasionMoves()
 
 void MoveGenerator::generateKingEvasionMoves() 
 {
-	Square from = _positionState->movingKingPosition();
 	if (_positionState->whiteToPlay()) {
+		Square from = _positionState->whiteKingPosition();
 		Bitboard moveBoard = (_bitboardImpl->kingAttackFrom(from)) & ~(_positionState->whitePieces());
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -188,6 +188,7 @@ void MoveGenerator::generateKingEvasionMoves()
 		}
 	}
 	else {
+		Square from = _positionState->blackKingPosition();
 		Bitboard moveBoard = (_bitboardImpl->kingAttackFrom(from)) & ~(_positionState->blackPieces());
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -406,7 +407,7 @@ void MoveGenerator::generateCapturingMoves()
 			queensPos &= (queensPos - 1);
 		}
 
-		generateKingCapturingMoves(_positionState->movingKingPosition());
+		generateKingCapturingMoves(_positionState->whiteKingPosition());
 	}
 	else {
 		Bitboard pawnsBlackPos = _positionState->getPiecePos()[PAWN_BLACK];
@@ -444,15 +445,14 @@ void MoveGenerator::generateCapturingMoves()
 			queensPos &= (queensPos - 1);
 		}
 
-		generateKingCapturingMoves(_positionState->movingKingPosition());
+		generateKingCapturingMoves(_positionState->blackKingPosition());
 	}
 }
 
 // Generates all white pawn capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 {
-	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
+	Bitboard opponentPieces = _positionState->blackPieces();
 	if (from >= A7) {
 		Bitboard promotionBoard = (_bitboardImpl->pawnWhiteAttackFrom(from) & opponentPieces) | _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
 		while(promotionBoard) {
@@ -480,10 +480,9 @@ void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 }
 
 // Generates all black pawn capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 {
-	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
+	Bitboard opponentPieces = _positionState->whitePieces();
 	if (from <= H2) {
 		Bitboard promotionBoard = (_bitboardImpl->pawnBlackAttackFrom(from) & opponentPieces) | _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
 		while(promotionBoard) {
@@ -511,7 +510,6 @@ void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 }
 
 // Generates all knight capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generateKnightCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
@@ -524,7 +522,6 @@ void MoveGenerator::generateKnightCapturingMoves(Square from)
 }
 
 // Generates all rook capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generateRookCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
@@ -537,7 +534,6 @@ void MoveGenerator::generateRookCapturingMoves(Square from)
 }
 
 // Generates all bishop capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generateBishopCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
@@ -550,7 +546,6 @@ void MoveGenerator::generateBishopCapturingMoves(Square from)
 }
 
 // Generates all queen capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generateQueenCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
@@ -563,7 +558,6 @@ void MoveGenerator::generateQueenCapturingMoves(Square from)
 }
 
 // Generates all king capturing moves from square from
-// for opponentPieces position
 void MoveGenerator::generateKingCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->whiteToPlay() ? _positionState->blackPieces() : _positionState->whitePieces();
@@ -572,6 +566,227 @@ void MoveGenerator::generateKingCapturingMoves(Square from)
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
 		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		moveBoard &= (moveBoard - 1);
+	}
+}
+
+void MoveGenerator::generateCheckingMoves()
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_WHITE];
+		while (pawnsPos) {
+			Square from = (Square) _bitboardImpl->lsb(pawnsPos);
+			generatePawnDirectCheckingMoves(from);
+			pawnsPos &= (pawnsPos - 1);
+		}
+
+		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_WHITE];
+		while (knightsPos) {
+			Square from = (Square) _bitboardImpl->lsb(knightsPos);
+			generateKnightDirectCheckingMoves(from);
+			knightsPos &= (knightsPos - 1);
+		}
+
+		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_WHITE];
+		while (rooksPos) {
+			Square from = (Square) _bitboardImpl->lsb(rooksPos);
+			generateRookDirectCheckingMoves(from);
+			rooksPos &= (rooksPos - 1);
+		}
+
+		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_WHITE];
+		while (bishopsPos) {
+			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
+			generateBishopDirectCheckingMoves(from);
+			bishopsPos &= (bishopsPos - 1);
+		}
+		
+		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_WHITE];
+		while (queensPos) {
+			Square from = (Square) _bitboardImpl->lsb(queensPos);
+			generateQueenDirectCheckingMoves(from);
+			queensPos &= (queensPos - 1);
+		}
+
+		generateKingCastlingCheckingMoves(_positionState->whiteKingPosition());
+	}
+	else {
+		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_BLACK];
+		while (pawnsPos) {
+			Square from = (Square) _bitboardImpl->lsb(pawnsPos);
+			generatePawnDirectCheckingMoves(from);
+			pawnsPos &= (pawnsPos - 1);
+		}
+
+		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_BLACK];
+		while (knightsPos) {
+			Square from = (Square) _bitboardImpl->lsb(knightsPos);
+			generateKnightDirectCheckingMoves(from);
+			knightsPos &= (knightsPos - 1);
+		}
+
+		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_BLACK];
+		while (rooksPos) {
+			Square from = (Square) _bitboardImpl->lsb(rooksPos);
+			generateRookDirectCheckingMoves(from);
+			rooksPos &= (rooksPos - 1);
+		}
+
+		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_BLACK];
+		while (bishopsPos) {
+			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
+			generateBishopDirectCheckingMoves(from);
+			bishopsPos &= (bishopsPos - 1);
+		}
+		
+		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_BLACK];
+		while (queensPos) {
+			Square from = (Square) _bitboardImpl->lsb(queensPos);
+			generateQueenDirectCheckingMoves(from);
+			queensPos &= (queensPos - 1);
+		}
+
+		generateKingCastlingCheckingMoves(_positionState->blackKingPosition());
+	}
+	//TODO: Generate discovered check moves
+}
+
+// Generates all pawn direct checking moves from square from 
+void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
+{
+	if (_positionState->whiteToPlay()) {
+		if (from < A7) {
+			Bitboard moveBoard = _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares()) & _positionState->getDirectCheck()[PAWN_WHITE];
+			while (moveBoard) {
+				Square to = (Square) _bitboardImpl->lsb(moveBoard);
+				if (to - from == 16) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				}
+				else {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				}
+				moveBoard &= (moveBoard - 1);
+			}
+		}
+	}
+	else {
+		if (from > H2) {
+			Bitboard moveBoard = _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares()) & _positionState->getDirectCheck()[PAWN_BLACK];
+			while (moveBoard) {
+				Square to = (Square) _bitboardImpl->lsb(moveBoard);
+				if (from - to == 16) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				}
+				else {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				}
+				moveBoard &= (moveBoard - 1);
+			}
+		}
+	}
+}
+
+// Generates all knight direct checking moves from square from
+void MoveGenerator::generateKnightDirectCheckingMoves(Square from)
+{
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[KNIGHT_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[KNIGHT_BLACK] & ~_positionState->whitePieces());
+	Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & directCheckPos;
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		moveBoard &= (moveBoard - 1);
+	}
+}
+
+// Generate all rook direct checking moves from square from
+void MoveGenerator::generateRookDirectCheckingMoves(Square from)
+{
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[ROOK_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[ROOK_BLACK] & ~_positionState->whitePieces());
+	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		moveBoard &= (moveBoard - 1);
+	}
+}
+
+// Generate all bishop direct checking moves from square from
+void MoveGenerator::generateBishopDirectCheckingMoves(Square from)
+{
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[BISHOP_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[BISHOP_BLACK] & ~_positionState->whitePieces());
+	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		moveBoard &= (moveBoard - 1);
+	}
+}
+
+// Generate all queen direct checking moves from square from
+void MoveGenerator::generateQueenDirectCheckingMoves(Square from)
+{
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[QUEEN_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[QUEEN_BLACK] & ~_positionState->whitePieces());
+	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
+	while (moveBoard) {
+		Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		moveBoard &= (moveBoard - 1);
+	}
+}
+
+// Generates all king castling moves which check opponent king from square from
+void MoveGenerator::generateKingCastlingCheckingMoves(Square from) 
+{
+	if (_positionState->whiteToPlay() && from == E1) {
+		if (_positionState->whiteLeftCastling() && !(WHITE_LEFT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
+			if (_positionState->blackKingPosition() > H1) {
+				if (squareToBitboard[D1] & _positionState->getDirectCheck()[ROOK_WHITE]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, C1, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+			else {
+				if (squareToBitboard[E1] & _positionState->getDirectCheck()[ROOK_WHITE]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, C1, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+		}
+		if (_positionState->whiteRightCastling() && !(WHITE_RIGHT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
+			if (_positionState->blackKingPosition() > H1) {
+				if (squareToBitboard[F1] & _positionState->getDirectCheck()[ROOK_WHITE]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, G1, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+			else {
+				if (squareToBitboard[E1] & _positionState->getDirectCheck()[ROOK_WHITE]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, G1, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+		}
+	}
+	else if (!_positionState->whiteToPlay() && from == E8) {
+		if (_positionState->blackLeftCastling() && !(BLACK_LEFT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
+			if (_positionState->whiteKingPosition() < A8) {
+				if (squareToBitboard[D8] & _positionState->getDirectCheck()[ROOK_BLACK]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, C8, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+			else {
+				if (squareToBitboard[E8] & _positionState->getDirectCheck()[ROOK_BLACK]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, C8, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+		}
+		if (_positionState->blackRightCastling() && !(BLACK_RIGHT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
+			if (_positionState->whiteKingPosition() < A8) {
+				if (squareToBitboard[F8] & _positionState->getDirectCheck()[ROOK_BLACK]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, G8, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+			else {
+				if (squareToBitboard[E8] & _positionState->getDirectCheck()[ROOK_BLACK]) {
+					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, G8, ETY_SQUARE, CASTLING_MOVE);
+				}
+			}
+		}
 	}
 }
 

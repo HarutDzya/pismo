@@ -77,6 +77,13 @@ private:
 	void generateQueenCapturingMoves(Square from);
 	void generateKingCapturingMoves(Square from);
 
+	void generatePawnDirectCheckingMoves(Square from);
+	void generateKnightDirectCheckingMoves(Square from);
+	void generateRookDirectCheckingMoves(Square from);
+	void generateBishopDirectCheckingMoves(Square from);
+	void generateQueenDirectCheckingMoves(Square from);
+	void generateKingCastlingCheckingMoves(Square from);
+
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKingMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);

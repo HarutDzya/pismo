@@ -997,14 +997,14 @@ Bitrank BitboardImpl::movePosRank(unsigned int position, Bitrank rankOccup) cons
 	return 0;
 }
 
-// Sets leftPin to possible positions where pinned piece can be located plus the sliding piece position
+// Sets leftPin to possible positions where pinned piece can be located
 // left to the attacked piece at position
-// Sets rightPin to possible positions where pinned piece can be located plus the sliding piece position
+// Sets rightPin to possible positions where pinned piece can be located
 // right to the attacked piece at position 
 // leftSlidePos is the position of the sliding piece to the left; -1 if not there
 // rightSlidePos is the position of the sliding piece to the right; -1 if not there
-// for example for the Bitrank 10101011 and position 3, the leftPin is 11110000
-// leftSlidePos is 7, rightPin is 00000111, rightSlidePos is 0
+// for example for the Bitrank 10101011 and position 3, the leftPin is 01110000
+// leftSlidePos is 7, rightPin is 00000110, rightSlidePos is 0
 void BitboardImpl::setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank& leftPin, Bitrank& rightPin) const
 {
 	int rightSetBit = msb(rankOccup << (8 - position));
@@ -1015,8 +1015,8 @@ void BitboardImpl::setRankPinInfo(unsigned int position, Bitrank rankOccup, int&
 	int leftPinPos = (leftSetBit != -1) ? (position + 1 + leftSetBit) : -1;
 	int leftNextSetBit = (leftPinPos != -1) ? lsb(rankOccup >> (1 + leftPinPos)) : -1;
 	leftSlidePos = (leftNextSetBit != -1) ? (leftPinPos + 1 + leftNextSetBit) : -1;
-	leftPin = (leftSlidePos != -1) ? OCCUPATION_FROM_LSB[leftSlidePos + 1] ^ OCCUPATION_FROM_LSB[position + 1] : 0;
-	rightPin = (rightSlidePos != -1) ? OCCUPATION_FROM_LSB[position] ^ OCCUPATION_FROM_LSB[rightSlidePos] : 0;
+	leftPin = (leftSlidePos != -1) ? OCCUPATION_FROM_LSB[leftSlidePos] ^ OCCUPATION_FROM_LSB[position + 1] : 0;
+	rightPin = (rightSlidePos != -1) ? OCCUPATION_FROM_LSB[position] ^ OCCUPATION_FROM_LSB[rightSlidePos + 1] : 0;
 }
 
 // Returns the position of the most significant bit set in the Bitrank
