@@ -8,6 +8,9 @@ namespace pismo
 
 typedef uint8_t Bitrank;
 
+const Bitboard WHITE_SQUARES_MASK = 0x55AA55AA55AA55AA; // Bitboard of white squares
+const Bitboard BLACK_SQUARES_MASK = 0xAA55AA55AA55AA55; // Bitboard of black squares
+
 const Bitboard WHITE_RIGHT_CASTLING_KING_SQUARES = 0x0000000000000070; // Bitboard of squares used by the king making right castling move for white
 const Bitboard WHITE_RIGHT_CASTLING_ETY_SQUARES = 0x0000000000000060; // Bitboard of squares which should be empty for right castling move for white
 const Bitboard WHITE_LEFT_CASTLING_KING_SQUARES = 0x000000000000001C; // Bitboard of squares used by the king making left castling move for white

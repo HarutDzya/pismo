@@ -580,6 +580,12 @@ void MoveGenerator::generateCheckingMoves()
 		}
 
 		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_WHITE];
+		if (squareToBitboard[_positionState->blackKingPosition()] & WHITE_SQUARES_MASK) {
+			knightsPos &= BLACK_SQUARES_MASK;
+		}
+		else {
+			knightsPos &= WHITE_SQUARES_MASK;
+		}
 		while (knightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(knightsPos);
 			generateKnightDirectCheckingMoves(from);
@@ -594,6 +600,12 @@ void MoveGenerator::generateCheckingMoves()
 		}
 
 		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_WHITE];
+		if (squareToBitboard[_positionState->blackKingPosition()] & WHITE_SQUARES_MASK) {
+			bishopsPos &= WHITE_SQUARES_MASK;
+		}
+		else {
+			bishopsPos &= BLACK_SQUARES_MASK;
+		}
 		while (bishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
 			generateBishopDirectCheckingMoves(from);
@@ -607,7 +619,7 @@ void MoveGenerator::generateCheckingMoves()
 			queensPos &= (queensPos - 1);
 		}
 
-		generateKingCastlingCheckingMoves(_positionState->whiteKingPosition());
+		generateKingWhiteCastlingCheckingMoves(_positionState->whiteKingPosition());
 	}
 	else {
 		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_BLACK];
@@ -618,6 +630,12 @@ void MoveGenerator::generateCheckingMoves()
 		}
 
 		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_BLACK];
+		if (squareToBitboard[_positionState->whiteKingPosition()] & WHITE_SQUARES_MASK) {
+			knightsPos &= BLACK_SQUARES_MASK;
+		}
+		else {
+			knightsPos &= WHITE_SQUARES_MASK;
+		}
 		while (knightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(knightsPos);
 			generateKnightDirectCheckingMoves(from);
@@ -632,6 +650,12 @@ void MoveGenerator::generateCheckingMoves()
 		}
 
 		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_BLACK];
+		if (squareToBitboard[_positionState->whiteKingPosition()] & WHITE_SQUARES_MASK) {
+			bishopsPos &= WHITE_SQUARES_MASK;
+		}
+		else {
+			bishopsPos &= BLACK_SQUARES_MASK;
+		}
 		while (bishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
 			generateBishopDirectCheckingMoves(from);
@@ -645,7 +669,7 @@ void MoveGenerator::generateCheckingMoves()
 			queensPos &= (queensPos - 1);
 		}
 
-		generateKingCastlingCheckingMoves(_positionState->blackKingPosition());
+		generateKingBlackCastlingCheckingMoves(_positionState->blackKingPosition());
 	}
 	//TODO: Generate discovered check moves
 }
@@ -655,8 +679,9 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 {
 	if (_positionState->whiteToPlay()) {
 		if (from < A7) {
+			// Promotion moves are not considered here, because they were already considered in generatePawnWhiteCapturingMoves
 			Bitboard moveBoard = _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares()) & _positionState->getDirectCheck()[PAWN_WHITE];
-			while (moveBoard) {
+			if (moveBoard) {
 				Square to = (Square) _bitboardImpl->lsb(moveBoard);
 				if (to - from == 16) {
 					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
@@ -664,14 +689,14 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 				else {
 					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 				}
-				moveBoard &= (moveBoard - 1);
 			}
 		}
 	}
 	else {
 		if (from > H2) {
+			// Promotion moves are not considered here, because they were already considered in generatePawnBlackCapturingMoves
 			Bitboard moveBoard = _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares()) & _positionState->getDirectCheck()[PAWN_BLACK];
-			while (moveBoard) {
+			if (moveBoard) {
 				Square to = (Square) _bitboardImpl->lsb(moveBoard);
 				if (from - to == 16) {
 					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
@@ -679,7 +704,6 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 				else {
 					(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 				}
-				moveBoard &= (moveBoard - 1);
 			}
 		}
 	}
@@ -733,10 +757,10 @@ void MoveGenerator::generateQueenDirectCheckingMoves(Square from)
 	}
 }
 
-// Generates all king castling moves which check opponent king from square from
-void MoveGenerator::generateKingCastlingCheckingMoves(Square from) 
+// Generates all white king castling moves which check opponent king from square from
+void MoveGenerator::generateKingWhiteCastlingCheckingMoves(Square from) 
 {
-	if (_positionState->whiteToPlay() && from == E1) {
+	if (from == E1) {
 		if (_positionState->whiteLeftCastling() && !(WHITE_LEFT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
 			if (_positionState->blackKingPosition() > H1) {
 				if (squareToBitboard[D1] & _positionState->getDirectCheck()[ROOK_WHITE]) {
@@ -762,7 +786,12 @@ void MoveGenerator::generateKingCastlingCheckingMoves(Square from)
 			}
 		}
 	}
-	else if (!_positionState->whiteToPlay() && from == E8) {
+}
+
+// Generates all black king castling moves which check opponent king from square from
+void MoveGenerator::generateKingBlackCastlingCheckingMoves(Square from)
+{
+	if (from == E8) {
 		if (_positionState->blackLeftCastling() && !(BLACK_LEFT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
 			if (_positionState->whiteKingPosition() < A8) {
 				if (squareToBitboard[D8] & _positionState->getDirectCheck()[ROOK_BLACK]) {

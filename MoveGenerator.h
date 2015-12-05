@@ -82,7 +82,8 @@ private:
 	void generateRookDirectCheckingMoves(Square from);
 	void generateBishopDirectCheckingMoves(Square from);
 	void generateQueenDirectCheckingMoves(Square from);
-	void generateKingCastlingCheckingMoves(Square from);
+	void generateKingWhiteCastlingCheckingMoves(Square from);
+	void generateKingBlackCastlingCheckingMoves(Square from);
 
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
