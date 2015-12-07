@@ -130,12 +130,22 @@ public:
 
 	Bitboard occupiedSquares() const {return _whitePieces | _blackPieces;}
 	Bitboard whitePieces() const {return _whitePieces;}
+	Bitboard whitePiecesTranspose() const {return _whitePiecesTranspose;}
+	Bitboard whitePiecesDiagA1h8() const {return _whitePiecesDiagA1h8;}
+	Bitboard whitePiecesDiagA8h1() const {return _whitePiecesDiagA8h1;}
 	Bitboard blackPieces() const {return _blackPieces;}
+	Bitboard blackPiecesTranspose() const {return _blackPiecesTranspose;}
+	Bitboard blackPiecesDiagA1h8() const {return _blackPiecesDiagA1h8;}
+	Bitboard blackPiecesDiagA8h1() const {return _blackPiecesDiagA8h1;}
 
 	Bitboard const (&getPiecePos() const)[PIECE_NB] {return _piecePos;}
 	Bitboard const (&getDirectCheck() const)[PIECE_NB] {return _directCheck;}
 
-	Square enPassantTarget() const {return _enPassantFile == -1 ? INVALID_SQUARE : (_whiteToPlay ? (Square) (A6 + _enPassantFile) : (Square) (A3 + _enPassantFile));}  
+	Square enPassantTarget() const {return _enPassantFile == -1 ? INVALID_SQUARE : (_whiteToPlay ? (Square) (A6 + _enPassantFile) : (Square) (A3 + _enPassantFile));}
+	const PinInfo& rankDiscCheck() const {return _stateDiscCheckInfo.rankPin;}
+	const PinInfo& fileDiscCheck() const {return _stateDiscCheckInfo.filePin;}
+	const PinInfo& diagA1h8DiscCheck() const {return _stateDiscCheckInfo.diagA1h8Pin;}
+	const PinInfo& diagA8h1DiscCheck() const {return _stateDiscCheckInfo.diagA8h1Pin;}	
 
 //private member functions
 private:

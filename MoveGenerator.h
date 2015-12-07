@@ -85,6 +85,16 @@ private:
 	void generateKingWhiteCastlingCheckingMoves(Square from);
 	void generateKingBlackCastlingCheckingMoves(Square from);
 
+	void generateWhiteDiscoveredCheckingMoves();
+	void generateBlackDiscoveredCheckingMoves();
+	void generateDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generatePawnDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generateKnightDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generateRookDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generateBishopDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generateQueenDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generateKingDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKingMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);

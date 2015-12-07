@@ -93,6 +93,10 @@ public:
 
 	Bitboard getSquaresBetween(Square from, Square kingSq) const;
 
+	Square squareToSquareTranspose(Square sq) const;
+	Square squareToSquareA1h8(Square sq) const;
+	Square squareToSquareA8h1(Square sq) const;
+
 	int lsb(const Bitboard& board) const;
 
 //private member functions
@@ -102,10 +106,6 @@ private:
 
 	BitboardImpl(const BitboardImpl&); //non-copyable
 	BitboardImpl& operator=(const BitboardImpl&); //non-assignable
-
-	Square squareToSquareTranspose(Square sq) const;
-	Square squareToSquareA1h8(Square sq) const;
-	Square squareToSquareA8h1(Square sq) const;
 
 	void initSquareToBitboardTranspose();
 	void initSquareToBitboardA1h8();

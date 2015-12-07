@@ -620,6 +620,7 @@ void MoveGenerator::generateCheckingMoves()
 		}
 
 		generateKingWhiteCastlingCheckingMoves(_positionState->whiteKingPosition());
+		generateWhiteDiscoveredCheckingMoves();
 	}
 	else {
 		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_BLACK];
@@ -670,8 +671,8 @@ void MoveGenerator::generateCheckingMoves()
 		}
 
 		generateKingBlackCastlingCheckingMoves(_positionState->blackKingPosition());
+		generateBlackDiscoveredCheckingMoves();
 	}
-	//TODO: Generate discovered check moves
 }
 
 // Generates all pawn direct checking moves from square from 
@@ -712,7 +713,7 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 // Generates all knight direct checking moves from square from
 void MoveGenerator::generateKnightDirectCheckingMoves(Square from)
 {
-	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[KNIGHT_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[KNIGHT_BLACK] & ~_positionState->whitePieces());
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[KNIGHT_WHITE] & ~_positionState->occupiedSquares()) : (_positionState->getDirectCheck()[KNIGHT_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -724,7 +725,7 @@ void MoveGenerator::generateKnightDirectCheckingMoves(Square from)
 // Generate all rook direct checking moves from square from
 void MoveGenerator::generateRookDirectCheckingMoves(Square from)
 {
-	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[ROOK_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[ROOK_BLACK] & ~_positionState->whitePieces());
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[ROOK_WHITE] & ~_positionState->occupiedSquares()) : (_positionState->getDirectCheck()[ROOK_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -736,7 +737,7 @@ void MoveGenerator::generateRookDirectCheckingMoves(Square from)
 // Generate all bishop direct checking moves from square from
 void MoveGenerator::generateBishopDirectCheckingMoves(Square from)
 {
-	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[BISHOP_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[BISHOP_BLACK] & ~_positionState->whitePieces());
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[BISHOP_WHITE] & ~_positionState->occupiedSquares()) : (_positionState->getDirectCheck()[BISHOP_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -748,7 +749,7 @@ void MoveGenerator::generateBishopDirectCheckingMoves(Square from)
 // Generate all queen direct checking moves from square from
 void MoveGenerator::generateQueenDirectCheckingMoves(Square from)
 {
-	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[QUEEN_WHITE] & ~_positionState->blackPieces()) : (_positionState->getDirectCheck()[QUEEN_BLACK] & ~_positionState->whitePieces());
+	Bitboard directCheckPos = _positionState->whiteToPlay() ? (_positionState->getDirectCheck()[QUEEN_WHITE] & ~_positionState->occupiedSquares()) : (_positionState->getDirectCheck()[QUEEN_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -816,6 +817,340 @@ void MoveGenerator::generateKingBlackCastlingCheckingMoves(Square from)
 				}
 			}
 		}
+	}
+}
+
+void MoveGenerator::generateWhiteDiscoveredCheckingMoves()
+{
+	if (_positionState->rankDiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->rankDiscCheck().smallPinPos & _positionState->whitePieces();
+		if (movingPiece) {
+			Square from = (Square) _bitboardImpl->lsb(movingPiece);
+			generateDiscoveredCheckingMoves(from, _positionState->rankDiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->rankDiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->rankDiscCheck().bigPinPos & _positionState->whitePieces();
+		if (movingPiece) {
+			Square from = (Square) _bitboardImpl->lsb(movingPiece);
+			generateDiscoveredCheckingMoves(from, _positionState->rankDiscCheck().bigSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->fileDiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->fileDiscCheck().smallPinPos & _positionState->whitePiecesTranspose();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareTranspose((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->fileDiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->fileDiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->fileDiscCheck().bigPinPos & _positionState->whitePiecesTranspose();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareTranspose((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->fileDiscCheck().bigSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA1h8DiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA1h8DiscCheck().smallPinPos & _positionState->whitePiecesDiagA1h8();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA1h8((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA1h8DiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA1h8DiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA1h8DiscCheck().bigPinPos & _positionState->whitePiecesDiagA1h8();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA1h8((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA1h8DiscCheck().bigSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA8h1DiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA8h1DiscCheck().smallPinPos & _positionState->whitePiecesDiagA8h1();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA8h1((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA8h1DiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA8h1DiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA8h1DiscCheck().bigPinPos & _positionState->whitePiecesDiagA8h1();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA8h1((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA8h1DiscCheck().bigSlidingPiecePos);
+		}
+	}
+}
+
+void MoveGenerator::generateBlackDiscoveredCheckingMoves()
+{
+	if (_positionState->rankDiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->rankDiscCheck().smallPinPos & _positionState->blackPieces();
+		if (movingPiece) {
+			Square from = (Square) _bitboardImpl->lsb(movingPiece);
+			generateDiscoveredCheckingMoves(from, _positionState->rankDiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->rankDiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->rankDiscCheck().bigPinPos & _positionState->blackPieces();
+		if (movingPiece) {
+			Square from = (Square) _bitboardImpl->lsb(movingPiece);
+			generateDiscoveredCheckingMoves(from, _positionState->rankDiscCheck().bigSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->fileDiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->fileDiscCheck().smallPinPos & _positionState->blackPiecesTranspose();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareTranspose((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->fileDiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->fileDiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->fileDiscCheck().bigPinPos & _positionState->blackPiecesTranspose();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareTranspose((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->fileDiscCheck().bigSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA1h8DiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA1h8DiscCheck().smallPinPos & _positionState->blackPiecesDiagA1h8();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA1h8((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA1h8DiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA1h8DiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA1h8DiscCheck().bigPinPos & _positionState->blackPiecesDiagA1h8();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA1h8((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA1h8DiscCheck().bigSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA8h1DiscCheck().smallSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA8h1DiscCheck().smallPinPos & _positionState->blackPiecesDiagA8h1();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA8h1((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA8h1DiscCheck().smallSlidingPiecePos);
+		}
+	}
+
+	if (_positionState->diagA8h1DiscCheck().bigSlidingPiecePos != INVALID_SQUARE) {
+		Bitboard movingPiece = _positionState->diagA8h1DiscCheck().bigPinPos & _positionState->blackPiecesDiagA8h1();
+		if (movingPiece) {
+			Square from = _bitboardImpl->squareToSquareA8h1((Square) _bitboardImpl->lsb(movingPiece));
+			generateDiscoveredCheckingMoves(from, _positionState->diagA8h1DiscCheck().bigSlidingPiecePos);
+		}
+	}
+}
+
+void MoveGenerator::generateDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay()) {
+		switch (_positionState->getBoard()[from / 8][from % 8]) {
+			case PAWN_WHITE:
+				generatePawnDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case KNIGHT_WHITE:
+				generateKnightDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case BISHOP_WHITE:
+				generateBishopDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case ROOK_WHITE:
+				generateRookDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case QUEEN_WHITE:
+				generateQueenDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case KING_WHITE:
+				generateKingDiscoveredCheckingMoves(from, slidingPiecePos);
+			default:
+				assert(false);
+		}
+	}
+	else {
+		switch (_positionState->getBoard()[from / 8][from % 8]) {
+			case PAWN_BLACK:
+				generatePawnDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case KNIGHT_BLACK:
+				generateKnightDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case BISHOP_BLACK:
+				generateBishopDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case ROOK_BLACK:
+				generateRookDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case QUEEN_BLACK:
+				generateQueenDiscoveredCheckingMoves(from, slidingPiecePos);
+				break;
+			case KING_BLACK:
+				generateKingDiscoveredCheckingMoves(from, slidingPiecePos);
+			default:
+				assert(false);
+		}
+	}
+}
+
+// Generates all pawn discovered checking moves from square from
+// when sliding piece is at the position slidingPiecePos; square from 
+// should be on the ray from slidingPiecePos to opponent king position
+void MoveGenerator::generatePawnDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay() && from < A7) {
+		// Promotion moves are not considered here, because they were already considered in generatePawnWhiteCapturingMoves
+		Bitboard moveBoard = _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->blackKingPosition()) & ~_positionState->getDirectCheck()[PAWN_WHITE];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			if (to - from == 16) {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+			}
+			else {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			}
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+	else if (!_positionState->whiteToPlay() && from > H2) {
+		// Promotion moves are not considered here, because they were already considered in generatePawnBlackCapturingMoves
+		Bitboard moveBoard = _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->whiteKingPosition()) & ~_positionState->getDirectCheck()[PAWN_BLACK];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			if (from - to == 16) {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+			}
+			else {
+				(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			}
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+}
+
+// Generates all knight discovered checking moves from square from
+// when sliding piece is at the position slidingPiecePos; square from 
+// should be on the ray from slidingPiecePos to opponent king position
+void MoveGenerator::generateKnightDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->blackKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[KNIGHT_WHITE];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+	else {
+		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->whiteKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[KNIGHT_BLACK];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+}
+
+// Generates all rook discovered checking moves from square from
+// when sliding piece is at the position slidingPiecePos; square from 
+// should be on the ray from slidingPiecePos to opponent king position
+void MoveGenerator::generateRookDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->blackKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[ROOK_WHITE];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+	else {
+		Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->whiteKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[ROOK_BLACK];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+}
+
+// Generates all bishop discovered checking moves from square from
+// when sliding piece is at the position slidingPiecePos; square from 
+// should be on the ray from slidingPiecePos to opponent king position
+void MoveGenerator::generateBishopDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->blackKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[BISHOP_WHITE];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+	else {
+		Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->whiteKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[BISHOP_BLACK];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+}
+
+// Generates all queen discovered checking moves from square from
+// when sliding piece is at the position slidingPiecePos; square from 
+// should be on the ray from slidingPiecePos to opponent king position
+void MoveGenerator::generateQueenDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->blackKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[QUEEN_WHITE];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+	else {
+		Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->whiteKingPosition()) & ~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[QUEEN_BLACK];
+		while (moveBoard) {
+			Square to = (Square) _bitboardImpl->lsb(moveBoard);
+			(*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			moveBoard &= (moveBoard - 1);
+		}
+	}
+}
+
+// Generates all king discovered checking moves from square from
+// when sliding piece is at the position slidingPiecePos; square from
+// should be on the ray from slidingPiecePos to opponent king position
+void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from, Square slidingPiecePos)
+{
+	if (_positionState->whiteToPlay()) {
+		Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->blackKingPosition()) & ~_positionState->occupiedSquares() & ~_bitboardImpl->kingAttackFrom(_positionState->blackKingPosition());
+	   while (moveBoard) {
+		   Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		   (*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		   moveBoard &= (moveBoard - 1);
+	   }
+	}
+	else {
+		Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) & ~_bitboardImpl->getSquaresBetween(slidingPiecePos, _positionState->whiteKingPosition()) & ~_positionState->occupiedSquares() & ~_bitboardImpl->kingAttackFrom(_positionState->whiteKingPosition());
+	   while (moveBoard) {
+		   Square to = (Square) _bitboardImpl->lsb(moveBoard);
+		   (*_availableMoves)[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		   moveBoard &= (moveBoard - 1);
+	   }
 	}
 }
 
