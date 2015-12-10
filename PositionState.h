@@ -285,7 +285,7 @@ private:
 
 	// Complete info of the positions where piece can
     // can be located to open discovered check and 
-	// appropirate sliding piece positions
+	// appropriate sliding piece positions
 	StatePinInfo _stateDiscCheckInfo;
 
 	// Complete info of the positions where pinned pieces 

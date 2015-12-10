@@ -92,8 +92,16 @@ private:
 	void generateKnightDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
 	void generateRookDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
 	void generateBishopDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
-	void generateQueenDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
 	void generateKingDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+
+	void generatePawnWhiteQuiteMoves(Square from);
+	void generatePawnBlackQuiteMoves(Square from);
+	void generateKnightQuiteMoves(Square from);
+	void generateRookQuiteMoves(Square from);
+	void generateBishopQuiteMoves(Square from);
+	void generateQueenQuiteMoves(Square from);
+	void generateKingWhiteQuiteMoves(Square from);
+	void generateKingBlackQuiteMoves(Square from);
 
 	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
 	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
@@ -109,6 +117,7 @@ private:
 	MovesArray* _availableMoves;
 	unsigned int _currentMovePos;
 	unsigned int _availableMovesSize;
+	Bitboard _discCheckPiecePos;
 
 	MoveGenerationStage _nextStage;
 	SearchType _searchType;
