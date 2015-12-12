@@ -14,7 +14,7 @@ enum MoveGenerationStage {
 enum SearchType {
 	USUAL_SEARCH = 0,
 	EVASION_SEARCH,
-	QUITE_SEARCH
+	QUIESCENCE_SEARCH
 };
 
 const unsigned int MAX_AVAILABLE_MOVES = 500;
@@ -46,11 +46,22 @@ private:
 
 	void generateMovesForUsualSearch();
 	void generateMovesForEvasionSearch();
-	void generateMovesForQuiteSearch();
+	void generateMovesForQuiescenceSearch();
 
+	// Generates all capturing and promotion moves
 	void generateCapturingMoves();
+
+	// Generates all checking moves, which are non-capturing or
+	// non-promotion moves
 	void generateCheckingMoves();
+
+	// Generates only evasion moves, therefore
+	// should be called only if moving side king
+	// is under attack
 	void generateEvasionMoves();
+
+	// Generates all the moves which are non-promotion,
+	// non-capturing
 	void generateQuiteMoves();
 
 	void sortCapturingMoves();
@@ -82,8 +93,6 @@ private:
 	void generateRookDirectCheckingMoves(Square from);
 	void generateBishopDirectCheckingMoves(Square from);
 	void generateQueenDirectCheckingMoves(Square from);
-	void generateKingWhiteCastlingCheckingMoves(Square from);
-	void generateKingBlackCastlingCheckingMoves(Square from);
 
 	void generateWhiteDiscoveredCheckingMoves();
 	void generateBlackDiscoveredCheckingMoves();
@@ -117,7 +126,6 @@ private:
 	MovesArray* _availableMoves;
 	unsigned int _currentMovePos;
 	unsigned int _availableMovesSize;
-	Bitboard _discCheckPiecePos;
 
 	MoveGenerationStage _nextStage;
 	SearchType _searchType;
