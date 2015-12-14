@@ -6,23 +6,9 @@
 
 namespace pismo
 {
-enum MoveGenerationStage {
-	CAPTURING_MOVES = 0, CHECKING_MOVES,
-   	QUITE_MOVES, EVASION_MOVES, SEARCH_FINISHED
-}; //TODO: Later add KILLER_MOVES
-
-enum SearchType {
-	USUAL_SEARCH = 0,
-	EVASION_SEARCH,
-	QUIESCENCE_SEARCH
-};
-
-const unsigned int MAX_AVAILABLE_MOVES = 500;
-
 class PositionState;
 class PossibleMoves;
 class BitboardImpl;
-struct MovesArray;
 
 class MoveGenerator
 {
@@ -30,11 +16,8 @@ public:
 	static MoveGenerator* instance();
 	void destroy();
 
-	void prepareMoveGeneration(const PositionState& pos, SearchType type, const MoveInfo& transTableMove, MovesArray& generatedMoves);
-	MoveInfo getTopMove();
-
-	void generateWhiteMoves(const PositionState& pos, MovesArray& generatedMoves);
-	void generateBlackMoves(const PositionState& pos, MovesArray& generatedMoves);
+	void prepareMoveGeneration(SearchType type, const MoveInfo& transTableMove, uint16_t depth);
+	MoveInfo getTopMove(uint16_t depth);
 
 private:
 	MoveGenerator();
@@ -112,21 +95,11 @@ private:
 	void generateKingWhiteQuiteMoves(Square from);
 	void generateKingBlackQuiteMoves(Square from);
 
-	void generatePawnMoves(Square from, Color clr, const PositionState& pos, MovesArray& generatedMoves);
-	void generateKnightMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
-	void generateKingMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
-	void generateRankMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
-	void generateFileMoves(Square from, const PositionState& pos, MovesArray& generatedMoves);
-	void generateDiagA1h8Moves(Square from, const PositionState& pos, MovesArray& generatedMoves);
-	void generateDiagA8h1Moves(Square from, const PositionState& pos, MovesArray& generatedMoves);
-
-	const PossibleMoves* _possibleMoves;
 	const BitboardImpl* _bitboardImpl;
 	const PositionState* _positionState;
-	MovesArray* _availableMoves;
+	MoveInfo* _availableMoves;
 	unsigned int _currentMovePos;
 	unsigned int _availableMovesSize;
-
 	MoveGenerationStage _nextStage;
 	SearchType _searchType;
 	MoveInfo _cachedMove;

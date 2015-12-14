@@ -1,48 +1,28 @@
 #include "MemPool.h"
+#include "MoveGenerator.h"
 
 namespace pismo
 {
-MemPool* MemPool::_instance = 0;
 
-MemPool* MemPool::instance()
-{
-	if (!_instance) {
-		_instance = new MemPool();
-	}
+MoveGenInfo* g_moveGenInfo[MAX_SEARCH_DEPTH];
 
-	return _instance;
-}
-
-void MemPool::destroy()
-{
-	delete _instance;
-	_instance = 0;
-}
-
-MemPool::MemPool():
-depthArray(0)
-{
-}
-
-MemPool::~MemPool()
+void MemPool::initMoveGenInfo() 
 {
 	for (uint16_t i = 0; i < MAX_SEARCH_DEPTH; ++i) {
-		delete depthArray[i];
+		g_moveGenInfo[i] = new MoveGenInfo();
 	}
-	delete[] depthArray;
 }
 
-void MemPool::initMovesArray()
+void MemPool::destroyMoveGenInfo()
 {
-	depthArray = new MovesArray*[MAX_SEARCH_DEPTH];
 	for (uint16_t i = 0; i < MAX_SEARCH_DEPTH; ++i) {
-		depthArray[i] = new MovesArray();
+		delete g_moveGenInfo[i];
 	}
 }
 
-MovesArray& MemPool::getMovesArray(uint16_t depth)
+MoveGenInfo& MemPool::getMoveGenInfo(uint16_t depth)
 {
-	return *depthArray[depth];
+	return g_moveGenInfo[i];
 }
 
 }

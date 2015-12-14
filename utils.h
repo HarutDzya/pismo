@@ -38,7 +38,18 @@ enum Square {
 enum MoveType {
 	NORMAL_MOVE = 0, CAPTURE_MOVE, PROMOTION_MOVE, CASTLING_MOVE,
         EN_PASSANT_MOVE, EN_PASSANT_CAPTURE
-};	
+};
+
+enum MoveGenerationStage {
+	CAPTURING_MOVES = 0, CHECKING_MOVES,
+	QUITE_MOVES, EVASION_MOVES, SEARCH_FINISHED
+}; //TODO: Later add KILLER_MOVES
+
+enum SearchType {
+	USUAL_SEARCH = 0,
+	EVASION_SEARCH,
+	QUIESCENCE_SEARCH
+};
 
 struct MoveInfo {
 	Square from;
