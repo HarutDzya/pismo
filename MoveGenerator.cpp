@@ -26,48 +26,44 @@ void MoveGenerator::destroy()
 }
 
 MoveGenerator::MoveGenerator() :
-	_bitboardImpl(BitboardImpl::instance()),
-	_positionState(PositionState::instance())
+	_bitboardImpl(BitboardImpl::instance())
 {
 
 }
 
 void MoveGenerator::prepareMoveGeneration(SearchType type, const MoveInfo& transTableMove, uint16_t depth)	
 {
-	MoveGenInfo* genInfo = MemPool::getMoveGenInfo(depth);
-	genInfo->_searchType = type;
-	genInfo->_cachedMove = transTableMove; 
-	switch (genInfo->_searchType) {
+	_moveGenInfo = MemPool::getMoveGenInfo(depth);
+	_moveGenInfo->_searchType = type;
+	_moveGenInfo->_cachedMove = transTableMove; 
+	switch (_moveGenInfo->_searchType) {
 		case USUAL_SEARCH:
-			genInfo->_nextStage = CAPTURING_MOVES;
+			_moveGenInfo->_nextStage = CAPTURING_MOVES;
 			break;
 		case EVASION_SEARCH:
-			genInfo->_nextStage = EVASION_MOVES;
+			_moveGenInfo->_nextStage = EVASION_MOVES;
 			break;
 		case QUIESCENCE_SEARCH:
-			genInfo->_nextStage = CAPTURING_MOVES;
+			_moveGenInfo->_nextStage = CAPTURING_MOVES;
 			break;
 		default:
 			assert(false);
 	}
-	genInfo->_currentMovePos = 0;
-	genInfo->_availableMovesSize = 0;
+	_moveGenInfo->_currentMovePos = 0;
+	_moveGenInfo->_availableMovesSize = 0;
 }
 
-MoveInfo MoveGenerator::getTopMove(uint16_t depth)
+MoveInfo MoveGenerator::getTopMove(const PositionState& pos, uint16_t depth)
 {
-	MoveGenInfo* genInfo = MemPool::getMoveGenInfo(depth);
-	_availableMoves = genInfo->_availableMoves;
-	_currentMovePos = genInfo->_currentMovePos;
-	_availableMovesSize = genInfo->_availableMovesSize;
-	_nextStage = genInfo->_nextStage;
-	_searchType = genInfo->_searchType;
-	_cachedMove = genInfo->_cachedMove;
-	if (_currentMovePos < _availableMovesSize && equal(_availableMoves[_currentMovePos], _cachedMove)) {
-		++_currentMovePos;
+	_moveGenInfo = MemPool::getMoveGenInfo(depth);
+	assert(_moveGenInfo);
+	_positionState = &pos;
+	if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize && 
+			equal((_moveGenInfo->_availableMoves)[_moveGenInfo->_currentMovePos], _moveGenInfo->_cachedMove)) {
+		++(_moveGenInfo->_currentMovePos);
 	}
-	if (_currentMovePos == _availableMovesSize) {
-		switch(_searchType) {
+	if (_moveGenInfo->_currentMovePos == _moveGenInfo->_availableMovesSize) {
+		switch(_moveGenInfo->_searchType) {
 			case USUAL_SEARCH:
 				generateMovesForUsualSearch();
 				break;
@@ -80,14 +76,9 @@ MoveInfo MoveGenerator::getTopMove(uint16_t depth)
 		}
 	}
 
-	genInfo->_availableMovesSize = _availableMovesSize;
-	genInfo->_nextStage = _nextStage;
-
-	if ( _currentMovePos < _availableMovesSize) {
-		genInfo->_currentMovePos = _currentMovePos + 1;
-		return _availableMoves[_currentMovePos++];
+	if ( _moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
+		return (_moveGenInfo->_availableMoves)[(_moveGenInfo->_currentMovePos)++];
 	}
-	genInfo->_currentMovePos = _currentMovePos;
 
 	return MoveInfo();
 }
@@ -99,19 +90,23 @@ bool MoveGenerator::equal(const MoveInfo& first, const MoveInfo& second) const
 
 void MoveGenerator::generateMovesForUsualSearch()
 {
-	_currentMovePos = 0;
-	_availableMovesSize = 0;
-	switch(_nextStage) {
+	_moveGenInfo->_currentMovePos = 0;
+	_moveGenInfo->_availableMovesSize = 0;
+	switch(_moveGenInfo->_nextStage) {
 		case CAPTURING_MOVES:
 			generateCapturingMoves();
 			sortCapturingMoves();
-			_nextStage = QUITE_MOVES;
-			break;
+			_moveGenInfo->_nextStage = QUITE_MOVES;
+			if (_moveGenInfo->_availableMovesSize != 0) {
+				break;
+			}
 		case QUITE_MOVES:
 			generateQuiteMoves();
 			sortQuiteMoves();
-			_nextStage = SEARCH_FINISHED;
-			break;
+			_moveGenInfo->_nextStage = SEARCH_FINISHED;
+			if (_moveGenInfo->_availableMovesSize != 0) {
+				break;
+			}
 		case SEARCH_FINISHED:
 		default:
 			break;
@@ -120,14 +115,16 @@ void MoveGenerator::generateMovesForUsualSearch()
 
 void MoveGenerator::generateMovesForEvasionSearch()
 {
-	_currentMovePos = 0;
-	_availableMovesSize = 0;
-	switch(_nextStage) {
+	_moveGenInfo->_currentMovePos = 0;
+	_moveGenInfo->_availableMovesSize = 0;
+	switch(_moveGenInfo->_nextStage) {
 		case EVASION_MOVES:
 			generateEvasionMoves();
 			sortEvasionMoves();
-			_nextStage = SEARCH_FINISHED;
-			break;
+			_moveGenInfo->_nextStage = SEARCH_FINISHED;
+			if (_moveGenInfo->_availableMovesSize != 0) {
+				break;
+			}
 		case SEARCH_FINISHED:
 		default:
 			break;
@@ -136,19 +133,23 @@ void MoveGenerator::generateMovesForEvasionSearch()
 
 void MoveGenerator::generateMovesForQuiescenceSearch()
 {
-	_currentMovePos = 0;
-	_availableMovesSize = 0;	
-	switch(_nextStage) {
+	_moveGenInfo->_currentMovePos = 0;
+	_moveGenInfo->_availableMovesSize = 0;	
+	switch(_moveGenInfo->_nextStage) {
 		case CAPTURING_MOVES:
 			generateCapturingMoves();
 			sortCapturingMoves();
-			_nextStage = CHECKING_MOVES;
-			break;
+			_moveGenInfo->_nextStage = CHECKING_MOVES;
+			if (_moveGenInfo->_availableMovesSize != 0) {
+				break;
+			}
 		case CHECKING_MOVES:
 			generateCheckingMoves();
 			sortCheckingMoves();
-			_nextStage = SEARCH_FINISHED;
-			break;
+			_moveGenInfo->_nextStage = SEARCH_FINISHED;
+			if (_moveGenInfo->_availableMovesSize != 0) {
+				break;
+			}
 		case SEARCH_FINISHED:
 		default:
 			break;
@@ -188,10 +189,11 @@ void MoveGenerator::generateKingEvasionMoves()
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (squareToBitboard[to] & _positionState->blackPieces()) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+				//TODO: Make the assignements of the components of MoveInfo in lieu, rather than making temporary object
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 			moveBoard &= (moveBoard - 1);
 		}
@@ -202,10 +204,10 @@ void MoveGenerator::generateKingEvasionMoves()
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (squareToBitboard[to] & _positionState->whitePieces()) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 			moveBoard &= (moveBoard - 1);
 		}
@@ -234,13 +236,13 @@ void MoveGenerator::generatePawnsWhiteEvasionMoves(Square to, MoveType type)
 		while (attackingPawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(attackingPawnsPos);
 			if (to >= A8) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 			}
 			attackingPawnsPos &= (attackingPawnsPos - 1);
 		}
@@ -250,16 +252,16 @@ void MoveGenerator::generatePawnsWhiteEvasionMoves(Square to, MoveType type)
 		if (movingPawnPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingPawnPos);
 			if (to >= A8) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
 			}
 			else if (to - from == 16) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 		}
 	}
@@ -269,7 +271,7 @@ void MoveGenerator::generatePawnsWhiteEvasionMoves(Square to, MoveType type)
 		Bitboard enPassantCapturePawnsPos = _bitboardImpl->pawnsWhiteAttackTo(enPassantTarget, pawnsWhitePos);
 		while (enPassantCapturePawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(enPassantCapturePawnsPos);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
 			enPassantCapturePawnsPos &= (enPassantCapturePawnsPos - 1);
 		}
 	}
@@ -285,13 +287,13 @@ void MoveGenerator::generatePawnsBlackEvasionMoves(Square to, MoveType type)
 		while (attackingPawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(attackingPawnsPos);
 			if (to <= H1) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 			}
 			attackingPawnsPos &= (attackingPawnsPos - 1);
 		}
@@ -301,16 +303,16 @@ void MoveGenerator::generatePawnsBlackEvasionMoves(Square to, MoveType type)
 		if (movingPawnPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingPawnPos);
 			if (to <= H1) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
 			}
 			else if (from - to == 16) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 		}
 	}
@@ -320,7 +322,7 @@ void MoveGenerator::generatePawnsBlackEvasionMoves(Square to, MoveType type)
 		Bitboard enPassantCapturePawnsPos = _bitboardImpl->pawnsBlackAttackTo(enPassantTarget, pawnsBlackPos);
 		while (enPassantCapturePawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(enPassantCapturePawnsPos);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
 			enPassantCapturePawnsPos &= (enPassantCapturePawnsPos - 1);
 		}
 	}
@@ -335,7 +337,7 @@ void MoveGenerator::generateKnightsEvasionMoves(Square to, MoveType type)
 	Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, knightsPos);
 	while (movingKnightsPos) {
 		Square from = (Square) _bitboardImpl->lsb(movingKnightsPos);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, type);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type);
 		movingKnightsPos &= (movingKnightsPos - 1);
 	}
 }
@@ -349,7 +351,7 @@ void MoveGenerator::generateBishopsEvasionMoves(Square to, MoveType type)
 	Bitboard movingBishopsPos = _bitboardImpl->bishopsAttackTo(to,_positionState->occupiedSquares(), bishopsPos);
 	while (movingBishopsPos) {
 		Square from = (Square) _bitboardImpl->lsb(movingBishopsPos);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, type);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type);
 		movingBishopsPos &= (movingBishopsPos - 1);
 	}
 }
@@ -363,7 +365,7 @@ void MoveGenerator::generateRooksEvasionMoves(Square to, MoveType type)
 	Bitboard movingRooksPos = _bitboardImpl->rooksAttackTo(to,_positionState->occupiedSquares(), rooksPos);
 	while (movingRooksPos) {
 		Square from = (Square) _bitboardImpl->lsb(movingRooksPos);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, type);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type);
 		movingRooksPos &= (movingRooksPos - 1);
 	}
 }
@@ -377,7 +379,7 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 	Bitboard movingQueensPos = _bitboardImpl->queensAttackTo(to,_positionState->occupiedSquares(), queensPos);
 	while (movingQueensPos) {
 		Square from = (Square) _bitboardImpl->lsb(movingQueensPos);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, type);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type);
 		movingQueensPos &= (movingQueensPos - 1);
 	}
 }
@@ -472,10 +474,10 @@ void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 		   	_bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
 		while(promotionBoard) {
 			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
 			promotionBoard &= (promotionBoard - 1);
 		}
 	}
@@ -483,13 +485,13 @@ void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->pawnWhiteAttackFrom(from) & opponentPieces;
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 
 		Square enPassantTarget = _positionState->enPassantTarget();
 		if (enPassantTarget != INVALID_SQUARE && (_bitboardImpl->pawnWhiteAttackFrom(from) & squareToBitboard[enPassantTarget])) {
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
 		}
 	}
 }
@@ -503,10 +505,10 @@ void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 		   	_bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
 		while(promotionBoard) {
 			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
 			promotionBoard &= (promotionBoard - 1);
 		}
 	}
@@ -514,13 +516,13 @@ void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->pawnBlackAttackFrom(from) & opponentPieces;
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 
 		Square enPassantTarget = _positionState->enPassantTarget();
 		if (enPassantTarget != INVALID_SQUARE && (_bitboardImpl->pawnBlackAttackFrom(from) & squareToBitboard[enPassantTarget])) {
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, enPassantTarget, ETY_SQUARE, EN_PASSANT_CAPTURE);
 		}
 	}
 }
@@ -532,7 +534,7 @@ void MoveGenerator::generateKnightCapturingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -544,7 +546,7 @@ void MoveGenerator::generateRookCapturingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -556,7 +558,7 @@ void MoveGenerator::generateBishopCapturingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -568,7 +570,7 @@ void MoveGenerator::generateQueenCapturingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -580,7 +582,7 @@ void MoveGenerator::generateKingCapturingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) & opponentPieces;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -704,10 +706,10 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 			if (moveBoard) {
 				Square to = (Square) _bitboardImpl->lsb(moveBoard);
 				if (to - from == 16) {
-					_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+					(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 				}
 				else {
-					_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+					(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 				}
 			}
 		}
@@ -720,10 +722,10 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 			if (moveBoard) {
 				Square to = (Square) _bitboardImpl->lsb(moveBoard);
 				if (from - to == 16) {
-					_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+					(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 				}
 				else {
-					_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+					(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 				}
 			}
 		}
@@ -741,7 +743,7 @@ void MoveGenerator::generateKnightDirectCheckingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -757,7 +759,7 @@ void MoveGenerator::generateRookDirectCheckingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -773,7 +775,7 @@ void MoveGenerator::generateBishopDirectCheckingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -789,7 +791,7 @@ void MoveGenerator::generateQueenDirectCheckingMoves(Square from)
 	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 }
@@ -972,10 +974,10 @@ void MoveGenerator::generatePawnDiscoveredCheckingMoves(Square from, Square slid
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (to - from == 16) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 			moveBoard &= (moveBoard - 1);
 		}
@@ -990,10 +992,10 @@ void MoveGenerator::generatePawnDiscoveredCheckingMoves(Square from, Square slid
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (from - to == 16) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 			moveBoard &= (moveBoard - 1);
 		}
@@ -1013,7 +1015,7 @@ void MoveGenerator::generateKnightDiscoveredCheckingMoves(Square from, Square sl
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1025,7 +1027,7 @@ void MoveGenerator::generateKnightDiscoveredCheckingMoves(Square from, Square sl
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1044,7 +1046,7 @@ void MoveGenerator::generateRookDiscoveredCheckingMoves(Square from, Square slid
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1056,7 +1058,7 @@ void MoveGenerator::generateRookDiscoveredCheckingMoves(Square from, Square slid
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1075,7 +1077,7 @@ void MoveGenerator::generateBishopDiscoveredCheckingMoves(Square from, Square sl
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1087,7 +1089,7 @@ void MoveGenerator::generateBishopDiscoveredCheckingMoves(Square from, Square sl
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1104,7 +1106,7 @@ void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from, Square slid
 		   	~_positionState->occupiedSquares() & ~_bitboardImpl->kingAttackFrom(_positionState->blackKingPosition());
 	   while (moveBoard) {
 		   Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		   _availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		   (_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		   moveBoard &= (moveBoard - 1);
 	   }
 	}
@@ -1114,7 +1116,7 @@ void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from, Square slid
 		   	~_positionState->occupiedSquares() & ~_bitboardImpl->kingAttackFrom(_positionState->whiteKingPosition());
 	   while (moveBoard) {
 		   Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		   _availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		   (_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		   moveBoard &= (moveBoard - 1);
 	   }
 	}
@@ -1212,10 +1214,10 @@ void MoveGenerator::generatePawnWhiteQuiteMoves(Square from)
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (to - from == 16) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 			moveBoard &= (moveBoard - 1);
 		}
@@ -1232,10 +1234,10 @@ void MoveGenerator::generatePawnBlackQuiteMoves(Square from)
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (from - to == 16) {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, EN_PASSANT_MOVE);
 			}
 			else {
-				_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			}
 			moveBoard &= (moveBoard - 1);
 		}
@@ -1250,7 +1252,7 @@ void MoveGenerator::generateKnightQuiteMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & ~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1258,7 +1260,7 @@ void MoveGenerator::generateKnightQuiteMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & ~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1273,7 +1275,7 @@ void MoveGenerator::generateRookQuiteMoves(Square from)
 		   	~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1282,7 +1284,7 @@ void MoveGenerator::generateRookQuiteMoves(Square from)
 		   	~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1297,7 +1299,7 @@ void MoveGenerator::generateBishopQuiteMoves(Square from)
 		   	~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1306,7 +1308,7 @@ void MoveGenerator::generateBishopQuiteMoves(Square from)
 		   	~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1321,7 +1323,7 @@ void MoveGenerator::generateQueenQuiteMoves(Square from)
 		   	~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1330,7 +1332,7 @@ void MoveGenerator::generateQueenQuiteMoves(Square from)
 		   	~_positionState->occupiedSquares();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 			moveBoard &= (moveBoard - 1);
 		}
 	}
@@ -1344,16 +1346,16 @@ void MoveGenerator::generateKingWhiteQuiteMoves(Square from)
 	   	~_bitboardImpl->kingAttackFrom(_positionState->blackKingPosition());
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 
 	if (from == E1) {
 		if (_positionState->whiteLeftCastling() && !(WHITE_LEFT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, C1, ETY_SQUARE, CASTLING_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, C1, ETY_SQUARE, CASTLING_MOVE);
 		}
 		if (_positionState->whiteRightCastling() && !(WHITE_RIGHT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, G1, ETY_SQUARE, CASTLING_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, G1, ETY_SQUARE, CASTLING_MOVE);
 		}
 	}
 }
@@ -1366,16 +1368,16 @@ void MoveGenerator::generateKingBlackQuiteMoves(Square from)
 	   	~_bitboardImpl->kingAttackFrom(_positionState->whiteKingPosition());
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
-		_availableMoves[_availableMovesSize++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
+		(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, NORMAL_MOVE);
 		moveBoard &= (moveBoard - 1);
 	}
 
 	if (from == E8) {
 		if (_positionState->blackLeftCastling() && !(BLACK_LEFT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, C8, ETY_SQUARE, CASTLING_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, C8, ETY_SQUARE, CASTLING_MOVE);
 		}
 		if (_positionState->blackRightCastling() && !(BLACK_RIGHT_CASTLING_ETY_SQUARES & _positionState->occupiedSquares())) {
-			_availableMoves[_availableMovesSize++] = MoveInfo(from, G8, ETY_SQUARE, CASTLING_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, G8, ETY_SQUARE, CASTLING_MOVE);
 		}
 	}
 }

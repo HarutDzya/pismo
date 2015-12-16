@@ -20,9 +20,9 @@ void MemPool::destroyMoveGenInfo()
 	}
 }
 
-MoveGenInfo& MemPool::getMoveGenInfo(uint16_t depth)
+MoveGenInfo* MemPool::getMoveGenInfo(uint16_t depth)
 {
-	return g_moveGenInfo[i];
+	return g_moveGenInfo[depth];
 }
 
 }

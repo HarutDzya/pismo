@@ -9,6 +9,7 @@ namespace pismo
 class PositionState;
 class PossibleMoves;
 class BitboardImpl;
+struct MoveGenInfo;
 
 class MoveGenerator
 {
@@ -17,7 +18,7 @@ public:
 	void destroy();
 
 	void prepareMoveGeneration(SearchType type, const MoveInfo& transTableMove, uint16_t depth);
-	MoveInfo getTopMove(uint16_t depth);
+	MoveInfo getTopMove(const PositionState& pos, uint16_t depth);
 
 private:
 	MoveGenerator();
@@ -97,12 +98,7 @@ private:
 
 	const BitboardImpl* _bitboardImpl;
 	const PositionState* _positionState;
-	MoveInfo* _availableMoves;
-	unsigned int _currentMovePos;
-	unsigned int _availableMovesSize;
-	MoveGenerationStage _nextStage;
-	SearchType _searchType;
-	MoveInfo _cachedMove;
+	MoveGenInfo* _moveGenInfo;
 };
 
 }

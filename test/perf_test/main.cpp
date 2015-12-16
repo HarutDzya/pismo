@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 		if (ifStream.is_open() && ofStream.is_open()) {
 			ofStream << "Output format: State\tElapsed_time\tActual_result\tExpected_result\tFEN\tDepth" << std::endl;  
 			std::string line;
-			pismo::MemPool::instance()->initMovesArray();
+			pismo::MemPool::initMoveGenInfo();
 			while(std::getline(ifStream, line)) {
 				std::string fen;
 				uint16_t depth;
@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
 		if (ofStream.is_open()) {
 			ofStream.close();
 		}
+		pismo::MemPool::destroyMoveGenInfo();
 	}
 }
 
