@@ -26,18 +26,6 @@ public:
 	void initPositionFEN(const std::string& fen);
 
 	/*
-	Checks all the rules of the game for legality of the move
-	even if it involves capture of the opponent piece
-	*/
-	bool moveIsLegal(const MoveInfo& move) const;
-
-	/*
-	Checks all the rules of the game for legality of the move
-	except the issue whther the king is under check after move
-	*/
-	bool moveIsPseudoLegal(const MoveInfo& move) const;
-	
-	/*
 	Makes a move if the move if legal according to the moveIsLegal
 	method
 	*/
@@ -49,13 +37,6 @@ public:
 	*/
 	void undoMove();
 
-	/* Checks to see whether the move checks opponent king
-	   by either direct check or discovered check.
-	   In order for this function to work the updateDirectCheckArray()
-	   and updateDiscoveredChecksInfo() should be invoked first.
-	*/
-	bool moveChecksOpponentKing(const MoveInfo& move) const;
-	
 	void updateDirectCheckArray();
 	void updateDiscoveredChecksInfo();
 
@@ -97,11 +78,6 @@ public:
 	 * and returns as a string
 	 */
 	const std::string getStateFEN() const;
-
-	/*
-	Prints possible moves from Square from on the board
-	*/
-	void printPossibleMoves(Square from) const;
 
 	ZobKey getZobKey() const {return _zobKey;}
 
@@ -158,24 +134,7 @@ private:
 	void initMoveCountFEN(const std::string& fen, unsigned int& charCount);
 	void updateCheckStatus();
 
-	bool moveIsCastling(const MoveInfo& move) const;
-	bool moveIsEnPassantCapture(const MoveInfo& move) const;
 	bool pieceIsSlidingPiece(Piece piece) const;
-
-	bool pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCapture) const;
-	bool knightMoveIsLegal(const MoveInfo& move) const;
-	bool bishopMoveIsLegal(const MoveInfo& move) const;
-	bool rookMoveIsLegal(const MoveInfo& move) const;
-	bool queenMoveIsLegal(const MoveInfo& move) const;
-	bool kingMoveIsLegal(const MoveInfo& move) const;
-	bool enPassantCaptureIsLegal(const MoveInfo& move) const;
-	bool castlingIsLegal(const MoveInfo& move) const;
-	bool castlingIsPseudoLegal(const MoveInfo& move) const;
-	
-	Bitboard squaresUnderAttack(Color attackedColor) const;
-
-	void makeLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const;
-	void undoLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const;
 
 	void makeNormalMove(const MoveInfo& move);
 	void makeCaptureMove(const MoveInfo& move);
@@ -224,6 +183,9 @@ private:
 		bool whiteRightCastling;
 		bool blackLeftCastling;
 		bool blackRightCastling;
+		bool isDoubleCheck;
+		Bitboard absolutePinsPos;
+
 	};
 
 	void undoNormalMove(const UndoMoveInfo& move);

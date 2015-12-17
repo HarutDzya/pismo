@@ -529,197 +529,6 @@ void PositionState::updateCheckStatus()
 	}
 }
 
-bool PositionState::moveIsPseudoLegal(const MoveInfo& move) const
-{
-	assert(move.from != move.to);
-	Piece pfrom = _board[move.from  / 8][move.from % 8];
-	if(pfrom == ETY_SQUARE) {
-		return false;
-	}
-	bool isEnPassantCapture;
-	if(_whiteToPlay) {
-		if((squareToBitboard[move.from] & _blackPieces) || (squareToBitboard[move.to] & _whitePieces)) {
-			return false;
-		}
-		else {
-			switch(pfrom) {
-				case PAWN_WHITE: 
-					return pawnMoveIsLegal(move, isEnPassantCapture);
-				case KNIGHT_WHITE:
-					return knightMoveIsLegal(move);
-				case BISHOP_WHITE:
-					return bishopMoveIsLegal(move);
-				case ROOK_WHITE:
-					return rookMoveIsLegal(move);
-				case QUEEN_WHITE:
-					return queenMoveIsLegal(move);
-				case KING_WHITE:
-					if (moveIsCastling(move)) {
-						return castlingIsPseudoLegal(move);
-					}
-					else { 
-						return kingMoveIsLegal(move);
-					}
-				default: 
-					assert(pfrom >= PAWN_WHITE && pfrom <= KING_WHITE);
-			}
-		}
-	}
-	else {
-		if((squareToBitboard[move.from] & _whitePieces) || (squareToBitboard[move.to] & _blackPieces)) {
-			return false;
-		}
-		else {
-			switch(pfrom) {
-				case PAWN_BLACK: 
-					return pawnMoveIsLegal(move, isEnPassantCapture);
-				case KNIGHT_BLACK: 
-					return knightMoveIsLegal(move);
-				case BISHOP_BLACK:
-					return bishopMoveIsLegal(move);
-				case ROOK_BLACK:
-					return rookMoveIsLegal(move);
-				case QUEEN_BLACK:
-					return queenMoveIsLegal(move);
-				case KING_BLACK:
-					if (moveIsCastling(move)) { 
-						return castlingIsPseudoLegal(move);
-					}
-					else { 
-						return kingMoveIsLegal(move);
-					}
-				default: 
-					assert(pfrom >= PAWN_BLACK && pfrom <= KING_BLACK);
-			}
-		}
-	}
-	return false;
-}
-
-bool PositionState::moveIsLegal(const MoveInfo& move) const
-{
-	assert(move.from != move.to);
-	Piece pfrom = _board[move.from  / 8][move.from % 8];
-	if(pfrom == ETY_SQUARE) {
-		return false;
-	}
-
-	bool result = false;
-	if(_whiteToPlay) {
-		if((squareToBitboard[move.from] & _blackPieces) || (squareToBitboard[move.to] & _whitePieces)) {
-			return false;
-		}
-		else {
-			bool isEnPassantCapture = false;
-			switch(pfrom) {
-				case PAWN_WHITE: 
-					result = pawnMoveIsLegal(move, isEnPassantCapture);
-					break;
-				case KNIGHT_WHITE:
-					result = knightMoveIsLegal(move);
-					break;
-				case BISHOP_WHITE:
-					result = bishopMoveIsLegal(move);
-					break;
-				case ROOK_WHITE:
-					result = rookMoveIsLegal(move);
-					break;
-				case QUEEN_WHITE:
-					result = queenMoveIsLegal(move);
-					break;
-				case KING_WHITE:
-					if (moveIsCastling(move)) {
-						return castlingIsLegal(move);
-					}
-					else { 
-						result = kingMoveIsLegal(move);
-					}
-					break;
-				default: 
-					assert(pfrom >= PAWN_WHITE && pfrom <= KING_WHITE);
-			}
-	
-			if (result) {
-				Piece capturedPiece;
-				makeLazyMove(move, isEnPassantCapture, capturedPiece);
-				result = !(squareToBitboard[_whiteKingPosition] & squaresUnderAttack(WHITE));
-				undoLazyMove(move, isEnPassantCapture, capturedPiece);
-			}
-		}
-	}
-	else {
-		if((squareToBitboard[move.from] & _whitePieces) || (squareToBitboard[move.to] & _blackPieces)) {
-			return false;
-		}
-		else {
-			bool isEnPassantCapture = false;
-			switch(pfrom) {
-				case PAWN_BLACK: 
-					result = pawnMoveIsLegal(move, isEnPassantCapture);
-					break;
-				case KNIGHT_BLACK: 
-					result = knightMoveIsLegal(move);
-					break;
-				case BISHOP_BLACK:
-					result = bishopMoveIsLegal(move);
-					break;
-				case ROOK_BLACK:
-					result = rookMoveIsLegal(move);
-					break;
-				case QUEEN_BLACK:
-					result = queenMoveIsLegal(move);
-					break;
-				case KING_BLACK:
-					if (moveIsCastling(move)) { 
-						return castlingIsLegal(move);
-					}
-					else { 
-						result = kingMoveIsLegal(move);
-					}
-					break;
-				default: 
-					return false;
-			}
-		
-			if (result) {
-				Piece capturedPiece;
-				makeLazyMove(move, isEnPassantCapture, capturedPiece);
-				result = !(squareToBitboard[_blackKingPosition] & squaresUnderAttack(BLACK));
-				undoLazyMove(move, isEnPassantCapture, capturedPiece);
-			}
-		}
-	}
-
-	return result;
-}
-
-bool PositionState::moveIsCastling(const MoveInfo& move) const
-{
-	if ((_whiteToPlay && _board[move.from / 8][move.from % 8] == KING_WHITE) ||
-			(!_whiteToPlay && _board[move.from / 8][move.from % 8] == KING_BLACK)) {
-		if (std::abs(move.from % 8 - move.to % 8) == 2) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool PositionState::moveIsEnPassantCapture(const MoveInfo& move) const
-{
-	if (_whiteToPlay) {
-		if (_board[move.from / 8][move.from % 8] == PAWN_WHITE && _board[move.to / 8][move.to % 8] == ETY_SQUARE && (move.to - move.from) % 8 != 0) {
-			return true;
-		}
-	}
-	else {
-		if (_board[move.from / 8][move.from % 8] == PAWN_BLACK && _board[move.to / 8][move.to % 8] == ETY_SQUARE && (move.from - move.to) % 8 != 0) {
-			return true;
-		}
-	}
-	return false;
-}
-
 bool PositionState::pieceIsSlidingPiece(Piece piece) const
 {
 	if (piece == ROOK_WHITE || piece == BISHOP_WHITE || piece == QUEEN_WHITE ||
@@ -728,357 +537,6 @@ bool PositionState::pieceIsSlidingPiece(Piece piece) const
 	}
 	
 	return false;
-}
-
-bool PositionState::pawnMoveIsLegal(const MoveInfo& move, bool& isEnPassantCapture) const
-{
-	isEnPassantCapture = false;
-	if (_whiteToPlay) {
-		assert(move.from > H1);
-		// Checks for single square movement of the pawn
-		if (move.to - move.from == 8 && !(squareToBitboard[move.to] & _blackPieces)) {
-			if (move.to >= A8) {
-				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
-			}
-			return true;
-		}
-		// Checks for the move of pawn from game starting position
-		else if (move.to - move.from == 16 && (squareToBitboard[move.from] & PAWN_WHITE_INIT) &&
-		!(squareToBitboard[(Square)(move.from + 8)] & (_whitePieces | _blackPieces)) && !(squareToBitboard[move.to] & _blackPieces)) {
-			return true;
-		}
-		// Checks for usual capture movement of the pawn
-		else if ((squareToBitboard[move.to] & _bitboardImpl->pawnWhiteAttackFrom(move.from)) && (squareToBitboard[move.to] & _blackPieces)) {
-			if (move.to >= A8) {
-				assert(move.promoted > PAWN_WHITE && move.promoted < KING_WHITE);
-			}
-			return true;
-		}
-		else {
-			isEnPassantCapture = true;
-			return enPassantCaptureIsLegal(move);
-		}
-	}
-	else {
-		// Checks for single square movement of the pawn
-		assert(move.from < A8);
-		if (move.from - move.to == 8 && !(squareToBitboard[move.to] & _whitePieces)) {
-			if (move.to <= H1) {
-				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
-			}
-			return true;
-		}
-		// Checks for the move of pawn from game starting position
-		else if (move.from - move.to == 16 && (squareToBitboard[move.from] & PAWN_BLACK_INIT) &&
-		!(squareToBitboard[(Square)(move.from - 8)] & (_whitePieces | _blackPieces)) && !(squareToBitboard[move.to] & _whitePieces)) {
-			return true;
-		}
-		// Checks for usual capture movement of the pawn
-		else if ((squareToBitboard[move.to] & _bitboardImpl->pawnBlackAttackFrom(move.from)) && (squareToBitboard[move.to] & _whitePieces)) {
-			if (move.to <= H1) {
-				assert(move.promoted > PAWN_BLACK && move.promoted < KING_BLACK);
-			}
-			return true;
-		}
-		else {
-			isEnPassantCapture = true;
-			return  enPassantCaptureIsLegal(move);
-		}
-	}
-	return false;
-}
-
-bool PositionState::enPassantCaptureIsLegal(const MoveInfo& move) const
-{
-	if (_enPassantFile != -1) {
-		if (_whiteToPlay) {
-			assert(_board[4][_enPassantFile] == PAWN_BLACK);
-			if (_enPassantFile == 0 && move.from == B5 && move.to == A6) {
-				return true;
-			}
-			else if (_enPassantFile == 7 && move.from == G5 && move.to == H6) {
-				return true;
-			} 
-			else if (((move.from == 4 * 8 + _enPassantFile + 1) || (move.from == 4 * 8 + _enPassantFile - 1))
-			&& move.to == 5 * 8 + _enPassantFile) {
-				return true;
-			}
-		}
-		else {
-			assert(_board[3][_enPassantFile] == PAWN_WHITE);
-			if (_enPassantFile == 0 && move.from == B4 && move.to == A3) {
-				return true;
-			}
-			else if (_enPassantFile == 7 && move.from == G4 && move.to == H3) {
-				return true;
-			}
-			else if (((move.from == 3 * 8 + _enPassantFile + 1) || (move.from == 3 * 8 + _enPassantFile - 1))
-			&& move.to == 2 * 8 + _enPassantFile) {
-				return true;
-			}
-		}
- 	}
-	
-	return false;
-}
-
-bool PositionState::knightMoveIsLegal(const MoveInfo& move) const
-{
-	if (squareToBitboard[move.to] & _bitboardImpl->knightAttackFrom(move.from)) {
-		return true;
-	}
-	return false;
-}
-
-bool PositionState::bishopMoveIsLegal(const MoveInfo& move) const
-{
-	if(squareToBitboard[move.to] & _bitboardImpl->bishopAttackFrom(move.from, _whitePieces | _blackPieces)) {
-		return true;
-	}
-	return false;
-}
-
-bool PositionState::rookMoveIsLegal(const MoveInfo& move) const
-{
-	if(squareToBitboard[move.to] & _bitboardImpl->rookAttackFrom(move.from, _whitePieces | _blackPieces)) {
-		return true;
-	}
-	return false;
-}
-
-bool PositionState::queenMoveIsLegal(const MoveInfo& move) const
-{
-	if(squareToBitboard[move.to] & _bitboardImpl->queenAttackFrom(move.from, _whitePieces | _blackPieces)) {
-		return true;
-	}
-	return false;
-}
-
-bool PositionState::kingMoveIsLegal(const MoveInfo& move) const
-{
-	if (squareToBitboard[move.to] & _bitboardImpl->kingAttackFrom(move.from)) {
-		return true;
-	}
-	return false;
-}
-
-bool PositionState::castlingIsLegal(const MoveInfo& move) const
-{
-	if (_whiteToPlay) {
-		if (move.from == E1 && move.to == C1) {
-			if (_whiteLeftCastling && !(WHITE_LEFT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces)) && !(WHITE_LEFT_CASTLING_KING_SQUARES & squaresUnderAttack(WHITE))) {
-					return true;
-				}
-		}
-		else if (move.from == E1 && move.to == G1) {
-				if (_whiteRightCastling && !(WHITE_RIGHT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces)) && !(WHITE_RIGHT_CASTLING_KING_SQUARES & squaresUnderAttack(WHITE))) {
-					return true;
-				}
-		}
-		
-		return false;
-	}
-	else {
-		if (move.from == E8 && move.to == C8) {
-			if (_blackLeftCastling && !(BLACK_LEFT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces)) && !(BLACK_LEFT_CASTLING_KING_SQUARES & squaresUnderAttack(BLACK))) {
-					return true;
-				}
-		}
-		else if (move.from == E8 && move.to == G8) {
-				if (_blackRightCastling && !(BLACK_RIGHT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces)) && !(BLACK_RIGHT_CASTLING_KING_SQUARES & squaresUnderAttack(BLACK))) {
-					return true;
-				}
-		}
-		
-		return false;
-	}
-}
-
-bool PositionState::castlingIsPseudoLegal(const MoveInfo& move) const
-{
-	if (_whiteToPlay) {
-		if (move.from == E1 && move.to == C1) {
-			if (_whiteLeftCastling && !(WHITE_LEFT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces))) {
-					return true;
-				}
-		}
-		else if (move.from == E1 && move.to == G1) {
-				if (_whiteRightCastling && !(WHITE_RIGHT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces))) {
-					return true;
-				}
-		}
-		
-		return false;
-	}
-	else {
-		if (move.from == E8 && move.to == C8) {
-			if (_blackLeftCastling && !(BLACK_LEFT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces))) {
-					return true;
-				}
-		}
-		else if (move.from == E8 && move.to == G8) {
-				if (_blackRightCastling && !(BLACK_RIGHT_CASTLING_ETY_SQUARES & (_whitePieces | _blackPieces))) {
-					return true;
-				}
-		}
-		
-		return false;
-	}
-}
-
-// Returns a bitboard with the bit set at the positions where the 
-// attackedColor pieces are under attack by opponent
-Bitboard PositionState::squaresUnderAttack(Color attackedColor) const
-{
-	Bitboard attackedBitboard = 0;
-	Bitboard occupiedSquares = _whitePieces | _blackPieces;
-
-	if(attackedColor == BLACK) {
-		for (unsigned int sq = A1; sq <= H8; ++sq) {
-			switch(_board[sq / 8][sq % 8]) {
-				case PAWN_WHITE:
-					attackedBitboard |= _bitboardImpl->pawnWhiteAttackFrom((Square) sq);
-					break;
-				case KNIGHT_WHITE:
-					attackedBitboard |= _bitboardImpl->knightAttackFrom((Square) sq);
-					break;
-				case BISHOP_WHITE:
-					attackedBitboard |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case ROOK_WHITE:
-					attackedBitboard |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case QUEEN_WHITE:
-					attackedBitboard |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case KING_WHITE:	
-					attackedBitboard |= _bitboardImpl->kingAttackFrom((Square) sq);
-					break;
-				default:
-					break;
-			}
-		}
-	}
-	else {
-		for (unsigned int sq = A1; sq <= H8; ++sq) {
-			switch(_board[sq / 8][sq % 8]) {
-				case PAWN_BLACK:
-					attackedBitboard |= _bitboardImpl->pawnBlackAttackFrom((Square) sq);
-					break;
-				case KNIGHT_BLACK:
-					attackedBitboard |= _bitboardImpl->knightAttackFrom((Square) sq);
-					break;
-				case BISHOP_BLACK:
-					attackedBitboard |= _bitboardImpl->bishopAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case ROOK_BLACK:
-					attackedBitboard |= _bitboardImpl->rookAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case QUEEN_BLACK:
-					attackedBitboard |= _bitboardImpl->queenAttackFrom((Square) sq, occupiedSquares);
-					break;
-				case KING_BLACK:	
-					attackedBitboard |= _bitboardImpl->kingAttackFrom((Square) sq);
-					break;
-				default:
-					break;
-			}
-		}
-	}	
-
-	if (attackedColor == BLACK) {
-		return attackedBitboard & (~_whitePieces);
-	}
-	else {
-		return attackedBitboard & (~_blackPieces);
-	}
-}
-
-// Makes move by only updating the occupation bitboards and _board array
-// Castling move and also promotion are not considered here,
-// therefore pawns can appear at the first and last ranks due to this move
-// This should be always used in conjunction with undoLazyMove 
-void PositionState::makeLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece& capturedPiece) const
-{
-	PositionState * nonConstThis = const_cast<PositionState *>(this);
-	capturedPiece = _board[move.to / 8][move.to % 8];
-	Piece pfrom = _board[move.from / 8][move.from % 8]; 
-	if (_whiteToPlay) {
-		if (isEnPassantCapture) {
-			nonConstThis->removePieceFromBitboards((Square) (move.to - 8), PAWN_BLACK, BLACK);
-			(nonConstThis->_board)[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
-			}
-		else {
-			if(capturedPiece != ETY_SQUARE) {
-				nonConstThis->removePieceFromBitboards(move.to, capturedPiece, BLACK);
-			}
-		}
-		nonConstThis->removePieceFromBitboards(move.from, pfrom, WHITE);
-		nonConstThis->addPieceToBitboards(move.to, pfrom, WHITE);
-	}
-	else {
-		if (isEnPassantCapture) {
-			nonConstThis->removePieceFromBitboards((Square) (move.to + 8), PAWN_WHITE, WHITE);
-			(nonConstThis->_board)[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
-			}
-		else {
-			if(capturedPiece != ETY_SQUARE) {
-				nonConstThis->removePieceFromBitboards(move.to, capturedPiece, WHITE);
-			}
-		}
-		nonConstThis->removePieceFromBitboards(move.from, pfrom, BLACK);
-		nonConstThis->addPieceToBitboards(move.to, pfrom, BLACK);
-	}
-	(nonConstThis->_board)[move.to / 8][move.to % 8] = pfrom;	
-	(nonConstThis->_board)[move.from / 8][move.from % 8] = ETY_SQUARE;
-	if (pfrom == KING_WHITE) {
-		nonConstThis->_whiteKingPosition = move.to;
-	}
-	else if (pfrom == KING_BLACK) {
-		nonConstThis->_blackKingPosition = move.to;
-	}
-
-}
-
-// Reverses the lazy move done by makeLazyMove
-void PositionState::undoLazyMove(const MoveInfo& move, bool isEnPassantCapture, Piece capturedPiece) const
-{
-	PositionState * nonConstThis = const_cast<PositionState *>(this);
-	Piece pto = _board[move.to / 8][move.to % 8];
-	if (_whiteToPlay) {
-		if (isEnPassantCapture) {
-			nonConstThis->addPieceToBitboards((Square) (move.to - 8), PAWN_BLACK, BLACK);
-			(nonConstThis->_board)[move.to / 8 - 1][move.to % 8] = PAWN_BLACK;
-			}
-		else {
-			if(capturedPiece != ETY_SQUARE) {
-				nonConstThis->addPieceToBitboards(move.to, capturedPiece, BLACK);
-			}
-		}
-		nonConstThis->addPieceToBitboards(move.from, pto, WHITE);
-		nonConstThis->removePieceFromBitboards(move.to, pto, WHITE);
-	}
-	else {
-		if (isEnPassantCapture) {
-			nonConstThis->addPieceToBitboards((Square) (move.to + 8), PAWN_WHITE, WHITE);
-			(nonConstThis->_board)[move.to / 8 + 1][move.to % 8] = PAWN_WHITE;
-			}
-		else {
-			if(capturedPiece != ETY_SQUARE) {
-				nonConstThis->addPieceToBitboards(move.to, capturedPiece, WHITE);
-			}
-		}
-		nonConstThis->addPieceToBitboards(move.from, pto, BLACK);
-		nonConstThis->removePieceFromBitboards(move.to, pto, BLACK);
-	}
-	(nonConstThis->_board)[move.from / 8][move.from % 8] = pto;
-	(nonConstThis->_board)[move.to / 8][move.to % 8] = capturedPiece;
-	if (pto == KING_WHITE) {
-		nonConstThis->_whiteKingPosition = move.from;
-	}
-	else if (pto == KING_BLACK) {
-		nonConstThis->_blackKingPosition = move.from;
-	}
 }
 
 void PositionState::updateDirectCheckArray()
@@ -1207,7 +665,7 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 		_kingUnderCheck = true;
 	}
 
-	if (moveIsEnPassantCapture(move)) {
+	if (move.type == EN_PASSANT_CAPTURE) {
 		if (enPassantCaptureDiscoveresCheck(move, slidingPiecePos)) {
 			if (_kingUnderCheck) {
 				_isDoubleCheck = true;
@@ -1236,46 +694,12 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 		}
 	}
 		
-	if (moveIsCastling(move)) {
+	if (move.type == CASTLING_MOVE) {
 		if (castlingChecksOpponentKing(move, slidingPiecePos)) {
 			_kingUnderCheck = true;
 			_absolutePinsPos |= _bitboardImpl->getSquaresBetween(slidingPiecePos, kingSq);
 		}
 	}
-}
-
-bool PositionState::moveChecksOpponentKing(const MoveInfo& move) const
-{
-	Piece pfrom = _board[move.from / 8][move.from % 8];
-	if (squareToBitboard[move.to] & _directCheck[pfrom]) {
-		return true;
-	}	   
-
-	Square slidingPiecePos;	
-	if (moveOpensDiscoveredCheck(move, slidingPiecePos)) {
-		return true;
-	}
-
-	//TODO: there should be faster way than checking 8 conditions separately as below (e.g. comparing move.from with king pos)
-	if (moveIsEnPassantCapture(move)) {
-	   if (enPassantCaptureDiscoveresCheck(move, slidingPiecePos)) {
-		   return true;
-	   }
-	}	   
-
-	if (move.promoted != ETY_SQUARE) {
-		if (promotionMoveChecksOpponentKing(move)) {
-			return true;
-		}
-	}
-		
-	if (moveIsCastling(move)) {
-		if (castlingChecksOpponentKing(move, slidingPiecePos)) {
-			return true;
-		}
-	}
-
-	return false;
 }
 
 bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const
@@ -1509,7 +933,7 @@ bool PositionState::isInterposeMove(const MoveInfo& move) const
 		return true;
 	}
 
-	if (moveIsEnPassantCapture(move)) {
+	if (move.type == EN_PASSANT_CAPTURE) {
 		Square capturedPiecePos = _whiteToPlay ? (Square) (move.to - 8) : (Square) (move.to + 8);
 		if (squareToBitboard[capturedPiecePos] & _absolutePinsPos) {
 			return true;
@@ -1535,7 +959,7 @@ bool PositionState::pseudoMoveIsLegalMove(const MoveInfo& move) const
 	   return false;
 	}
 
-	if (moveIsEnPassantCapture(move) && pinEnPassantCaptureOpensCheck(move)) {
+	if ((move.type == EN_PASSANT_CAPTURE) && pinEnPassantCaptureOpensCheck(move)) {
 		return false;
 	}
 
@@ -1544,7 +968,7 @@ bool PositionState::pseudoMoveIsLegalMove(const MoveInfo& move) const
 
 bool PositionState::kingPseudoMoveIsLegal(const MoveInfo& move) const
 {
-	if (moveIsCastling(move)) {
+	if (move.type == CASTLING_MOVE) {
 		if(!_kingUnderCheck) {
 			switch (move.to) {
 				case C1:
@@ -1712,42 +1136,33 @@ void PositionState::makeMove(const MoveInfo& move)
 	undoMove->whiteRightCastling = _whiteRightCastling;
 	undoMove->blackLeftCastling = _blackLeftCastling;
 	undoMove->blackRightCastling = _blackRightCastling;
-	
-	updateMoveChecksOpponentKing(move);	
+	undoMove->isDoubleCheck = _isDoubleCheck;
+	undoMove->absolutePinsPos = _absolutePinsPos;
+	undoMove->moveType = move.type;
 
-	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
-		if(move.to >= A8 || move.to <= H1) {
-			makePromotionMove(move);
-			undoMove->moveType = PROMOTION_MOVE;
-		}
-		else if (std::abs(move.from - move.to) == 16) {
-			makeEnPassantMove(move);
-			undoMove->moveType = EN_PASSANT_MOVE;
-		}
-		else if (moveIsEnPassantCapture(move)) {
-			makeEnPassantCapture(move);
-			undoMove->moveType = EN_PASSANT_CAPTURE;
-		}
-		else if (pto != ETY_SQUARE) {
-			makeCaptureMove(move);
-			undoMove->moveType = CAPTURE_MOVE;
-		}
-		else {
+	updateMoveChecksOpponentKing(move);
+
+	switch (move.type) {
+		case NORMAL_MOVE:
 			makeNormalMove(move);
-			undoMove->moveType = NORMAL_MOVE;
-		}
-	}
-	else if (moveIsCastling(move)) {
-		makeCastlingMove(move);
-		undoMove->moveType = CASTLING_MOVE;
-	}		
-	else if (pto != ETY_SQUARE) {
-		makeCaptureMove(move);
-		undoMove->moveType = CAPTURE_MOVE;
-	}
-	else {
-		makeNormalMove(move);
-		undoMove->moveType = NORMAL_MOVE;
+			break;
+		case CAPTURE_MOVE:
+			makeCaptureMove(move);
+			break;
+		case PROMOTION_MOVE:
+			makePromotionMove(move);
+			break;
+		case EN_PASSANT_MOVE:
+			makeEnPassantMove(move);
+			break;
+		case EN_PASSANT_CAPTURE:
+			makeEnPassantCapture(move);
+			break;
+		case CASTLING_MOVE:
+			makeCastlingMove(move);
+			break;
+		default:
+			assert(false);
 	}
 
 	updateCastlingRights(move);
@@ -2161,7 +1576,20 @@ void PositionState::undoMove()
 
 	revertCastlingRights(*move);
 	updateGameStatus();
-	
+	_isDoubleCheck = move->isDoubleCheck;
+	_absolutePinsPos = move->absolutePinsPos;
+	if (_isDoubleCheck) {
+		_kingUnderCheck = true;
+	}
+	else {
+	   if (_absolutePinsPos) {
+		   _kingUnderCheck = true;
+	   }
+	   else {
+		   _kingUnderCheck = false;
+	   }
+	}
+
 	_whiteToPlay = !_whiteToPlay;
 	_zobKey ^= _zobKeyImpl->getIfBlackToPlayKey();
 }
@@ -2727,30 +2155,4 @@ void PositionState::printBoard() const
 	}
 }
 
-void PositionState::printPossibleMoves(Square from) const
-{
-	Piece promoted;
-	if (_whiteToPlay) {
-		promoted = QUEEN_WHITE;
-	}
-	else {
-		promoted = QUEEN_BLACK;
-	}
-	std::cout << "Possible moves" << std::endl;
-	for (int i = 7; i >= 0; --i) {
-		for(int j = 0; j < 8; ++j) {
-			MoveInfo move(from, (Square) (i * 8 + j), promoted);
-			if (moveIsLegal(move)) {
-				std::cout << "L ";
-			}
-			else {
-				std::cout << "X ";
-			}
-			
-			if (j == 7) {
-				std::cout << std::endl;
-			}
-		}
-	}
-}
 }

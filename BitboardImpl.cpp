@@ -242,30 +242,35 @@ Bitboard BitboardImpl::pawnBlackMovesFrom(Square from, const Bitboard& occupiedS
 // for occupiedSquares and pawnsWhitePos white pawns positions
 Bitboard BitboardImpl::pawnWhiteMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsWhitePos) const
 {
-	assert(to > H2);
 	if (to >= A4 && to <= H4) {
-		if (squareToBitboard[to - 8] & occupiedSquares) {
-			return squareToBitboard[to - 8] & pawnsWhitePos;
+		if (squareToBitboard[to - 8] & ~occupiedSquares) {
+			return squareToBitboard[to - 16] & pawnsWhitePos;
 		}
-		return squareToBitboard[to - 16] & pawnsWhitePos;
 	}
-
-	return squareToBitboard[to - 8] & pawnsWhitePos;
+	if (to > H2) {
+		return squareToBitboard[to - 8] & pawnsWhitePos;
+	}
+	else {
+		return 0;
+	}
 }
 
 // Returns the bitboard of black pawn vertical moves to square to
 // for occupiedSquares and pawnsBlackPos black pawns positions
 Bitboard BitboardImpl::pawnBlackMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsBlackPos) const
 {
-	assert(to < A7);
 	if (to >= A5 && to <= H5) {
-		if (squareToBitboard[to + 8] & occupiedSquares) {
-			return squareToBitboard[to + 8] & pawnsBlackPos;
+		if (squareToBitboard[to + 8] & ~occupiedSquares) {
+			return squareToBitboard[to + 16] & pawnsBlackPos;
 		}
-		return squareToBitboard[to + 16] & pawnsBlackPos;
 	}
 
-	return squareToBitboard[to + 8] & pawnsBlackPos;
+	if (to < A6) {
+	   	return squareToBitboard[to + 8] & pawnsBlackPos;
+	}
+	else {
+		return 0;
+	}
 }
 
 // Returns bitboard of possible rook moves from square from when 
