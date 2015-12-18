@@ -265,7 +265,7 @@ Bitboard BitboardImpl::pawnBlackMovesTo(Square to, const Bitboard& occupiedSquar
 		}
 	}
 
-	if (to < A6) {
+	if (to < A7) {
 	   	return squareToBitboard[to + 8] & pawnsBlackPos;
 	}
 	else {
