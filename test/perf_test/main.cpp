@@ -12,8 +12,7 @@ void parseInputInfo(const std::string& line, std::string& fen, uint16_t& depth, 
 int main(int argc, char* argv[])
 {
 	if (argc != 3) {
-		std::cout << "Program is executed with the following command: " << argv[0] 
-			<< ".exe input_file output_file" << std::endl;
+		std::cout << "\nUsage:\n     " << argv[0] << " input_file output_file\n" << std::endl;
 	}
 	else {
 		std::ifstream ifStream;

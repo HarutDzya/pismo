@@ -20,7 +20,7 @@ SRCS = ../../PositionState.cpp \
 OBJS = ${SRCS:.cpp=.o}
 
 all: $(OBJS)
-	$(CC) $(OBJS) -o a.out
+	$(CC) $(OBJS) -o perft
 
 $(OBJS): %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@

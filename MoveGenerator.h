@@ -20,6 +20,9 @@ public:
 	void prepareMoveGeneration(SearchType type, const MoveInfo& transTableMove, uint16_t depth);
 	MoveInfo getTopMove(const PositionState& pos, uint16_t depth);
 
+	// used only for perft testing
+	void generatePerftMoves(const PositionState& pos, uint16_t depth);
+
 private:
 	MoveGenerator();
 	~MoveGenerator();
@@ -54,6 +57,7 @@ private:
 	void sortQuiteMoves();
 
 	bool equal(const MoveInfo& first, const MoveInfo& second) const;
+
 
 	void generateKingEvasionMoves();
 	void generatePawnsEvasionMoves(Square to, MoveType type);

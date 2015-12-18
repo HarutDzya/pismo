@@ -53,6 +53,24 @@ void MoveGenerator::prepareMoveGeneration(SearchType type, const MoveInfo& trans
 	_moveGenInfo->_availableMovesSize = 0;
 }
 
+void MoveGenerator::generatePerftMoves(const PositionState& pos, uint16_t depth)
+{
+  _positionState = &pos;
+  _moveGenInfo = MemPool::getMoveGenInfo(depth);
+  _moveGenInfo->_currentMovePos = 0;
+  _moveGenInfo->_availableMovesSize = 0;
+
+  if (_positionState->kingUnderCheck())
+  {
+     generateEvasionMoves();
+  }
+  else
+  {
+    generateCapturingMoves();
+    generateQuiteMoves();
+  }
+}
+
 MoveInfo MoveGenerator::getTopMove(const PositionState& pos, uint16_t depth)
 {
 	_moveGenInfo = MemPool::getMoveGenInfo(depth);
