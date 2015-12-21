@@ -84,12 +84,11 @@ private:
 
 	void generateWhiteDiscoveredCheckingMoves();
 	void generateBlackDiscoveredCheckingMoves();
-	void generateDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
-	void generatePawnDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
-	void generateKnightDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
-	void generateRookDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
-	void generateBishopDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
-	void generateKingDiscoveredCheckingMoves(Square from, Square slidingPiecePos);
+	void generatePawnDiscoveredCheckingMoves(Square from);
+	void generateKnightDiscoveredCheckingMoves(Square from);
+	void generateRookDiscoveredCheckingMoves(Square from);
+	void generateBishopDiscoveredCheckingMoves(Square from);
+	void generateKingDiscoveredCheckingMoves(Square from);
 
 	void generatePawnWhiteQuiteMoves(Square from);
 	void generatePawnBlackQuiteMoves(Square from);

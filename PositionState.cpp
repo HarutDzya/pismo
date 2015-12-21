@@ -11,13 +11,10 @@ namespace pismo
 
 PositionState::PositionState(): 
 _whitePieces(0), 
-_whitePiecesTranspose(0),
-_whitePiecesDiagA1h8(0),
-_whitePiecesDiagA8h1(0),
 _blackPieces(0),
-_blackPiecesTranspose(0),
-_blackPiecesDiagA1h8(0),
-_blackPiecesDiagA8h1(0),
+_occupiedSquares(0),
+_discPiecePos(0),
+_pinPiecePos(0),
 _bitboardImpl(BitboardImpl::instance()),
 _zobKeyImpl(new ZobKeyImpl()),
 _absolutePinsPos(0),
@@ -97,6 +94,7 @@ void PositionState::initPosition(const std::vector<std::pair<Square, Piece> >& p
 		_zobKey ^= _zobKeyImpl->getBlackLeftCastlingKey();
 		_zobKey ^= _zobKeyImpl->getBlackRightCastlingKey();
 
+		_occupiedSquares = _whitePieces | _blackPieces;
 		updateCheckStatus();
 		updateGameStatus();
 	}
@@ -208,7 +206,8 @@ void PositionState::initPositionFEN(const std::string& fen)
 	initEnPassantFileFEN(fen, charCount);
 	++charCount;
 	initMoveCountFEN(fen, charCount);
-	
+
+	_occupiedSquares = _whitePieces | _blackPieces;	
 	updateCheckStatus();
 	updateGameStatus();
 	assert(charCount == fen.size());
@@ -381,8 +380,6 @@ void PositionState::initMoveCountFEN(const std::string& fen, unsigned int& charC
 
 void PositionState::updateCheckStatus()
 {
-	Bitboard occupiedSquares = (_whitePieces | _blackPieces);
-	
 	if(_whiteToPlay) {
 		for (unsigned int sq = A1; sq <= H8; ++sq) {
 			Square pieceSq = (Square) sq;
@@ -412,7 +409,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case BISHOP_BLACK:
-					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->bishopAttackFrom(pieceSq, _occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -424,7 +421,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case ROOK_BLACK:
-					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->rookAttackFrom(pieceSq, _occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -436,7 +433,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case QUEEN_BLACK:
-					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_whiteKingPosition] & _bitboardImpl->queenAttackFrom(pieceSq, _occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _whiteKingPosition);
@@ -484,7 +481,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case BISHOP_WHITE:
-					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->bishopAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->bishopAttackFrom(pieceSq, _occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -496,7 +493,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case ROOK_WHITE:
-					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->rookAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->rookAttackFrom(pieceSq, _occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -508,7 +505,7 @@ void PositionState::updateCheckStatus()
 					}
 					break;
 				case QUEEN_WHITE:
-					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->queenAttackFrom(pieceSq, occupiedSquares)) {
+					if (squareToBitboard[_blackKingPosition] & _bitboardImpl->queenAttackFrom(pieceSq, _occupiedSquares)) {
 						if (!_kingUnderCheck) {
 							_kingUnderCheck = true;
 							_absolutePinsPos = _bitboardImpl->getSquaresBetween(pieceSq, _blackKingPosition);
@@ -541,98 +538,68 @@ bool PositionState::pieceIsSlidingPiece(Piece piece) const
 
 void PositionState::updateDirectCheckArray()
 {
-	Bitboard occupiedSquares = _whitePieces | _blackPieces;
 	if (_whiteToPlay) {
 		_directCheck[KING_WHITE] = 0;
 		_directCheck[KNIGHT_WHITE] = _bitboardImpl->knightAttackFrom(_blackKingPosition);
 		_directCheck[PAWN_WHITE] = _bitboardImpl->pawnsWhiteAttackTo(_blackKingPosition);
-		_directCheck[ROOK_WHITE] = _bitboardImpl->rookAttackFrom(_blackKingPosition, occupiedSquares);
-		_directCheck[BISHOP_WHITE] = _bitboardImpl->bishopAttackFrom(_blackKingPosition, occupiedSquares);
-		_directCheck[QUEEN_WHITE] = _bitboardImpl->queenAttackFrom(_blackKingPosition, occupiedSquares);
+		_directCheck[ROOK_WHITE] = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares);
+		_directCheck[BISHOP_WHITE] = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares);
+		_directCheck[QUEEN_WHITE] = _bitboardImpl->queenAttackFrom(_blackKingPosition, _occupiedSquares);
 	}
 	else {
 		_directCheck[KING_BLACK] = 0;
 		_directCheck[KNIGHT_BLACK] = _bitboardImpl->knightAttackFrom(_whiteKingPosition);
 		_directCheck[PAWN_BLACK] = _bitboardImpl->pawnsBlackAttackTo(_whiteKingPosition);
-		_directCheck[ROOK_BLACK] = _bitboardImpl->rookAttackFrom(_whiteKingPosition, occupiedSquares);
-		_directCheck[BISHOP_BLACK] = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, occupiedSquares);
-		_directCheck[QUEEN_BLACK] = _bitboardImpl->queenAttackFrom(_whiteKingPosition, occupiedSquares);
+		_directCheck[ROOK_BLACK] = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares);
+		_directCheck[BISHOP_BLACK] = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares);
+		_directCheck[QUEEN_BLACK] = _bitboardImpl->queenAttackFrom(_whiteKingPosition, _occupiedSquares);
 
 		}
 }
 
 void PositionState::updateDiscoveredChecksInfo()
 {
+	_discPiecePos = 0;
 	if (_whiteToPlay) {
-		_stateDiscCheckInfo.rankPin = _bitboardImpl->getRankPinInfo(_blackKingPosition, _whitePieces | _blackPieces);
-		_stateDiscCheckInfo.filePin = _bitboardImpl->getFilePinInfo(_blackKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
-		_stateDiscCheckInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_blackKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-		_stateDiscCheckInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_blackKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
-		updateNonDiagPinStatus(_stateDiscCheckInfo.rankPin, WHITE);
-		updateNonDiagPinStatus(_stateDiscCheckInfo.filePin, WHITE);
-		updateDiagPinStatus(_stateDiscCheckInfo.diagA1h8Pin, WHITE);
-		updateDiagPinStatus(_stateDiscCheckInfo.diagA8h1Pin, WHITE);
-	}
-	else {
-		_stateDiscCheckInfo.rankPin = _bitboardImpl->getRankPinInfo(_whiteKingPosition, _whitePieces | _blackPieces);
-		_stateDiscCheckInfo.filePin = _bitboardImpl->getFilePinInfo(_whiteKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
-		_stateDiscCheckInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_whiteKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-		_stateDiscCheckInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_whiteKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
-		updateNonDiagPinStatus(_stateDiscCheckInfo.rankPin, BLACK);
-		updateNonDiagPinStatus(_stateDiscCheckInfo.filePin, BLACK);
-		updateDiagPinStatus(_stateDiscCheckInfo.diagA1h8Pin, BLACK);
-		updateDiagPinStatus(_stateDiscCheckInfo.diagA8h1Pin, BLACK);
-	}
-}
+		Bitboard possibleDiscPieces = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares) &
+			(_whitePieces | _piecePos[PAWN_BLACK]);
+		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+			(_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possibleDiscPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
+		}
 
-void PositionState::updateNonDiagPinStatus(PinInfo& pin, Color clr) const
-{
-	Piece slidePiece;
-	Piece queenPiece;
-	if (clr == WHITE) {
-		slidePiece = ROOK_WHITE;
-		queenPiece = QUEEN_WHITE;
+		possibleDiscPieces = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares) &
+			(_whitePieces | _piecePos[PAWN_BLACK]);
+		slidingPiecePos = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+			(_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possibleDiscPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
+		}
 	}
 	else {
-		slidePiece = ROOK_BLACK;
-		queenPiece = QUEEN_BLACK;
-	}
-	if (pin.smallSlidingPiecePos != INVALID_SQUARE) {
-		if (_board[pin.smallSlidingPiecePos / 8][pin.smallSlidingPiecePos % 8] != slidePiece && _board[pin.smallSlidingPiecePos / 8][pin.smallSlidingPiecePos % 8] != queenPiece) {
-			pin.smallSlidingPiecePos = INVALID_SQUARE;
-			pin.smallPinPos = 0;
+		Bitboard possibleDiscPieces = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares) &
+			(_blackPieces | _piecePos[PAWN_WHITE]);
+		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+			(_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possibleDiscPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
 		}
-	}
-	if (pin.bigSlidingPiecePos != INVALID_SQUARE) {
-		if (_board[pin.bigSlidingPiecePos / 8][pin.bigSlidingPiecePos % 8] != slidePiece && _board[pin.bigSlidingPiecePos / 8][pin.bigSlidingPiecePos % 8] != queenPiece) {
-			pin.bigSlidingPiecePos = INVALID_SQUARE;
-			pin.bigPinPos = 0;
-		}
-	}
-}
 
-void PositionState::updateDiagPinStatus(PinInfo& pin, Color clr) const
-{
-	Piece slidePiece;
-	Piece queenPiece;
-	if (clr == WHITE) {
-		slidePiece = BISHOP_WHITE;
-		queenPiece = QUEEN_WHITE;
-	}
-	else {
-		slidePiece = BISHOP_BLACK;
-		queenPiece = QUEEN_BLACK;
-	}
-	if (pin.smallSlidingPiecePos != INVALID_SQUARE) {
-		if (_board[pin.smallSlidingPiecePos / 8][pin.smallSlidingPiecePos % 8] != slidePiece && _board[pin.smallSlidingPiecePos / 8][pin.smallSlidingPiecePos % 8] != queenPiece) {
-			pin.smallSlidingPiecePos = INVALID_SQUARE;
-			pin.smallPinPos = 0;
-		}
-	}
-	if (pin.bigSlidingPiecePos != INVALID_SQUARE) {
-		if (_board[pin.bigSlidingPiecePos / 8][pin.bigSlidingPiecePos % 8] != slidePiece && _board[pin.bigSlidingPiecePos / 8][pin.bigSlidingPiecePos % 8] != queenPiece) {
-			pin.bigSlidingPiecePos = INVALID_SQUARE;
-			pin.bigPinPos = 0;
+		possibleDiscPieces = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares) &
+			(_blackPieces | _piecePos[PAWN_WHITE]);
+		slidingPiecePos = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+			(_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possibleDiscPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
 		}
 	}
 }
@@ -705,58 +672,30 @@ void  PositionState::updateMoveChecksOpponentKing(const MoveInfo& move)
 bool PositionState::moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const
 {
 	slidingPiecePos = INVALID_SQUARE;
-	if (_whiteToPlay) {
-		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
-			return false;
+	if (squareToBitboard[move.from] & _discPiecePos) {
+		if (_whiteToPlay) {
+			if (!(_bitboardImpl->getSquaresBetween(move.from, _blackKingPosition) &
+					   	_bitboardImpl->getSquaresBetween(move.to, _blackKingPosition))) {
+				Bitboard slidingPieceBoard = (_bitboardImpl->queenAttackFrom(_blackKingPosition, _occupiedSquares) ^
+					_bitboardImpl->queenAttackFrom(_blackKingPosition, _occupiedSquares ^ squareToBitboard[move.from])) &
+					_whitePieces;
+				assert (slidingPieceBoard);
+				slidingPiecePos = (Square) _bitboardImpl->lsb(slidingPieceBoard);
+				return true;
+			}
+		}
+		else {
+			if (!(_bitboardImpl->getSquaresBetween(move.from, _whiteKingPosition) &
+					   	_bitboardImpl->getSquaresBetween(move.to, _whiteKingPosition))) {
+				Bitboard slidingPieceBoard = (_bitboardImpl->queenAttackFrom(_whiteKingPosition, _occupiedSquares) ^
+					_bitboardImpl->queenAttackFrom(_whiteKingPosition, _occupiedSquares ^ squareToBitboard[move.from])) &
+					_blackPieces;
+				assert (slidingPieceBoard);
+				slidingPiecePos = (Square) _bitboardImpl->lsb(slidingPieceBoard);
+				return true;
+			}
 		}
 	}
-	else {
-		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
-			return false;
-		}
-	}
-
-	if ((squareToBitboard[move.from] & _stateDiscCheckInfo.rankPin.smallPinPos) &&
-		   	!(squareToBitboard[move.to] & _stateDiscCheckInfo.rankPin.smallPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.rankPin.smallSlidingPiecePos;
-		return true;
-	}
-	if ((squareToBitboard[move.from] & _stateDiscCheckInfo.rankPin.bigPinPos) &&
-		   	!(squareToBitboard[move.to] & _stateDiscCheckInfo.rankPin.bigPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.rankPin.bigSlidingPiecePos;
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.smallPinPos) &&
-		   	!(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.smallPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.filePin.smallSlidingPiecePos;
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _stateDiscCheckInfo.filePin.bigPinPos) &&
-		   	!(_bitboardImpl->squareToBitboardTranspose(move.to) & _stateDiscCheckInfo.filePin.bigPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.filePin.bigSlidingPiecePos;
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos) &&
-		   	!(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos;
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos) &&
-		   	!(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos;
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos) &&
-		   	!(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos;
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos) &&
-		   	!(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos)) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos;
-		return true;
-	}
-
 	return false;
 }
 
@@ -814,10 +753,11 @@ bool PositionState::castlingChecksOpponentKing(const MoveInfo& move, Square& sli
 			
 bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const
 {
+	slidingPiecePos = INVALID_SQUARE;
 	if (_whiteToPlay && _blackKingPosition / 8 == 4) {
 		Square leftPos;
 		Square rightPos;
-		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _whitePieces | _blackPieces, leftPos, rightPos);
+		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
 		if (leftPos != INVALID_SQUARE && rightPos != INVALID_SQUARE) {
 			if (leftPos == _blackKingPosition) {
 				if (_board[rightPos / 8][rightPos % 8] == ROOK_WHITE || _board[rightPos / 8][rightPos % 8] == QUEEN_WHITE) {
@@ -836,7 +776,7 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square
 	else if (!_whiteToPlay && _whiteKingPosition / 8 == 3) {
 		Square leftPos;
 		Square rightPos;
-		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _whitePieces | _blackPieces, leftPos, rightPos);
+		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
 		if (leftPos != INVALID_SQUARE && rightPos != INVALID_SQUARE) {
 			if (leftPos == _whiteKingPosition) {
 				if (_board[rightPos / 8][rightPos % 8] == ROOK_BLACK || _board[rightPos / 8][rightPos % 8] == QUEEN_BLACK) {
@@ -855,34 +795,26 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square
 
 	Square capturedPawnPos = (move.to > move.from) ? (Square) (move.to - 8) : (Square) (move.to + 8);
 	
-	slidingPiecePos = INVALID_SQUARE;
-	if (_whiteToPlay) {
-		if (!(squareToBitboard[capturedPawnPos] & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
-			return false;
+	if (squareToBitboard[capturedPawnPos] & _discPiecePos) {
+		if (_whiteToPlay) {
+			Bitboard slidingPieceBoard = (_bitboardImpl->queenAttackFrom(_blackKingPosition, _occupiedSquares) ^
+				_bitboardImpl->queenAttackFrom(_blackKingPosition, _occupiedSquares ^ squareToBitboard[capturedPawnPos])) &
+				_whitePieces;
+			assert (slidingPieceBoard);
+			slidingPiecePos = (Square) _bitboardImpl->lsb(slidingPieceBoard);
+			return true;
 		}
-	}
-	else {
-		if (!(squareToBitboard[capturedPawnPos] & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
-			return false;
+		else {
+			Bitboard slidingPieceBoard = (_bitboardImpl->queenAttackFrom(_whiteKingPosition, _occupiedSquares) ^
+				_bitboardImpl->queenAttackFrom(_whiteKingPosition, _occupiedSquares ^ squareToBitboard[capturedPawnPos])) &
+				_blackPieces;
+				assert (slidingPieceBoard);
+				slidingPiecePos = (Square) _bitboardImpl->lsb(slidingPieceBoard);
+				return true;
 		}
+		
 	}
 	
-	if (_bitboardImpl->squareToBitboardDiagA1h8(capturedPawnPos) & _stateDiscCheckInfo.diagA1h8Pin.smallPinPos) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.smallSlidingPiecePos;
-		return true;
-	}
-	if (_bitboardImpl->squareToBitboardDiagA1h8(capturedPawnPos) & _stateDiscCheckInfo.diagA1h8Pin.bigPinPos) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA1h8Pin.bigSlidingPiecePos;
-		return true;
-	}
-	if (_bitboardImpl->squareToBitboardDiagA8h1(capturedPawnPos) & _stateDiscCheckInfo.diagA8h1Pin.smallPinPos) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.smallSlidingPiecePos;
-		return true;
-	}
-	if (_bitboardImpl->squareToBitboardDiagA8h1(capturedPawnPos) & _stateDiscCheckInfo.diagA8h1Pin.bigPinPos) {
-		slidingPiecePos = _stateDiscCheckInfo.diagA8h1Pin.bigSlidingPiecePos;
-		return true;
-	}
 	return false;
 }
 
@@ -905,25 +837,48 @@ bool PositionState::promotionMoveChecksOpponentKing(const MoveInfo& move) const
 
 void PositionState::updateStatePinInfo()
 {
+	_pinPiecePos = 0;
 	if (_whiteToPlay) {
-		_statePinInfo.rankPin = _bitboardImpl->getRankPinInfo(_whiteKingPosition, _whitePieces | _blackPieces);
-		_statePinInfo.filePin = _bitboardImpl->getFilePinInfo(_whiteKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
-		_statePinInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_whiteKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-		_statePinInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_whiteKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
-		updateNonDiagPinStatus(_statePinInfo.rankPin, BLACK);
-		updateNonDiagPinStatus(_statePinInfo.filePin, BLACK);
-		updateDiagPinStatus(_statePinInfo.diagA1h8Pin, BLACK);
-		updateDiagPinStatus(_statePinInfo.diagA8h1Pin, BLACK);
+		Bitboard possiblePinPieces = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares) &
+			_whitePieces;
+		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares ^ possiblePinPieces) &
+			(_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possiblePinPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
+		}
+
+		possiblePinPieces = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares) &
+			_whitePieces;
+		slidingPiecePos = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares ^ possiblePinPieces) &
+			(_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possiblePinPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
+		}
 	}
 	else {
-		_statePinInfo.rankPin = _bitboardImpl->getRankPinInfo(_blackKingPosition, _whitePieces | _blackPieces);
-		_statePinInfo.filePin = _bitboardImpl->getFilePinInfo(_blackKingPosition, _whitePiecesTranspose | _blackPiecesTranspose);
-		_statePinInfo.diagA1h8Pin = _bitboardImpl->getDiagA1h8PinInfo(_blackKingPosition, _whitePiecesDiagA1h8 | _blackPiecesDiagA1h8);
-		_statePinInfo.diagA8h1Pin = _bitboardImpl->getDiagA8h1PinInfo(_blackKingPosition, _whitePiecesDiagA8h1 | _blackPiecesDiagA8h1);
-		updateNonDiagPinStatus(_statePinInfo.rankPin, WHITE);
-		updateNonDiagPinStatus(_statePinInfo.filePin, WHITE);
-		updateDiagPinStatus(_statePinInfo.diagA1h8Pin, WHITE);
-		updateDiagPinStatus(_statePinInfo.diagA8h1Pin, WHITE);
+		Bitboard possiblePinPieces = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares) &
+			_blackPieces;
+		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares ^ possiblePinPieces) &
+			(_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possiblePinPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
+		}
+
+		possiblePinPieces = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares) &
+			_blackPieces;
+		slidingPiecePos = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares ^ possiblePinPieces) &
+			(_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]);
+		while (slidingPiecePos) {
+			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possiblePinPieces;
+			slidingPiecePos &= (slidingPiecePos - 1);
+		}
 	}
 }
 
@@ -997,23 +952,23 @@ bool PositionState::kingPseudoMoveIsLegal(const MoveInfo& move) const
 bool PositionState::squareUnderAttack(Square s) const
 {
 	if (_whiteToPlay) {
-		Bitboard occupiedSquares = (_whitePieces | _blackPieces) ^ squareToBitboard[_whiteKingPosition];
+		Bitboard occupSquares = _occupiedSquares ^ squareToBitboard[_whiteKingPosition];
 		if (_bitboardImpl->pawnsBlackAttackTo(s, _piecePos[PAWN_BLACK]) || 
 				_bitboardImpl->knightsAttackTo(s, _piecePos[KNIGHT_BLACK]) ||
-			   	_bitboardImpl->bishopsAttackTo(s, occupiedSquares, _piecePos[BISHOP_BLACK]) ||
-				_bitboardImpl->rooksAttackTo(s, occupiedSquares, _piecePos[ROOK_BLACK]) ||
-				_bitboardImpl->queensAttackTo(s, occupiedSquares, _piecePos[QUEEN_BLACK]) ||
+			   	_bitboardImpl->bishopsAttackTo(s, occupSquares, _piecePos[BISHOP_BLACK]) ||
+				_bitboardImpl->rooksAttackTo(s, occupSquares, _piecePos[ROOK_BLACK]) ||
+				_bitboardImpl->queensAttackTo(s, occupSquares, _piecePos[QUEEN_BLACK]) ||
 				_bitboardImpl->kingAttackTo(s, _piecePos[KING_BLACK])) {
 			return true;
 		}
 	}
 	else {
-		Bitboard occupiedSquares = (_whitePieces | _blackPieces) ^ squareToBitboard[_blackKingPosition];
+		Bitboard occupSquares = _occupiedSquares ^ squareToBitboard[_blackKingPosition];
 		if (_bitboardImpl->pawnsWhiteAttackTo(s, _piecePos[PAWN_WHITE]) || 
 				_bitboardImpl->knightsAttackTo(s, _piecePos[KNIGHT_WHITE]) ||
-			   	_bitboardImpl->bishopsAttackTo(s, occupiedSquares, _piecePos[BISHOP_WHITE]) ||
-				_bitboardImpl->rooksAttackTo(s, occupiedSquares, _piecePos[ROOK_WHITE]) ||
-				_bitboardImpl->queensAttackTo(s, occupiedSquares, _piecePos[QUEEN_WHITE]) ||
+			   	_bitboardImpl->bishopsAttackTo(s, occupSquares, _piecePos[BISHOP_WHITE]) ||
+				_bitboardImpl->rooksAttackTo(s, occupSquares, _piecePos[ROOK_WHITE]) ||
+				_bitboardImpl->queensAttackTo(s, occupSquares, _piecePos[QUEEN_WHITE]) ||
 				_bitboardImpl->kingAttackTo(s, _piecePos[KING_WHITE])) {
 			return true;
 		}
@@ -1025,60 +980,20 @@ bool PositionState::squareUnderAttack(Square s) const
 
 bool PositionState::pinMoveOpensCheck(const MoveInfo& move) const
 {
-	if (_whiteToPlay) {
-		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_whiteKingPosition))) {
-			return false;
+	if (squareToBitboard[move.from] & _pinPiecePos) {
+		if (_whiteToPlay) {
+			if (!(_bitboardImpl->getSquaresBetween(move.from, _whiteKingPosition) &
+						_bitboardImpl->getSquaresBetween(move.to, _whiteKingPosition))) {
+				return true;
+			}
+		}
+		else {
+			if (!(_bitboardImpl->getSquaresBetween(move.from, _blackKingPosition) &
+						_bitboardImpl->getSquaresBetween(move.to, _blackKingPosition))) {
+				return true;
+			}
 		}
 	}
-	else {
-		if (!(squareToBitboard[move.from] & _bitboardImpl->getSlidingPieceMoves(_blackKingPosition))) {
-			return false;
-		}
-	}
-
-	//TODO: there should be faster way than checking 8 conditions separately as below (e.g. comparing move.from with king pos)
-	if ((squareToBitboard[move.from] & _statePinInfo.rankPin.smallPinPos) &&
-			_statePinInfo.rankPin.smallSlidingPiecePos != move.to &&
-			!(squareToBitboard[move.to] & _statePinInfo.rankPin.smallPinPos)) {
-		return true;
-	}
-	
-	if ((squareToBitboard[move.from] & _statePinInfo.rankPin.bigPinPos) &&
-			_statePinInfo.rankPin.bigSlidingPiecePos != move.to &&
-			!(squareToBitboard[move.to] & _statePinInfo.rankPin.bigPinPos)) {
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.smallPinPos) &&
-		   _statePinInfo.filePin.smallSlidingPiecePos != move.to &&
-		   !(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.smallPinPos)) {
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardTranspose(move.from) & _statePinInfo.filePin.bigPinPos) &&
-		   	_statePinInfo.filePin.bigSlidingPiecePos != move.to &&
-			!(_bitboardImpl->squareToBitboardTranspose(move.to) & _statePinInfo.filePin.bigPinPos)) {
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.smallPinPos) &&
-			_statePinInfo.diagA1h8Pin.smallSlidingPiecePos != move.to &&
-			!(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.smallPinPos)) {
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA1h8(move.from) & _statePinInfo.diagA1h8Pin.bigPinPos) &&
-		   	_statePinInfo.diagA1h8Pin.bigSlidingPiecePos != move.to &&
-			!(_bitboardImpl->squareToBitboardDiagA1h8(move.to) & _statePinInfo.diagA1h8Pin.bigPinPos)) {
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.smallPinPos) &&
-			_statePinInfo.diagA8h1Pin.smallSlidingPiecePos != move.to &&
-			!(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.smallPinPos)) {
-		return true;
-	}
-	if ((_bitboardImpl->squareToBitboardDiagA8h1(move.from) & _statePinInfo.diagA8h1Pin.bigPinPos) &&
-			_statePinInfo.diagA8h1Pin.bigSlidingPiecePos != move.to &&
-			!(_bitboardImpl->squareToBitboardDiagA8h1(move.to) & _statePinInfo.diagA8h1Pin.bigPinPos)) {
-		return true;
-	}
-	
 	return false;
 }
 
@@ -1087,7 +1002,7 @@ bool PositionState::pinEnPassantCaptureOpensCheck(const MoveInfo& move) const
 	if (_whiteToPlay && _whiteKingPosition / 8 == 4) {
 		Square leftPos;
 		Square rightPos;
-		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _whitePieces | _blackPieces, leftPos, rightPos);
+		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
 		if (leftPos != INVALID_SQUARE && rightPos != INVALID_SQUARE) {
 			if (leftPos == _whiteKingPosition) {
 				if (_board[rightPos / 8][rightPos % 8] == ROOK_BLACK || _board[rightPos / 8][rightPos % 8] == QUEEN_BLACK) {
@@ -1104,7 +1019,7 @@ bool PositionState::pinEnPassantCaptureOpensCheck(const MoveInfo& move) const
 	else if (!_whiteToPlay && _blackKingPosition / 8 == 3) {
 		Square leftPos;
 		Square rightPos;
-		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _whitePieces | _blackPieces, leftPos, rightPos);
+		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
 		if (leftPos != INVALID_SQUARE && rightPos != INVALID_SQUARE) {
 			if (leftPos == _blackKingPosition) {
 				if (_board[rightPos / 8][rightPos % 8] == ROOK_WHITE || _board[rightPos / 8][rightPos % 8] == QUEEN_WHITE) {
@@ -1167,7 +1082,8 @@ void PositionState::makeMove(const MoveInfo& move)
 
 	updateCastlingRights(move);
 	updateGameStatus();
-	
+
+	_occupiedSquares = _whitePieces | _blackPieces;	
 	_whiteToPlay = !_whiteToPlay;
 	_zobKey ^= _zobKeyImpl->getIfBlackToPlayKey();
 }
@@ -1494,17 +1410,11 @@ void PositionState::addPieceToBitboards(Square sq, Piece p, Color clr)
 	assert(clr == WHITE || clr == BLACK);
 	if (clr == WHITE) {
 		_whitePieces |= squareToBitboard[sq];
-		_whitePiecesTranspose |= _bitboardImpl->squareToBitboardTranspose(sq);
-		_whitePiecesDiagA1h8 |= _bitboardImpl->squareToBitboardDiagA1h8(sq);
-		_whitePiecesDiagA8h1 |= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
 	else {
 		_blackPieces |= squareToBitboard[sq];
-		_blackPiecesTranspose |= _bitboardImpl->squareToBitboardTranspose(sq);
-		_blackPiecesDiagA1h8 |= _bitboardImpl->squareToBitboardDiagA1h8(sq);
-		_blackPiecesDiagA8h1 |= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
-	_piecePos[p] |= squareToBitboard[sq];	
+	_piecePos[p] |= squareToBitboard[sq];
 }
 
 // Removes a piece from all 4 occupation bitboards in the appropriate position
@@ -1513,15 +1423,9 @@ void PositionState::removePieceFromBitboards(Square sq, Piece p, Color clr)
 	assert(clr == WHITE || clr == BLACK);
 	if (clr == WHITE) {
 		_whitePieces ^= squareToBitboard[sq];
-		_whitePiecesTranspose ^= _bitboardImpl->squareToBitboardTranspose(sq);
-		_whitePiecesDiagA1h8 ^= _bitboardImpl->squareToBitboardDiagA1h8(sq);
-		_whitePiecesDiagA8h1 ^= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
 	else {
 		_blackPieces ^= squareToBitboard[sq];
-		_blackPiecesTranspose ^= _bitboardImpl->squareToBitboardTranspose(sq);
-		_blackPiecesDiagA1h8 ^= _bitboardImpl->squareToBitboardDiagA1h8(sq);
-		_blackPiecesDiagA8h1 ^= _bitboardImpl->squareToBitboardDiagA8h1(sq);
 	}
 	_piecePos[p] ^= squareToBitboard[sq];
 }
@@ -1590,6 +1494,7 @@ void PositionState::undoMove()
 	   }
 	}
 
+	_occupiedSquares = _whitePieces | _blackPieces;
 	_whiteToPlay = !_whiteToPlay;
 	_zobKey ^= _zobKeyImpl->getIfBlackToPlayKey();
 }

@@ -31,7 +31,7 @@ uint64_t Perft::analyze(PositionState& pos, uint16_t depth, bool begin) const
     }
     moveCount += mc;
     if (begin) {
-//        std::cout << "Move: " << pismo::moveToNotation((genInfo->_availableMoves)[genInfo->_currentMovePos - 1]) << "    " << mc << "   FEN: " << pos.getStateFEN() << std::endl;
+		//std::cout << "Move: " << pismo::moveToNotation((genInfo->_availableMoves)[genInfo->_currentMovePos - 1]) << "    " << mc << "   FEN: " << pos.getStateFEN() << std::endl;
     }
   }
 

@@ -103,25 +103,16 @@ public:
 	bool blackRightCastling() const {return _blackRightCastling;}
 
 	Bitboard absolutePinsPos() const {return _absolutePinsPos;}
+	Bitboard discPiecePos() const {return _discPiecePos;}
 
-	Bitboard occupiedSquares() const {return _whitePieces | _blackPieces;}
+	Bitboard occupiedSquares() const {return _occupiedSquares;}
 	Bitboard whitePieces() const {return _whitePieces;}
-	Bitboard whitePiecesTranspose() const {return _whitePiecesTranspose;}
-	Bitboard whitePiecesDiagA1h8() const {return _whitePiecesDiagA1h8;}
-	Bitboard whitePiecesDiagA8h1() const {return _whitePiecesDiagA8h1;}
 	Bitboard blackPieces() const {return _blackPieces;}
-	Bitboard blackPiecesTranspose() const {return _blackPiecesTranspose;}
-	Bitboard blackPiecesDiagA1h8() const {return _blackPiecesDiagA1h8;}
-	Bitboard blackPiecesDiagA8h1() const {return _blackPiecesDiagA8h1;}
 
 	Bitboard const (&getPiecePos() const)[PIECE_NB] {return _piecePos;}
 	Bitboard const (&getDirectCheck() const)[PIECE_NB] {return _directCheck;}
 
 	Square enPassantTarget() const {return _enPassantFile == -1 ? INVALID_SQUARE : (_whiteToPlay ? (Square) (A6 + _enPassantFile) : (Square) (A3 + _enPassantFile));}
-	const PinInfo& rankDiscCheck() const {return _stateDiscCheckInfo.rankPin;}
-	const PinInfo& fileDiscCheck() const {return _stateDiscCheckInfo.filePin;}
-	const PinInfo& diagA1h8DiscCheck() const {return _stateDiscCheckInfo.diagA1h8Pin;}
-	const PinInfo& diagA8h1DiscCheck() const {return _stateDiscCheckInfo.diagA8h1Pin;}	
 
 //private member functions
 private:
@@ -147,9 +138,6 @@ private:
 
 	void addPieceToBitboards(Square sq, Piece p, Color clr);
 	void removePieceFromBitboards(Square sq, Piece p, Color clr);
-
-	void updateNonDiagPinStatus(PinInfo& pin, Color clr) const;
-	void updateDiagPinStatus(PinInfo& pin, Color clr) const;
 
 	void updateMoveChecksOpponentKing(const MoveInfo& move);	
 	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;
@@ -224,15 +212,12 @@ private:
 private:
 	Piece _board[8][8];
 	
-	// Occupation bitboards (4 for each color)
+	// Occupation bitboards for each color
 	Bitboard _whitePieces;
-	Bitboard _whitePiecesTranspose;
-	Bitboard _whitePiecesDiagA1h8;
-	Bitboard _whitePiecesDiagA8h1;
 	Bitboard _blackPieces;
-	Bitboard _blackPiecesTranspose;
-	Bitboard _blackPiecesDiagA1h8;
-	Bitboard _blackPiecesDiagA8h1;
+	
+	// Occupation bitboard
+	Bitboard _occupiedSquares;
 
 	// Occupation bitboards for each peace
 	Bitboard _piecePos[PIECE_NB];
@@ -245,14 +230,14 @@ private:
 	// positions from which it can attack the king	
 	Bitboard _directCheck[PIECE_NB];
 
-	// Complete info of the positions where piece can
-    // can be located to open discovered check and 
-	// appropriate sliding piece positions
-	StatePinInfo _stateDiscCheckInfo;
+	// Bitboard of the positions where discovered 
+	// pieces are located; opposite color discovered 
+	// pawns are also considered for en passant capture
+	Bitboard _discPiecePos;
 
-	// Complete info of the positions where pinned pieces 
-	// can be located and appropriate sliding piece positions
-	StatePinInfo _statePinInfo;
+	// Bitboard of the positions where pinned pieces
+	// are located
+	Bitboard _pinPiecePos;
 
 	const BitboardImpl* _bitboardImpl;
 	const ZobKeyImpl* _zobKeyImpl;
