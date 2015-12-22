@@ -6,7 +6,6 @@ SRCS = PositionState.cpp \
 			MoveGenerator.cpp \
 			BitboardImpl.cpp \
 			MagicMoves.cpp \
-			PossibleMoves.cpp \
 			ZobKeyImpl.cpp \
 			TranspositionTable.cpp \
 			PositionEvaluation.cpp \

@@ -92,33 +92,6 @@ const int PIECE_VALUES[PIECE_NB] =
 
 const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE black wins)
 
-// Pin info for one ray direction
-// Bitboards show available pinned piece current and possible moving positions for squares
-// smaller and bigger than the attacked square
-// smallSlidingPiecePos and bigSlidingPiecePos give the positions
-// of possible sliding pieces
-// if there is no sliding piece in one direction appropriate Square is set to INVALID_SQUARE
-// and Bitboard to 0
-// for example of the rank ray case
-// if king is at C4, pawn is at B4 and E4, and ROOK is at A4 and G4
-// smallSlidingPiecePos = A4, bigSlidingPiecePos = G4
-// smallPinPos is Bitboard with bits on A4 to B4 set (exluding A4)
-// bigPinPos is Bitboard with bits on D4 to G4 set (excluding G4)
-struct PinInfo {
-        Square smallSlidingPiecePos;
-        Square bigSlidingPiecePos;
-        Bitboard smallPinPos;
-        Bitboard bigPinPos;
-
-        PinInfo(Square small = INVALID_SQUARE, Square big = INVALID_SQUARE, const Bitboard& spos = 0, const Bitboard& bpos = 0)
-        : smallSlidingPiecePos(small),
-        bigSlidingPiecePos(big),
-        smallPinPos(spos),
-        bigPinPos(bpos)
-        {
-        }
-};
-
 std::string moveToNotation(const MoveInfo& move);
 }
 

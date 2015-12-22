@@ -1009,7 +1009,7 @@ void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) &
-			~_bitboardImpl->getSlidingPieceMoves(_positionState->blackKingPosition()) &
+			~(RankFileMask[_positionState->blackKingPosition()] | DiagonalMask[_positionState->blackKingPosition()]) &
 			// Moves of the white king which are on the ray coming from black king
 			// position cannot open discovered check	
 		   	~_positionState->occupiedSquares() & ~_bitboardImpl->kingAttackFrom(_positionState->blackKingPosition());
@@ -1021,7 +1021,7 @@ void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from)
 	}
 	else {
 		Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) &
-			~_bitboardImpl->getSlidingPieceMoves(_positionState->whiteKingPosition()) &
+			~(RankFileMask[_positionState->whiteKingPosition()] | DiagonalMask[_positionState->whiteKingPosition()]) &
 			// Moves of black king which are on the ray coming from white king
 			// position cannot open discovered check	
 		   	~_positionState->occupiedSquares() & ~_bitboardImpl->kingAttackFrom(_positionState->whiteKingPosition());

@@ -6,7 +6,6 @@ SRCS = ../../PositionState.cpp \
 			../../MoveGenerator.cpp \
 			../../BitboardImpl.cpp \
 			../../MagicMoves.cpp \
-			../../PossibleMoves.cpp \
 			../../ZobKeyImpl.cpp \
 			../../TranspositionTable.cpp \
 			../../PositionEvaluation.cpp \
@@ -26,4 +25,4 @@ $(OBJS): %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	rm -f *.o a.out
+	rm -f *.o perft

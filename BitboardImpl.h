@@ -40,10 +40,6 @@ const Bitboard KING_MOVES_B2 = 0x0000000000070507; // Bitboard for possible move
 const Bitboard KING_MOVES_A2 = 0x0000000000030203; // Bitboard for possible moves of king at Square A2
 const Bitboard KING_MOVES_H2 = 0x0000000000C040C0; // Bitboard for possible moves of king at Square H2 
 
-const Bitrank OCCUPATION_FROM_LSB[] =
-	{0x00, 0x01, 0x03, 0x07, 0x0F, 
-	0x1F, 0x3F, 0x7F, 0xFF};
-
 extern Bitboard squareToBitboard[NUMBER_OF_SQUARES];
 extern Bitboard RankFileMask[NUMBER_OF_SQUARES];
 extern Bitboard DiagonalMask[NUMBER_OF_SQUARES];
@@ -54,15 +50,6 @@ public:
 	static const BitboardImpl* instance();
 	void destroy();
 	
-	Bitboard squareToBitboardTranspose(Square sq) const;
-	Bitboard squareToBitboardDiagA1h8(Square sq) const;
-	Bitboard squareToBitboardDiagA8h1(Square sq) const;
-	
-	Bitboard getRankMoves(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard getFileMoves(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard getDiagA1h8Moves(Square from, const Bitboard& occupiedSquares) const;
-	Bitboard getDiagA8h1Moves(Square from, const Bitboard& occupiedSquares) const;
-
 	Bitboard knightAttackFrom(Square from) const;
 	Bitboard knightsAttackTo(Square to, const Bitboard& knightsPos) const;
 	Bitboard kingAttackFrom(Square from) const;
@@ -84,20 +71,9 @@ public:
 	Bitboard pawnWhiteMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsWhitePos) const;
 	Bitboard pawnBlackMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsBlackPos) const;
 
-	const PinInfo& getRankPinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-	const PinInfo& getFilePinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-	const PinInfo& getDiagA1h8PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-	const PinInfo& getDiagA8h1PinInfo(Square kingSq, const Bitboard& occupiedSquares) const;
-
 	void getEnPassantPinInfo(Square from, Square to, const Bitboard& occupiedSquares, Square& leftPos, Square& rightPos) const;
 
-	Bitboard getSlidingPieceMoves(Square from) const;
-
 	Bitboard getSquaresBetween(Square from, Square kingSq) const;
-
-	Square squareToSquareTranspose(Square sq) const;
-	Square squareToSquareA1h8(Square sq) const;
-	Square squareToSquareA8h1(Square sq) const;
 
 	int lsb(const Bitboard& board) const;
 
@@ -109,65 +85,25 @@ private:
 	BitboardImpl(const BitboardImpl&); //non-copyable
 	BitboardImpl& operator=(const BitboardImpl&); //non-assignable
 
-	void initSquareToBitboardTranspose();
-	void initSquareToBitboardA1h8();
-	void initSquareToBitboardA8h1();
-
-	void initMovePosBoardRank();
-	void initMovePosBoardFile();
-	void initMovePosBoardA1h8();
-	void initMovePosBoardA8h1();
-
 	void initMovePosBoardKnight();
 	void initMovePosBoardKing();
 	void initAttackingPosBoardPawnWhite();
 	void initAttackingPosBoardPawnBlack();
 
-	void initRankPinInfo();
-	void initFilePinInfo();
-	void initDiagA1h8PinInfo();
-	void initDiagA8h1PinInfo();
-
-	void initSlidingPosBoard();
-
 	void initSquaresBetween();
 
 	void initBitScanTable();
 
-	Bitrank movePosRank(unsigned int position, Bitrank rankOccup) const;
-	void setRankPinInfo(unsigned int position, Bitrank rankOccup, int& leftSlidePos, int& rightSlidePos, Bitrank & leftPin, Bitrank& rightPin) const;
 	int msb(Bitrank rank) const;
-
-	Bitboard bitboardTransposeToBitboard(const Bitboard& boardTranspose) const;
-	Bitboard bitboardDiagA1h8ToBitboard(const Bitboard& boardDiagA1h8) const;
-	Bitboard bitboardDiagA8h1ToBitboard(const Bitboard& boardDiagA8h1) const;	
-	Bitboard rotateBitboardRight(const Bitboard& board, unsigned int num) const;
 
 // date members
 private:
 	static BitboardImpl* _instance;
 
-	Bitboard _squareToBitboardTranspose[NUMBER_OF_SQUARES];
-	Bitboard _squareToBitboardA1h8[NUMBER_OF_SQUARES];
-	Bitboard _squareToBitboardA8h1[NUMBER_OF_SQUARES];
-
-	// TODO: For optimization purposes change arrays to [64][64]	
-	Bitboard _movePosBoardRank[NUMBER_OF_SQUARES][256];
-	Bitboard _movePosBoardFile[NUMBER_OF_SQUARES][256];
-	Bitboard _movePosBoardDiagA1h8[NUMBER_OF_SQUARES][256];
-	Bitboard _movePosBoardDiagA8h1[NUMBER_OF_SQUARES][256];
-
 	Bitboard _movePosBoardKnight[NUMBER_OF_SQUARES];
 	Bitboard _movePosBoardKing[NUMBER_OF_SQUARES];
 	Bitboard _attackingPosBoardPawnWhite[NUMBER_OF_SQUARES - 16];
 	Bitboard _attackingPosBoardPawnBlack[NUMBER_OF_SQUARES - 16];
-
-	PinInfo _rankPinInfo[NUMBER_OF_SQUARES][256];
-	PinInfo _filePinInfo[NUMBER_OF_SQUARES][256];
-	PinInfo _diagA1h8PinInfo[NUMBER_OF_SQUARES][256];
-	PinInfo _diagA8h1PinInfo[NUMBER_OF_SQUARES][256];
-	
-	Bitboard _slidingPosBoard[NUMBER_OF_SQUARES];
 
 	Bitboard _squaresBetween[NUMBER_OF_SQUARES][NUMBER_OF_SQUARES];
 

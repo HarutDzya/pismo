@@ -139,7 +139,7 @@ private:
 	template <Color clr>
 	void addPieceToBitboards(Square sq, Piece p);
 
-  template <Color clr>
+	template <Color clr>
 	void removePieceFromBitboards(Square sq, Piece p);
 
 	void updateMoveChecksOpponentKing(const MoveInfo& move);	
@@ -201,16 +201,6 @@ private:
 			uint32_t _stackSize;
 	};
 	
-	struct StatePinInfo {
-		PinInfo rankPin;
-		PinInfo filePin;
-		PinInfo diagA1h8Pin;
-		PinInfo diagA8h1Pin;
-	};
-
-
-
-
 //data members
 private:
 	Piece _board[8][8];
