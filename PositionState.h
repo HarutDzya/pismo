@@ -136,8 +136,11 @@ private:
 
 	void updateCastlingRights(const MoveInfo& move);
 
-	void addPieceToBitboards(Square sq, Piece p, Color clr);
-	void removePieceFromBitboards(Square sq, Piece p, Color clr);
+	template <Color clr>
+	void addPieceToBitboards(Square sq, Piece p);
+
+  template <Color clr>
+	void removePieceFromBitboards(Square sq, Piece p);
 
 	void updateMoveChecksOpponentKing(const MoveInfo& move);	
 	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;

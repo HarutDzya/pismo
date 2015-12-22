@@ -63,13 +63,13 @@ void PositionState::setPiece(Square s, Piece p)
 		if (p == KING_WHITE) {
 			_whiteKingPosition = s;
 		}
-		addPieceToBitboards(s, p, WHITE);
+		addPieceToBitboards<WHITE>(s, p);
 	}
 	else {
 		if (p == KING_BLACK) {
 			_blackKingPosition = s;
 		}
-		addPieceToBitboards(s, p, BLACK);
+		addPieceToBitboards<BLACK>(s, p);
 	}
 	++_pieceCount[p];
 	_pstValue += calculatePstValue(p, s);
@@ -1117,15 +1117,15 @@ void PositionState::makeNormalMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_whiteToPlay) {			
-		removePieceFromBitboards(move.from, pfrom, WHITE);
-		addPieceToBitboards(move.to, pfrom, WHITE);
+		removePieceFromBitboards<WHITE>(move.from, pfrom);
+		addPieceToBitboards<WHITE>(move.to, pfrom);
 		if (pfrom == KING_WHITE) {
 			_whiteKingPosition = move.to;
 		}
 	}
 	else {
-		removePieceFromBitboards(move.from, pfrom, BLACK);
-		addPieceToBitboards(move.to, pfrom, BLACK);
+		removePieceFromBitboards<BLACK>(move.from, pfrom);
+		addPieceToBitboards<BLACK>(move.to, pfrom);
 		if (pfrom == KING_BLACK) {
 			_blackKingPosition = move.to;
 		}
@@ -1147,17 +1147,17 @@ void PositionState::makeCaptureMove(const MoveInfo& move)
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	Piece pto = _board[move.to / 8][move.to % 8];
 	if (_whiteToPlay) {			
-		removePieceFromBitboards(move.from, pfrom, WHITE);
-		addPieceToBitboards(move.to, pfrom, WHITE);
-		removePieceFromBitboards(move.to, pto, BLACK);
+		removePieceFromBitboards<WHITE>(move.from, pfrom);
+		addPieceToBitboards<WHITE>(move.to, pfrom);
+		removePieceFromBitboards<BLACK>(move.to, pto);
 		if (pfrom == KING_WHITE) {
 			_whiteKingPosition = move.to;
 		}
 	}
 	else {
-		removePieceFromBitboards(move.from, pfrom, BLACK);
-		addPieceToBitboards(move.to, pfrom, BLACK);
-		removePieceFromBitboards(move.to, pto, WHITE);
+		removePieceFromBitboards<BLACK>(move.from, pfrom);
+		addPieceToBitboards<BLACK>(move.to, pfrom);
+		removePieceFromBitboards<WHITE>(move.to, pto);
 		if (pfrom == KING_BLACK) {
 			_blackKingPosition = move.to;
 		}
@@ -1183,8 +1183,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 {
 	if (_whiteToPlay) {
 		assert(move.from == E1);
-		removePieceFromBitboards(move.from, KING_WHITE, WHITE);
-		addPieceToBitboards(move.to, KING_WHITE, WHITE);
+		removePieceFromBitboards<WHITE>(move.from, KING_WHITE);
+		addPieceToBitboards<WHITE>(move.to, KING_WHITE);
 		_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 		_board[move.to / 8][move.to % 8] = KING_WHITE;
 		_pstValue -= calculatePstValue(KING_WHITE, move.from);
@@ -1193,8 +1193,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_WHITE, move.to);
 		_whiteKingPosition = move.to;
 		if (move.to == C1) {
-			removePieceFromBitboards(A1, ROOK_WHITE, WHITE);
-			addPieceToBitboards(D1, ROOK_WHITE, WHITE);	
+			removePieceFromBitboards<WHITE>(A1, ROOK_WHITE);
+			addPieceToBitboards<WHITE>(D1, ROOK_WHITE);
 			_board[A1 / 8][A1 % 8] = ETY_SQUARE;
 			_board[D1 / 8][D1 % 8] = ROOK_WHITE;
 			_pstValue -= calculatePstValue(ROOK_WHITE, A1);
@@ -1204,8 +1204,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 		}	
 		else {
 			assert(move.to == G1);
-			removePieceFromBitboards(H1, ROOK_WHITE, WHITE);
-			addPieceToBitboards(F1, ROOK_WHITE, WHITE);	
+			removePieceFromBitboards<WHITE>(H1, ROOK_WHITE);
+			addPieceToBitboards<WHITE>(F1, ROOK_WHITE);
 			_board[H1 / 8][H1 % 8] = ETY_SQUARE;
 			_board[F1 / 8][F1 % 8] = ROOK_WHITE;
 			_pstValue -= calculatePstValue(ROOK_WHITE, H1);
@@ -1217,8 +1217,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 	}
 	else {
 		assert(move.from == E8);
-		removePieceFromBitboards(move.from, KING_BLACK, BLACK);
-		addPieceToBitboards(move.to, KING_BLACK, BLACK);
+		removePieceFromBitboards<BLACK>(move.from, KING_BLACK);
+		addPieceToBitboards<BLACK>(move.to, KING_BLACK);
 		_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 		_board[move.to / 8][move.to % 8] = KING_BLACK;
 		_pstValue -= calculatePstValue(KING_BLACK, move.from);
@@ -1227,8 +1227,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_BLACK, move.to);
 		_blackKingPosition = move.to;
 		if (move.to == C8) {
-			removePieceFromBitboards(A8, ROOK_BLACK, BLACK);
-			addPieceToBitboards(D8, ROOK_BLACK, BLACK);	
+			removePieceFromBitboards<BLACK>(A8, ROOK_BLACK);
+			addPieceToBitboards<BLACK>(D8, ROOK_BLACK);
 			_board[A8 / 8][A8 % 8] = ETY_SQUARE;
 			_board[D8 / 8][D8 % 8] = ROOK_BLACK;
 			_pstValue -= calculatePstValue(ROOK_BLACK, A8);
@@ -1238,8 +1238,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 		}	
 		else {
 			assert(move.to == G8);
-			removePieceFromBitboards(H8, ROOK_BLACK, BLACK);
-			addPieceToBitboards(F8, ROOK_BLACK, BLACK);	
+			removePieceFromBitboards<BLACK>(H8, ROOK_BLACK);
+			addPieceToBitboards<BLACK>(F8, ROOK_BLACK);
 			_board[H8 / 8][H8 % 8] = ETY_SQUARE;
 			_board[F8 / 8][F8 % 8] = ROOK_BLACK;
 			_pstValue -= calculatePstValue(ROOK_BLACK, H8);
@@ -1258,12 +1258,12 @@ void PositionState::makeEnPassantMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_whiteToPlay) {
-		removePieceFromBitboards(move.from, pfrom, WHITE);
-		addPieceToBitboards(move.to, pfrom, WHITE);
+		removePieceFromBitboards<WHITE>(move.from, pfrom);
+		addPieceToBitboards<WHITE>(move.to, pfrom);
 	}
 	else {
-		removePieceFromBitboards(move.from, pfrom, BLACK);
-		addPieceToBitboards(move.to, pfrom, BLACK);
+		removePieceFromBitboards<BLACK>(move.from, pfrom);
+		addPieceToBitboards<BLACK>(move.to, pfrom);
 	}	
 	_board[move.from / 8][move.from % 8] = ETY_SQUARE;
 	_board[move.to / 8][move.to % 8] = pfrom;
@@ -1283,9 +1283,9 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 {
 	Piece pfrom = _board[move.from / 8][move.from % 8];
 	if (_whiteToPlay) {
-		removePieceFromBitboards(move.from, pfrom, WHITE);
-		addPieceToBitboards(move.to, pfrom, WHITE);
-		removePieceFromBitboards((Square) (move.to - 8), PAWN_BLACK, BLACK);
+		removePieceFromBitboards<WHITE>(move.from, pfrom);
+		addPieceToBitboards<WHITE>(move.to, pfrom);
+		removePieceFromBitboards<BLACK>((Square) (move.to - 8), PAWN_BLACK);
 		--_pieceCount[PAWN_BLACK];
 		_board[move.to / 8 - 1][move.to % 8] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
@@ -1293,9 +1293,9 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		_materialZobKey ^= _zobKeyImpl->getMaterialKey(PAWN_BLACK, _pieceCount[PAWN_BLACK] + 1);
 	}
 	else {
-		removePieceFromBitboards(move.from, pfrom, BLACK);
-		addPieceToBitboards(move.to, pfrom, BLACK);
-		removePieceFromBitboards((Square) (move.to + 8), PAWN_WHITE, WHITE);
+		removePieceFromBitboards<BLACK>(move.from, pfrom);
+		addPieceToBitboards<BLACK>(move.to, pfrom);
+		removePieceFromBitboards<WHITE>((Square) (move.to + 8), PAWN_WHITE);
 		--_pieceCount[PAWN_WHITE];
 		_board[move.to / 8 + 1][move.to % 8] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
@@ -1319,10 +1319,10 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 	Piece pto = _board[move.to / 8][move.to % 8];
 	if (_whiteToPlay) {
 		assert(move.from >= A7 && move.from <= H7);
-		removePieceFromBitboards(move.from, pfrom, WHITE);
-		addPieceToBitboards(move.to, move.promoted, WHITE);
+		removePieceFromBitboards<WHITE>(move.from, pfrom);
+		addPieceToBitboards<WHITE>(move.to, move.promoted);
 		if (pto != ETY_SQUARE) {
-			removePieceFromBitboards(move.to, pto, BLACK);
+			removePieceFromBitboards<BLACK>(move.to, pto);
 			_pstValue -= calculatePstValue(pto, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 			--_pieceCount[pto];
@@ -1331,10 +1331,10 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 	}
 	else {
 		assert(move.from >= A2 && move.from <= H2);
-		removePieceFromBitboards(move.from, pfrom, BLACK);
-		addPieceToBitboards(move.to, move.promoted, BLACK);
+		removePieceFromBitboards<BLACK>(move.from, pfrom);
+		addPieceToBitboards<BLACK>(move.to, move.promoted);
 		if (pto != ETY_SQUARE) {
-			removePieceFromBitboards(move.to, pto, WHITE);
+			removePieceFromBitboards<WHITE>(move.to, pto);
 			_pstValue -= calculatePstValue(pto, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 			--_pieceCount[pto];
@@ -1430,9 +1430,9 @@ void PositionState::updateCastlingRights(const MoveInfo& move)
 
 
 // Adds a piece into all 4 occupation bitboards in the appropriate position
-void PositionState::addPieceToBitboards(Square sq, Piece p, Color clr)
+template <Color clr>
+void PositionState::addPieceToBitboards(Square sq, Piece p)
 {
-	assert(clr == WHITE || clr == BLACK);
 	if (clr == WHITE) {
 		_whitePieces |= squareToBitboard[sq];
 	}
@@ -1443,9 +1443,9 @@ void PositionState::addPieceToBitboards(Square sq, Piece p, Color clr)
 }
 
 // Removes a piece from all 4 occupation bitboards in the appropriate position
-void PositionState::removePieceFromBitboards(Square sq, Piece p, Color clr)
+template <Color clr>
+void PositionState::removePieceFromBitboards(Square sq, Piece p)
 {
-	assert(clr == WHITE || clr == BLACK);
 	if (clr == WHITE) {
 		_whitePieces ^= squareToBitboard[sq];
 	}
@@ -1527,15 +1527,15 @@ void PositionState::undoMove()
 void PositionState::undoNormalMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {			
-		removePieceFromBitboards(move.to, move.movedPiece, BLACK);
-		addPieceToBitboards(move.from, move.movedPiece, BLACK);
+		removePieceFromBitboards<BLACK>(move.to, move.movedPiece);
+		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
 		if (move.movedPiece == KING_BLACK) {
 			_blackKingPosition = move.from;
 		}
 	}
 	else {
-		removePieceFromBitboards(move.to, move.movedPiece, WHITE);
-		addPieceToBitboards(move.from, move.movedPiece, WHITE);
+		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
+		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
 		if (move.movedPiece == KING_WHITE) {
 			_whiteKingPosition = move.from;
 		}
@@ -1555,17 +1555,17 @@ void PositionState::undoNormalMove(const UndoMoveInfo& move)
 void PositionState::undoCaptureMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {			
-		removePieceFromBitboards(move.to, move.movedPiece, BLACK);
-		addPieceToBitboards(move.from, move.movedPiece, BLACK);
-		addPieceToBitboards(move.to, move.capturedPiece, WHITE);
+		removePieceFromBitboards<BLACK>(move.to, move.movedPiece);
+		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
+		addPieceToBitboards<WHITE>(move.to, move.capturedPiece);
 		if (move.movedPiece == KING_BLACK) {
 			_blackKingPosition = move.from;
 		}
 	}
 	else {
-		removePieceFromBitboards(move.to, move.movedPiece, WHITE);
-		addPieceToBitboards(move.from, move.movedPiece, WHITE);
-		addPieceToBitboards(move.to, move.capturedPiece, BLACK);
+		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
+		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
+		addPieceToBitboards<BLACK>(move.to, move.capturedPiece);
 		if (move.movedPiece == KING_WHITE) {
 			_whiteKingPosition = move.from;
 		}
@@ -1591,8 +1591,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 	if (_whiteToPlay) {
 		assert(move.from == E8);
 		assert(move.movedPiece == KING_BLACK);
-		removePieceFromBitboards(move.to, move.movedPiece, BLACK);
-		addPieceToBitboards(move.from, move.movedPiece, BLACK);
+		removePieceFromBitboards<BLACK>(move.to, move.movedPiece);
+		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
 		_board[move.from / 8][move.from % 8] = KING_BLACK;
 		_board[move.to / 8][move.to % 8] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(KING_BLACK, move.to);
@@ -1601,8 +1601,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_BLACK, move.from);
 		_blackKingPosition = move.from;
 		if (move.to == C8) {
-			removePieceFromBitboards(D8, ROOK_BLACK, BLACK);
-			addPieceToBitboards(A8, ROOK_BLACK, BLACK);	
+			removePieceFromBitboards<BLACK>(D8, ROOK_BLACK);
+			addPieceToBitboards<BLACK>(A8, ROOK_BLACK);
 			_board[D8 / 8][D8 % 8] = ETY_SQUARE;
 			_board[A8 / 8][A8 % 8] = ROOK_BLACK;
 			_pstValue -= calculatePstValue(ROOK_BLACK, D8);
@@ -1612,8 +1612,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 		}	
 		else {
 			assert(move.to == G8);
-			removePieceFromBitboards(F8, ROOK_BLACK, BLACK);
-			addPieceToBitboards(H8, ROOK_BLACK, BLACK);	
+			removePieceFromBitboards<BLACK>(F8, ROOK_BLACK);
+			addPieceToBitboards<BLACK>(H8, ROOK_BLACK);
 			_board[F8 / 8][F8 % 8] = ETY_SQUARE;
 			_board[H8 / 8][H8 % 8] = ROOK_BLACK;
 			_pstValue -= calculatePstValue(ROOK_BLACK, F8);
@@ -1625,8 +1625,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 	else {
 		assert(move.from == E1);
 		assert(move.movedPiece == KING_WHITE); 
-		removePieceFromBitboards(move.to, move.movedPiece, WHITE);
-		addPieceToBitboards(move.from, move.movedPiece, WHITE);
+		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
+		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
 		_board[move.to / 8][move.to % 8] = ETY_SQUARE;
 		_board[move.from / 8][move.from % 8] = KING_WHITE;
 		_pstValue -= calculatePstValue(KING_WHITE, move.to);
@@ -1635,8 +1635,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_WHITE, move.from);
 		_whiteKingPosition = move.from;
 		if (move.to == C1) {
-			removePieceFromBitboards(D1, ROOK_WHITE, WHITE);
-			addPieceToBitboards(A1, ROOK_WHITE, WHITE);	
+			removePieceFromBitboards<WHITE>(D1, ROOK_WHITE);
+			addPieceToBitboards<WHITE>(A1, ROOK_WHITE);
 			_board[D1 / 8][D1 % 8] = ETY_SQUARE;
 			_board[A1 / 8][A1 % 8] = ROOK_WHITE;
 			_pstValue -= calculatePstValue(ROOK_WHITE, D1);
@@ -1646,8 +1646,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 		}	
 		else {
 			assert(move.to == G1);
-			removePieceFromBitboards(F1, ROOK_WHITE, WHITE);
-			addPieceToBitboards(H1, ROOK_WHITE, WHITE);	
+			removePieceFromBitboards<WHITE>(F1, ROOK_WHITE);
+			addPieceToBitboards<WHITE>(H1, ROOK_WHITE);
 			_board[F1 / 8][F1 % 8] = ETY_SQUARE;
 			_board[H1 / 8][H1 % 8] = ROOK_WHITE;
 			_pstValue -= calculatePstValue(ROOK_WHITE, F1);
@@ -1666,12 +1666,12 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 void PositionState::undoEnPassantMove(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {
-		removePieceFromBitboards(move.to, move.movedPiece, BLACK);
-		addPieceToBitboards(move.from, move.movedPiece, BLACK);
+		removePieceFromBitboards<BLACK>(move.to, move.movedPiece);
+		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
 	}
 	else {
-		removePieceFromBitboards(move.to, move.movedPiece, WHITE);
-		addPieceToBitboards(move.from, move.movedPiece, WHITE);
+		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
+		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
 	}
 	assert(_board[move.to / 8][move.to % 8] != ETY_SQUARE);	
 	_board[move.to / 8][move.to % 8] = ETY_SQUARE;
@@ -1690,9 +1690,9 @@ void PositionState::undoEnPassantMove(const UndoMoveInfo& move)
 void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 {
 	if (_whiteToPlay) {
-		removePieceFromBitboards(move.to, move.movedPiece, BLACK);
-		addPieceToBitboards(move.from, move.movedPiece, BLACK);
-		addPieceToBitboards((Square) (move.to + 8), PAWN_WHITE, WHITE);
+		removePieceFromBitboards<BLACK>(move.to, move.movedPiece);
+		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
+		addPieceToBitboards<WHITE>((Square) (move.to + 8), PAWN_WHITE);
 		++_pieceCount[PAWN_WHITE];
 		_board[move.to / 8 + 1][move.to % 8] = PAWN_WHITE;
 		_pstValue += calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
@@ -1700,9 +1700,9 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		_materialZobKey ^= _zobKeyImpl->getMaterialKey(PAWN_WHITE, _pieceCount[PAWN_WHITE]);
 	}
 	else {
-		removePieceFromBitboards(move.to, move.movedPiece, WHITE);
-		addPieceToBitboards(move.from, move.movedPiece, WHITE);
-		addPieceToBitboards((Square) (move.to - 8), PAWN_BLACK, BLACK);
+		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
+		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
+		addPieceToBitboards<BLACK>((Square) (move.to - 8), PAWN_BLACK);
 		++_pieceCount[PAWN_BLACK];
 		_board[move.to / 8 - 1][move.to % 8] = PAWN_BLACK;
 		_pstValue += calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
@@ -1727,10 +1727,10 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 	Piece promoted = _board[move.to / 8][move.to % 8];
 	if (_whiteToPlay) {
 		assert(move.from >= A2 && move.from <= H2);
-		removePieceFromBitboards(move.to, promoted, BLACK);
-		addPieceToBitboards(move.from, move.movedPiece, BLACK);
+		removePieceFromBitboards<BLACK>(move.to, promoted);
+		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
 		if (move.capturedPiece != ETY_SQUARE) {
-			addPieceToBitboards(move.to, move.capturedPiece, WHITE);
+			addPieceToBitboards<WHITE>(move.to, move.capturedPiece);
 			_pstValue += calculatePstValue(move.capturedPiece, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 			++_pieceCount[move.capturedPiece];
@@ -1739,10 +1739,10 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 	}
 	else {
 		assert(move.from >= A7 && move.from <= H7);
-		removePieceFromBitboards(move.to, promoted, WHITE);
-		addPieceToBitboards(move.from, move.movedPiece, WHITE);
+		removePieceFromBitboards<WHITE>(move.to, promoted);
+		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
 		if (move.capturedPiece != ETY_SQUARE) {
-			addPieceToBitboards(move.to, move.capturedPiece, BLACK);
+			addPieceToBitboards<BLACK>(move.to, move.capturedPiece);
 			_pstValue += calculatePstValue(move.capturedPiece, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 			++_pieceCount[move.capturedPiece];
