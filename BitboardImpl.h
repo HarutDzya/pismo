@@ -45,6 +45,8 @@ const Bitrank OCCUPATION_FROM_LSB[] =
 	0x1F, 0x3F, 0x7F, 0xFF};
 
 extern Bitboard squareToBitboard[NUMBER_OF_SQUARES];
+extern Bitboard RankFileMask[NUMBER_OF_SQUARES];
+extern Bitboard DiagonalMask[NUMBER_OF_SQUARES];
 
 class BitboardImpl
 {

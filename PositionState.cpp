@@ -561,45 +561,57 @@ void PositionState::updateDiscoveredChecksInfo()
 {
 	_discPiecePos = 0;
 	if (_whiteToPlay) {
-		Bitboard possibleDiscPieces = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares) &
-			(_whitePieces | _piecePos[PAWN_BLACK]);
-		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares ^ possibleDiscPieces) &
-			(_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possibleDiscPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+		if (DiagonalMask[_blackKingPosition] & (_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]))
+		{
+			Bitboard possibleDiscPieces = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares) &
+				(_whitePieces | _piecePos[PAWN_BLACK]);
+			Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+				(_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possibleDiscPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 
-		possibleDiscPieces = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares) &
-			(_whitePieces | _piecePos[PAWN_BLACK]);
-		slidingPiecePos = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares ^ possibleDiscPieces) &
-			(_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possibleDiscPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+		if (RankFileMask[_blackKingPosition] & (_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]))
+		{
+			Bitboard possibleDiscPieces = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares) &
+				(_whitePieces | _piecePos[PAWN_BLACK]);
+			Bitboard slidingPiecePos = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+				(_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possibleDiscPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 	}
 	else {
-		Bitboard possibleDiscPieces = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares) &
-			(_blackPieces | _piecePos[PAWN_WHITE]);
-		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares ^ possibleDiscPieces) &
-			(_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possibleDiscPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+		if (DiagonalMask[_whiteKingPosition] & (_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]))
+		{
+			Bitboard possibleDiscPieces = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares) &
+				(_blackPieces | _piecePos[PAWN_WHITE]);
+			Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+				(_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possibleDiscPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 
-		possibleDiscPieces = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares) &
-			(_blackPieces | _piecePos[PAWN_WHITE]);
-		slidingPiecePos = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares ^ possibleDiscPieces) &
-			(_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possibleDiscPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+		if (RankFileMask[_whiteKingPosition] & (_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]))
+		{
+			Bitboard possibleDiscPieces = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares) &
+				(_blackPieces | _piecePos[PAWN_WHITE]);
+			Bitboard slidingPiecePos = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares ^ possibleDiscPieces) &
+				(_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_discPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possibleDiscPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 	}
 }
@@ -838,46 +850,59 @@ bool PositionState::promotionMoveChecksOpponentKing(const MoveInfo& move) const
 void PositionState::updateStatePinInfo()
 {
 	_pinPiecePos = 0;
-	if (_whiteToPlay) {
-		Bitboard possiblePinPieces = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares) &
-			_whitePieces;
-		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares ^ possiblePinPieces) &
-			(_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possiblePinPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+	if (_whiteToPlay) 
+  {
+		if (DiagonalMask[_whiteKingPosition] & (_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]))
+		{
+			Bitboard possiblePinPieces = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares) &
+				 _whitePieces;
+			Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_whiteKingPosition, _occupiedSquares ^ possiblePinPieces) &
+			  (_piecePos[BISHOP_BLACK] | _piecePos[QUEEN_BLACK]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possiblePinPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 
-		possiblePinPieces = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares) &
-			_whitePieces;
-		slidingPiecePos = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares ^ possiblePinPieces) &
-			(_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possiblePinPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+		if (RankFileMask[_whiteKingPosition] & (_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]))
+		{
+			Bitboard possiblePinPieces = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares) &
+				_whitePieces;
+			Bitboard slidingPiecePos = _bitboardImpl->rookAttackFrom(_whiteKingPosition, _occupiedSquares ^ possiblePinPieces) &
+				(_piecePos[ROOK_BLACK] | _piecePos[QUEEN_BLACK]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _whiteKingPosition) & possiblePinPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 	}
 	else {
-		Bitboard possiblePinPieces = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares) &
-			_blackPieces;
-		Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares ^ possiblePinPieces) &
-			(_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possiblePinPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+		if (DiagonalMask[_blackKingPosition] & (_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]))
+		{
+			Bitboard possiblePinPieces = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares) &
+				_blackPieces;
+			Bitboard slidingPiecePos = _bitboardImpl->bishopAttackFrom(_blackKingPosition, _occupiedSquares ^ possiblePinPieces) &
+				(_piecePos[BISHOP_WHITE] | _piecePos[QUEEN_WHITE]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possiblePinPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 
-		possiblePinPieces = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares) &
+		if (RankFileMask[_blackKingPosition] & (_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]))
+		{
+			Bitboard possiblePinPieces = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares) &
 			_blackPieces;
-		slidingPiecePos = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares ^ possiblePinPieces) &
-			(_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]);
-		while (slidingPiecePos) {
-			Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
-			_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possiblePinPieces;
-			slidingPiecePos &= (slidingPiecePos - 1);
+			Bitboard slidingPiecePos = _bitboardImpl->rookAttackFrom(_blackKingPosition, _occupiedSquares ^ possiblePinPieces) &
+				(_piecePos[ROOK_WHITE] | _piecePos[QUEEN_WHITE]);
+			while (slidingPiecePos) {
+				Square slidingSq = (Square) _bitboardImpl->lsb(slidingPiecePos);
+				_pinPiecePos |= _bitboardImpl->getSquaresBetween(slidingSq, _blackKingPosition) & possiblePinPieces;
+				slidingPiecePos &= (slidingPiecePos - 1);
+			}
 		}
 	}
 }
