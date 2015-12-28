@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <string>
 
+#define mRank(square) ((square) >> 3)
+#define mFile(square) ((square) & 0x7)
+
 namespace pismo
 {
 typedef uint64_t Bitboard;

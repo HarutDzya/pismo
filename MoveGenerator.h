@@ -99,9 +99,13 @@ private:
 	void generateKingWhiteQuiteMoves(Square from);
 	void generateKingBlackQuiteMoves(Square from);
 
+	int SEE(const MoveInfo& move);
+	Bitboard getLeastValuablePiece(Square to, bool whiteToPlay, const Bitboard& movedPieces, const Bitboard& occupiedSquares, Piece& attackingPiece) const;
+
 	const BitboardImpl* _bitboardImpl;
 	const PositionState* _positionState;
 	MoveGenInfo* _moveGenInfo;
+	int32_t* _gainSEE;
 };
 
 }
