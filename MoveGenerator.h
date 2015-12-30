@@ -35,7 +35,8 @@ private:
 	void generateMovesForEvasionSearch();
 	void generateMovesForQuiescenceSearch();
 
-	// Generates all capturing and promotion moves
+	// Generates all capturing and promotion (where 
+	// promoted piece is a queen) moves
 	void generateCapturingMoves();
 
 	// Generates all checking moves, which are non-capturing or
@@ -47,8 +48,9 @@ private:
 	// is under attack
 	void generateEvasionMoves();
 
-	// Generates all the moves which are non-promotion,
-	// non-capturing
+	// Generates all the moves which are non-capturing non-promotion,
+	// and promotion moves (with or without capture) where
+	// promoted piece is not a queen
 	void generateQuiteMoves();
 
 	void sortCapturingMoves();
@@ -99,7 +101,7 @@ private:
 	void generateKingWhiteQuiteMoves(Square from);
 	void generateKingBlackQuiteMoves(Square from);
 
-	int SEE(const MoveInfo& move);
+	int16_t SEE(const MoveInfo& move);
 	Bitboard getLeastValuablePiece(Square to, bool whiteToPlay, const Bitboard& movedPieces, const Bitboard& occupiedSquares, Piece& attackingPiece) const;
 
 	const BitboardImpl* _bitboardImpl;

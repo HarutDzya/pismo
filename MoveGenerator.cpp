@@ -208,7 +208,7 @@ void MoveGenerator::generateKingEvasionMoves()
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (squareToBitboard[to] & _positionState->blackPieces()) {
-				uint16_t value = -PIECE_VALUES[KING_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+				int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KING_WHITE];
 				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 				//TODO: Make the assignements of the components of MoveInfo in lieu, rather than making temporary object
 			}
@@ -224,7 +224,7 @@ void MoveGenerator::generateKingEvasionMoves()
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
 			if (squareToBitboard[to] & _positionState->whitePieces()) {
-				uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[KING_BLACK];
+				int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KING_BLACK];
 				(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			}
 			else {
@@ -254,7 +254,7 @@ void MoveGenerator::generatePawnsWhiteEvasionMoves(Square to, MoveType type)
 	Bitboard pawnsWhitePos = _positionState->getPiecePos()[PAWN_WHITE];
 	if (type == CAPTURE_MOVE) {
 		Bitboard attackingPawnsPos = _bitboardImpl->pawnsWhiteAttackTo(to, pawnsWhitePos);
-		uint16_t value = -PIECE_VALUES[PAWN_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+		int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_WHITE];
 		while (attackingPawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(attackingPawnsPos);
 			if (to >= A8) {
@@ -307,7 +307,7 @@ void MoveGenerator::generatePawnsBlackEvasionMoves(Square to, MoveType type)
 	Bitboard pawnsBlackPos = _positionState->getPiecePos()[PAWN_BLACK];
 	if (type == CAPTURE_MOVE) {
 		Bitboard attackingPawnsPos = _bitboardImpl->pawnsBlackAttackTo(to, pawnsBlackPos);
-		uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[PAWN_BLACK];
+		int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_BLACK];
 		while (attackingPawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(attackingPawnsPos);
 			if (to <= H1) {
@@ -359,8 +359,8 @@ void MoveGenerator::generateKnightsEvasionMoves(Square to, MoveType type)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, _positionState->getPiecePos()[KNIGHT_WHITE]);
-		uint16_t value = (type == CAPTURE_MOVE) ? 
-			-PIECE_VALUES[KNIGHT_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] : 0;
+		int16_t value = (type == CAPTURE_MOVE) ? 
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KNIGHT_WHITE] : 0;
 		while (movingKnightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingKnightsPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -369,8 +369,8 @@ void MoveGenerator::generateKnightsEvasionMoves(Square to, MoveType type)
 	}
 	else {
 		Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, _positionState->getPiecePos()[KNIGHT_BLACK]);
-		uint16_t value = (type == CAPTURE_MOVE) ? 
-			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[KNIGHT_BLACK] : 0;
+		int16_t value = (type == CAPTURE_MOVE) ? 
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KNIGHT_BLACK] : 0;
 		while (movingKnightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingKnightsPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -386,19 +386,19 @@ void MoveGenerator::generateBishopsEvasionMoves(Square to, MoveType type)
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingBishopsPos = _bitboardImpl->bishopsAttackTo(to, 
 				_positionState->occupiedSquares(), _positionState->getPiecePos()[BISHOP_WHITE]);
-		uint16_t value = (type == CAPTURE_MOVE) ? 
-			-PIECE_VALUES[BISHOP_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] : 0;	
+		int16_t value = (type == CAPTURE_MOVE) ? 
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[BISHOP_WHITE] : 0;	
 		while (movingBishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingBishopsPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
 			movingBishopsPos &= (movingBishopsPos - 1);
 		}
 	}
-else {
+	else {
 		Bitboard movingBishopsPos = _bitboardImpl->bishopsAttackTo(to, 
 				_positionState->occupiedSquares(), _positionState->getPiecePos()[BISHOP_BLACK]);
-		uint16_t value = (type == CAPTURE_MOVE) ? 
-			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[BISHOP_BLACK] : 0;	
+		int16_t value = (type == CAPTURE_MOVE) ? 
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[BISHOP_BLACK] : 0;	
 		while (movingBishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingBishopsPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -414,8 +414,8 @@ void MoveGenerator::generateRooksEvasionMoves(Square to, MoveType type)
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingRooksPos = _bitboardImpl->rooksAttackTo(to,
 				_positionState->occupiedSquares(), _positionState->getPiecePos()[ROOK_WHITE]);
-		uint16_t value = (type == CAPTURE_MOVE) ?
-			-PIECE_VALUES[ROOK_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] : 0;
+		int16_t value = (type == CAPTURE_MOVE) ?
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[ROOK_WHITE] : 0;
 		while (movingRooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingRooksPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -425,8 +425,8 @@ void MoveGenerator::generateRooksEvasionMoves(Square to, MoveType type)
 	else {
 		Bitboard movingRooksPos = _bitboardImpl->rooksAttackTo(to,
 				_positionState->occupiedSquares(), _positionState->getPiecePos()[ROOK_BLACK]);
-		uint16_t value = (type == CAPTURE_MOVE) ?
-			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[ROOK_BLACK] : 0;
+		int16_t value = (type == CAPTURE_MOVE) ?
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[ROOK_BLACK] : 0;
 		while (movingRooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingRooksPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -442,8 +442,8 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingQueensPos = _bitboardImpl->queensAttackTo(to,
 				_positionState->occupiedSquares(), _positionState->getPiecePos()[QUEEN_WHITE]);
-		uint16_t value = (type == CAPTURE_MOVE) ?
-			-PIECE_VALUES[QUEEN_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] : 0;
+		int16_t value = (type == CAPTURE_MOVE) ?
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[QUEEN_WHITE] : 0;
 		while (movingQueensPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingQueensPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -453,8 +453,8 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 	else {
 		Bitboard movingQueensPos = _bitboardImpl->queensAttackTo(to,
 				_positionState->occupiedSquares(), _positionState->getPiecePos()[QUEEN_BLACK]);
-		uint16_t value = (type == CAPTURE_MOVE) ?
-			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[QUEEN_BLACK] : 0;
+		int16_t value = (type == CAPTURE_MOVE) ?
+			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[QUEEN_BLACK] : 0;
 		while (movingQueensPos) {
 			Square from = (Square) _bitboardImpl->lsb(movingQueensPos);
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, type, value);
@@ -463,7 +463,8 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 	}
 }
 
-// Generates all capturing and promotion moves
+// Generates all capturing and promotion
+// (where promoted piece is a queen) moves
 void MoveGenerator::generateCapturingMoves()
 {
 	if(_positionState->whiteToPlay()) {
@@ -544,20 +545,24 @@ void MoveGenerator::generateCapturingMoves()
 	}
 }
 
-// Generates all white pawn capturing and promotion moves from square from
+// Generates all white pawn capturing and
+// promotion (where promoted piece is a queen)
+// moves from square from
 void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->blackPieces();
 	if (from >= A7) {
-		Bitboard promotionBoard = (_bitboardImpl->pawnWhiteAttackFrom(from) & opponentPieces) |
-		   	_bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
-		while(promotionBoard) {
-			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
-			uint16_t value = -PIECE_VALUES[PAWN_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
-			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE, value);
-			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE, value);
-			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE, value);
+		Bitboard promotionCapturingBoard = _bitboardImpl->pawnWhiteAttackFrom(from) & opponentPieces;
+		while (promotionCapturingBoard) {
+			Square to = (Square) _bitboardImpl->lsb(promotionCapturingBoard);
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE, value);
+			promotionCapturingBoard &= (promotionCapturingBoard - 1);
+		}
+		Bitboard promotionBoard = _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
+		while (promotionBoard) {
+			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_WHITE, PROMOTION_MOVE);
 			promotionBoard &= (promotionBoard - 1);
 		}
 	}
@@ -565,7 +570,7 @@ void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->pawnWhiteAttackFrom(from) & opponentPieces;
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = -PIECE_VALUES[PAWN_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -578,20 +583,24 @@ void MoveGenerator::generatePawnWhiteCapturingMoves(Square from)
 	}
 }
 
-// Generates all black pawn capturing and promotion moves from square from
+// Generates all black pawn capturing and
+// promotion (where promoted piece is a queen)
+// moves from square from
 void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 {
 	Bitboard opponentPieces = _positionState->whitePieces();
 	if (from <= H2) {
-		Bitboard promotionBoard = (_bitboardImpl->pawnBlackAttackFrom(from) & opponentPieces) |
-		   	_bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
-		while(promotionBoard) {
-			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[PAWN_BLACK];
-			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE, value);
-			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE, value);
-			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE, value);
+		Bitboard promotionCapturingBoard = _bitboardImpl->pawnBlackAttackFrom(from) & opponentPieces;
+		while (promotionCapturingBoard) {
+			Square to = (Square) _bitboardImpl->lsb(promotionCapturingBoard);
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE, value);
+			promotionCapturingBoard &= (promotionCapturingBoard - 1);
+		}
+		Bitboard promotionBoard = _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
+		while (promotionBoard) {
+			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, QUEEN_BLACK, PROMOTION_MOVE);
 			promotionBoard &= (promotionBoard - 1);
 		}
 	}
@@ -599,7 +608,7 @@ void MoveGenerator::generatePawnBlackCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->pawnBlackAttackFrom(from) & opponentPieces;
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[PAWN_BLACK];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -619,7 +628,7 @@ void MoveGenerator::generateKnightCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & _positionState->blackPieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = -PIECE_VALUES[KNIGHT_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KNIGHT_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -628,7 +637,7 @@ void MoveGenerator::generateKnightCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & _positionState->whitePieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[KNIGHT_BLACK];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KNIGHT_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -642,7 +651,7 @@ void MoveGenerator::generateRookCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & _positionState->blackPieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = -PIECE_VALUES[ROOK_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[ROOK_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -651,7 +660,7 @@ void MoveGenerator::generateRookCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & _positionState->whitePieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[ROOK_BLACK];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[ROOK_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -665,7 +674,7 @@ void MoveGenerator::generateBishopCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & _positionState->blackPieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = -PIECE_VALUES[BISHOP_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[BISHOP_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -674,7 +683,7 @@ void MoveGenerator::generateBishopCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & _positionState->whitePieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[BISHOP_BLACK];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[BISHOP_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -688,7 +697,7 @@ void MoveGenerator::generateQueenCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & _positionState->blackPieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = -PIECE_VALUES[QUEEN_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[QUEEN_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -697,7 +706,7 @@ void MoveGenerator::generateQueenCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & _positionState->whitePieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[QUEEN_BLACK];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[QUEEN_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -711,7 +720,7 @@ void MoveGenerator::generateKingCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) & _positionState->blackPieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = -PIECE_VALUES[KING_WHITE] - PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KING_WHITE];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -720,7 +729,7 @@ void MoveGenerator::generateKingCapturingMoves(Square from)
 		Bitboard moveBoard = _bitboardImpl->kingAttackFrom(from) & _positionState->whitePieces();
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
-			uint16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] + PIECE_VALUES[KING_BLACK];
+			int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KING_BLACK];
 			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ETY_SQUARE, CAPTURE_MOVE, value);
 			moveBoard &= (moveBoard - 1);
 		}
@@ -1156,7 +1165,9 @@ void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from)
 }
 
 // Generates all quite moves, that is the moves which
-// are non-capturing, non-promotion moves
+// are non-capturing non-promotion moves and
+// promotion moves (with or without capturing) where
+// promoted piece is not a queen
 void MoveGenerator::generateQuiteMoves()
 {
 	if (_positionState->whiteToPlay()) {
@@ -1238,11 +1249,24 @@ void MoveGenerator::generateQuiteMoves()
 }
 
 // Generates all pawn white quite moves from square from
-// that is all non-promotion, non-capturing moves
+// that is all non-capturing non-promotion moves and 
+// promotion moves (with or without capturing) where 
+// promoted piece is not a queen
 void MoveGenerator::generatePawnWhiteQuiteMoves(Square from)
 {
-	if (from < A7) {
-		// Promotions are not considered here, becuase they were generated in generateCapturingMoves
+	if (from >= A7) {
+		Bitboard promotionBoard = (_bitboardImpl->pawnWhiteAttackFrom(from) & _positionState->blackPieces()) |
+			_bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
+		while (promotionBoard) {
+			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
+			// Promotions to queen are not considered here, becuase they were generated in generateCapturingMoves
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_WHITE, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_WHITE, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_WHITE, PROMOTION_MOVE);
+			promotionBoard &= (promotionBoard - 1);
+		}
+	}
+	else {
 		Bitboard moveBoard = _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares());
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -1258,11 +1282,24 @@ void MoveGenerator::generatePawnWhiteQuiteMoves(Square from)
 }
 
 // Generates all pawn black quite moves from square from
-// that is all non-promotion, non-capturing moves
+// that is all non-capturing non-promotion moves and 
+// promotions moves (with or without capturing) where
+// promoted piece is not a queen
 void MoveGenerator::generatePawnBlackQuiteMoves(Square from)
 {
-	if (from > H2) {
-		// Promotions are not considered here, becuase they were generated in generateCapturingMoves
+	if (from <= H2) {
+		Bitboard promotionBoard = (_bitboardImpl->pawnBlackAttackFrom(from) & _positionState->whitePieces()) |
+			_bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
+		while (promotionBoard) {
+			Square to = (Square) _bitboardImpl->lsb(promotionBoard);
+			// Promotions to queen are not considered here, becuase they were generated in generateCapturingMoves
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, KNIGHT_BLACK, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, BISHOP_BLACK, PROMOTION_MOVE);
+			(_moveGenInfo->_availableMoves)[(_moveGenInfo->_availableMovesSize)++] = MoveInfo(from, to, ROOK_BLACK, PROMOTION_MOVE);
+			promotionBoard &= (promotionBoard - 1);
+		}
+	}
+	else {
 		Bitboard moveBoard = _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares());
 		while (moveBoard) {
 			Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -1422,20 +1459,43 @@ void MoveGenerator::sortCapturingMoves()
 // Evaluates the Static Exchange Evaluation using swap algorithm
 // for the move; return true if move results in eventual gain for the
 // side
-int MoveGenerator::SEE(const MoveInfo& move)
+// The algorithm works as follows: we proceed with the chain of captures
+// by calculating gain for each side due to the capture and we stop once 
+// no more captures left or due to pruning (see below). After that we update
+// gain values by moving from down up by calculating minimum gain for the side
+int16_t MoveGenerator::SEE(const MoveInfo& move)
 {
+	if (move.value > 0) {
+		return PIECE_VALUES[_positionState->getBoard()[mRank(move.to)][mFile(move.to)]];
+	}
 	uint16_t depth = 0;
 	bool whiteToPlay = _positionState->whiteToPlay();
 	Bitboard occupiedSquares = _positionState->occupiedSquares();
 	Bitboard movedPieces = 0;
 	Bitboard attackingPiecePos = squareToBitboard[move.from];
 	Piece attackingPiece = _positionState->getBoard()[mRank(move.from)][mFile(move.from)];
-	_gainSEE[depth] = -PIECE_VALUES[_positionState->getBoard()[mRank(move.to)][mFile(move.to)]];
-	while (attackingPiecePos && depth < MAX_SEARCH_DEPTH) {
+	if (move.type == EN_PASSANT_CAPTURE) {
+		if (whiteToPlay) {
+			_gainSEE[depth] = PIECE_VALUES[PAWN_BLACK];
+			occupiedSquares ^= squareToBitboard[move.to - 8];
+		}
+		else {
+			_gainSEE[depth] = PIECE_VALUES[PAWN_WHITE];
+			occupiedSquares ^= squareToBitboard[move.to + 8];
+		}
+	}
+	else {
+		_gainSEE[depth] = PIECE_VALUES[_positionState->getBoard()[mRank(move.to)][mFile(move.to)]];
+	}
+	while (attackingPiecePos) {
 		++depth;
 		whiteToPlay = !whiteToPlay;
-		_gainSEE[depth] = -PIECE_VALUES[attackingPiece] + _gainSEE[depth - 1];
-		if (_gainSEE[depth - 1] * _gainSEE[depth] > 0) {
+		_gainSEE[depth] = PIECE_VALUES[attackingPiece] - _gainSEE[depth - 1];
+		if (_gainSEE[depth] < 0) {
+			// This is pruning mechanism, it checks if for the last capture gain
+			// is negative, this means that the moving side will lose
+			// whether it captures a piece or not and we can stop here, because it will be
+			// good capture for the other side in any case
 			break;
 		}
 		occupiedSquares ^= attackingPiecePos;
@@ -1443,21 +1503,12 @@ int MoveGenerator::SEE(const MoveInfo& move)
 		attackingPiecePos = getLeastValuablePiece(move.to, whiteToPlay, movedPieces, occupiedSquares,  attackingPiece);
 	}
 	while (--depth) {
-		whiteToPlay = !whiteToPlay;
-		if (whiteToPlay) {
-			_gainSEE[depth - 1] = std::max(_gainSEE[depth - 1], _gainSEE[depth]);
-		}
-		else {
-			_gainSEE[depth - 1] = std::min(_gainSEE[depth - 1], _gainSEE[depth]);
-		}
+		_gainSEE[depth - 1] = -std::max(-_gainSEE[depth - 1], _gainSEE[depth]);
 	}
-	if (whiteToPlay) {
-		return -_gainSEE[0];
-	}
-	else {
-		return _gainSEE[0];
-	}
+
+	return _gainSEE[0];
 }
+
 // Returns the bitboard of the position of the least valuable 
 // peace which attacks the square to, when several pieces has been
 // moved by SEE algorithm; sets attackingPiece to the attacking piece

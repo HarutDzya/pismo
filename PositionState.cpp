@@ -767,7 +767,7 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square
 {
 	slidingPiecePos = INVALID_SQUARE;
 	if (_whiteToPlay) {
-		if (mRank(_blackKingPosition) == 4) {
+		if (mRank(_blackKingPosition) == RANK_5) {
 			Square leftPos;
 			Square rightPos;
 			_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
@@ -799,7 +799,7 @@ bool PositionState::enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square
 		}
 	}
 	else {
-		if (mRank(_whiteKingPosition) == 3) {
+		if (mRank(_whiteKingPosition) == RANK_4) {
 			Square leftPos;
 			Square rightPos;
 			_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
@@ -1028,7 +1028,7 @@ bool PositionState::pinMoveOpensCheck(const MoveInfo& move) const
 
 bool PositionState::pinEnPassantCaptureOpensCheck(const MoveInfo& move) const
 {
-	if (_whiteToPlay && mRank(_whiteKingPosition) == 4) {
+	if (_whiteToPlay && mRank(_whiteKingPosition) == RANK_5) {
 		Square leftPos;
 		Square rightPos;
 		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);
@@ -1045,7 +1045,7 @@ bool PositionState::pinEnPassantCaptureOpensCheck(const MoveInfo& move) const
 			}
 		}
 	}
-	else if (!_whiteToPlay && mRank(_blackKingPosition) == 3) {
+	else if (!_whiteToPlay && mRank(_blackKingPosition) == RANK_4) {
 		Square leftPos;
 		Square rightPos;
 		_bitboardImpl->getEnPassantPinInfo(move.from, move.to, _occupiedSquares, leftPos, rightPos);

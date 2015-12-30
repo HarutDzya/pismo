@@ -37,6 +37,17 @@ enum Square {
 	INVALID_SQUARE
 };
 
+enum Rank {
+	RANK_1 = 0, RANK_2, RANK_3,
+	RANK_4, RANK_5, RANK_6, RANK_7,
+	RANK_8
+};
+
+enum File {
+	FILE_A = 0, FILE_B, FILE_C,
+	FILE_D, FILE_E, FILE_F, FILE_G,
+	FILE_H
+};
 
 enum MoveType {
 	NORMAL_MOVE = 0, CAPTURE_MOVE, PROMOTION_MOVE, CASTLING_MOVE,
@@ -59,8 +70,8 @@ struct MoveInfo {
 	Square to;
 	Piece promoted;
 	MoveType type;
-	uint16_t value;
-	MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE, MoveType mt = NORMAL_MOVE, uint16_t v = 0)
+	int16_t value;
+	MoveInfo(Square f = INVALID_SQUARE, Square t = INVALID_SQUARE, Piece p = ETY_SQUARE, MoveType mt = NORMAL_MOVE, int16_t v = 0)
 		: from(f)
 		  , to(t)
 		  , promoted(p)
@@ -90,8 +101,8 @@ struct EvalInfo
 
 // Material Piece values according to enum Piece 
 const int PIECE_VALUES[PIECE_NB] = 
-	{100,  320,  330,  500,  900,  20000,
-	-100, -320, -330, -500, -900, -20000};
+	{100,  320,  330,  500,  900,  0,
+	100, 320, 330, 500, 900, 0};
 
 const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE black wins)
 
