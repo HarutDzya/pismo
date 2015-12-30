@@ -1,0 +1,71 @@
+go to stockfish, run make to build stockfish (stockfish executable is created)
+go to gull , run make to build gull (gull executable is created)
+
+to evaluate position with gull engine and print the score run :
+
+./gull <<< "position fen r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1"
+
+the same with stockfish
+
+./stockfish <<< "position fen r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1"
+
+stockfish also supports detailed evaluation output. Run:
+
+./stockfish <<< "position fen_details r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1"
+(I should add it also for gull)
+
+
+Note: bash operator <<< to redicrect argument to the stdin, it is the same as running program separately
+and providing "position details r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1" input
+(see http://www.gnu.org/software/bash/manual/bashref.html#Redirections for more details)
+
+
+Need to build following script:
+
+There is an input file positions.txt containing sample positions (as fens).
+Script should read file and for each fen run stockfish and gull to evaluate position and compare it with the pismo eval.
+There should be a way to define threshold which will specify possible deviation from stockfish/gull engines.
+
+//if the value of pismo's engine is inbetween stockfish and gull, status = great
+if (stockfish < pismo < gull) || (stockfish > pismo > gull) 
+  status = great
+
+if (pismo < min(stockfish, gull) && pismo > min(stockfish,gull) - threshold) )
+  status = good
+
+if (pismo > max(stockfish, gull) && pismo < max(stockfish, gull) + threshold) )
+  status = good
+
+otherwise it is bad
+
+
+It should generate output file like this :
+
+(e.g. threshold = 1)
+
+pismo | stockfish | gull |  status   |    fen
+------------------------------------------------
+1.45  |  1.2      | 0.87 |  great    | r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/PpP/
+2.00  |  1.3      | 1.1  |  good     |  asdfasfasdfa
+0.90  |  1.3      | 1.1  |  good     |  asdfasfasdfa
+-5    |  -2       | -2.2 |  bad      |  asdfasdfadf
+-5    |  -2       | -2.2 |  bad      |  asdfasdfadf
+-5    |  -2       | -2.2 |  bad      |  asdfasdfadf
+-5    |  -2       | -2.2 |  bad      |  asdfasdfadf
+
+
+it should also generate direcotries (great, good, bad).
+Each dir should contain files for each type of output
+
+for aboveexample great dir should contain one file: 1.txt
+good dir should contain two files: 1.txt and 2.txt
+bad dir shouldl contain  four files: 1.txt, 2.txt, 3.txt, 4.txt
+
+in each file we should have detail output of three engines:
+for stockfish as  mentioned above you can get it by running
+ ./stockfish <<< "position fen_details r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1"
+
+for pismo and gull we should add support for it.
+
+-------
+script should take two arguments: input file for positions and threshold value
