@@ -19,6 +19,7 @@ struct MoveGenInfo
 {
 	MoveInfo _availableMoves[MAX_POSSIBLE_MOVES];
 	uint16_t _currentMovePos;
+	uint16_t _badCaptureSize;
 	uint16_t _availableMovesSize;
 	MoveGenerationStage _nextStage;
 	SearchType _searchType;

@@ -4,6 +4,7 @@
 #include "MemPool.h"
 
 #include <assert.h>
+#include <algorithm>
 
 namespace pismo
 {
@@ -39,18 +40,19 @@ void MoveGenerator::prepareMoveGeneration(SearchType type, const MoveInfo& trans
 	_moveGenInfo->_cachedMove = transTableMove; 
 	switch (_moveGenInfo->_searchType) {
 		case USUAL_SEARCH:
-			_moveGenInfo->_nextStage = CAPTURING_MOVES;
+			_moveGenInfo->_nextStage = GOOD_CAPTURING_MOVES;
 			break;
 		case EVASION_SEARCH:
 			_moveGenInfo->_nextStage = EVASION_MOVES;
 			break;
 		case QUIESCENCE_SEARCH:
-			_moveGenInfo->_nextStage = CAPTURING_MOVES;
+			_moveGenInfo->_nextStage = GOOD_CAPTURING_MOVES;
 			break;
 		default:
 			assert(false);
 	}
 	_moveGenInfo->_currentMovePos = 0;
+	_moveGenInfo->_badCaptureSize = 0;
 	_moveGenInfo->_availableMovesSize = 0;
 }
 
@@ -109,21 +111,25 @@ bool MoveGenerator::equal(const MoveInfo& first, const MoveInfo& second) const
 
 void MoveGenerator::generateMovesForUsualSearch()
 {
-	_moveGenInfo->_currentMovePos = 0;
-	_moveGenInfo->_availableMovesSize = 0;
 	switch(_moveGenInfo->_nextStage) {
-		case CAPTURING_MOVES:
+		case GOOD_CAPTURING_MOVES:
 			generateCapturingMoves();
-			sortCapturingMoves();
+			sortGoodCapturingMoves();
 			_moveGenInfo->_nextStage = QUITE_MOVES;
-			if (_moveGenInfo->_availableMovesSize != 0) {
+			if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
 				break;
 			}
 		case QUITE_MOVES:
 			generateQuiteMoves();
 			sortQuiteMoves();
+			_moveGenInfo->_nextStage = BAD_CAPTURING_MOVES;
+			if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
+				break;
+			}
+		case BAD_CAPTURING_MOVES:
+			sortBadCapturingMoves();
 			_moveGenInfo->_nextStage = SEARCH_FINISHED;
-			if (_moveGenInfo->_availableMovesSize != 0) {
+			if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
 				break;
 			}
 		case SEARCH_FINISHED:
@@ -134,14 +140,12 @@ void MoveGenerator::generateMovesForUsualSearch()
 
 void MoveGenerator::generateMovesForEvasionSearch()
 {
-	_moveGenInfo->_currentMovePos = 0;
-	_moveGenInfo->_availableMovesSize = 0;
 	switch(_moveGenInfo->_nextStage) {
 		case EVASION_MOVES:
 			generateEvasionMoves();
 			sortEvasionMoves();
 			_moveGenInfo->_nextStage = SEARCH_FINISHED;
-			if (_moveGenInfo->_availableMovesSize != 0) {
+			if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
 				break;
 			}
 		case SEARCH_FINISHED:
@@ -152,21 +156,19 @@ void MoveGenerator::generateMovesForEvasionSearch()
 
 void MoveGenerator::generateMovesForQuiescenceSearch()
 {
-	_moveGenInfo->_currentMovePos = 0;
-	_moveGenInfo->_availableMovesSize = 0;	
 	switch(_moveGenInfo->_nextStage) {
-		case CAPTURING_MOVES:
+		case GOOD_CAPTURING_MOVES:
 			generateCapturingMoves();
-			sortCapturingMoves();
+			sortGoodCapturingMoves();
 			_moveGenInfo->_nextStage = CHECKING_MOVES;
-			if (_moveGenInfo->_availableMovesSize != 0) {
+			if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
 				break;
 			}
 		case CHECKING_MOVES:
 			generateCheckingMoves();
 			sortCheckingMoves();
 			_moveGenInfo->_nextStage = SEARCH_FINISHED;
-			if (_moveGenInfo->_availableMovesSize != 0) {
+			if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize) {
 				break;
 			}
 		case SEARCH_FINISHED:
@@ -1452,8 +1454,33 @@ void MoveGenerator::generateKingBlackQuiteMoves(Square from)
 	}
 }
 
-void MoveGenerator::sortCapturingMoves()
+// Defines sorting order to be used in move sorting functions
+// returns true if the first moves value is bigger or equal
+// to second moves value
+bool MoveGenerator::moveSortOrder(const MoveInfo& first, const MoveInfo& second)
 {
+	return first.value >= second.value;
+}
+
+// Divides all generated capturing moves into two sectors
+// where moves with SEE > 0 (good captures) are located in the right sector
+// and other moves (bad captures) are located in the left sector
+// Afterwards sorts right sector moves according to moveSortOrder function
+void MoveGenerator::sortGoodCapturingMoves()
+{
+	_moveGenInfo->_badCaptureSize = _moveGenInfo->_availableMovesSize;
+	for (uint16_t moveCount = _moveGenInfo->_currentMovePos; moveCount < _moveGenInfo->_availableMovesSize; ++moveCount) {
+		if (SEE(_moveGenInfo->_availableMoves[moveCount]) > 0) {
+			--(_moveGenInfo->_badCaptureSize);
+			MoveInfo goodCapture = _moveGenInfo->_availableMoves[moveCount];
+		   _moveGenInfo->_availableMoves[moveCount] = _moveGenInfo->_availableMoves[_moveGenInfo->_badCaptureSize];
+	   	   _moveGenInfo->_availableMoves[_moveGenInfo->_badCaptureSize] = goodCapture;
+		}
+	}
+
+	_moveGenInfo->_currentMovePos = _moveGenInfo->_badCaptureSize;
+	std::sort(_moveGenInfo->_availableMoves + _moveGenInfo->_currentMovePos,
+		   	_moveGenInfo->_availableMoves + _moveGenInfo->_availableMovesSize, moveSortOrder);
 }
 
 // Evaluates the Static Exchange Evaluation using swap algorithm
@@ -1485,7 +1512,16 @@ int16_t MoveGenerator::SEE(const MoveInfo& move)
 		}
 	}
 	else {
-		_gainSEE[depth] = PIECE_VALUES[_positionState->getBoard()[mRank(move.to)][mFile(move.to)]];
+		Piece capturedPiece = _positionState->getBoard()[mRank(move.to)][mFile(move.to)];
+		if (capturedPiece == ETY_SQUARE) {
+			// This is for the case of promoted move without capture
+			// By seting SEE to 0 we classify promotion move without capture
+			// as a bad capture.
+			return 0;
+		}
+		else {
+			_gainSEE[depth] = PIECE_VALUES[capturedPiece];
+		}
 	}
 	while (attackingPiecePos) {
 		++depth;
@@ -1574,16 +1610,57 @@ Bitboard MoveGenerator::getLeastValuablePiece(Square to, bool whiteToPlay, const
 	return 0;
 }
 
-void MoveGenerator::sortCheckingMoves()
+// Assigns the currentMovePos to the begining of the array
+// where bad capturing moves are located and then sorts
+// bad capturing moves according to moveSortOrder function
+void MoveGenerator::sortBadCapturingMoves()
 {
+	_moveGenInfo->_currentMovePos = 0;
+	_moveGenInfo->_availableMovesSize = _moveGenInfo->_badCaptureSize;
+	std::sort(_moveGenInfo->_availableMoves + _moveGenInfo->_currentMovePos,
+		   	_moveGenInfo->_availableMoves + _moveGenInfo->_availableMovesSize, moveSortOrder);
 }
 
+void MoveGenerator::sortCheckingMoves()
+{
+	// TODO: Implement sorting checking moves based on history heuristic
+}
+
+// Divided evasion moves into three sectors
+// the first sector is good capturing evasion moves
+// the second sector is quite evasion moves
+// the third sector is bad capturing moves
+// afterward sorts each sector according moveSortOrder
 void MoveGenerator::sortEvasionMoves()
 {
+	uint16_t endGoodCapture = _moveGenInfo->_currentMovePos;
+	uint16_t beginBadCapture = _moveGenInfo->_availableMovesSize;
+	for (uint16_t moveCount = _moveGenInfo->_currentMovePos; moveCount < _moveGenInfo->_availableMovesSize; ++moveCount) {
+		MoveType type = _moveGenInfo->_availableMoves[moveCount].type;
+		if (type == CAPTURE_MOVE || type == EN_PASSANT_CAPTURE ||
+				(type == PROMOTION_MOVE && (_moveGenInfo->_availableMoves[moveCount].promoted == QUEEN_WHITE ||
+											_moveGenInfo->_availableMoves[moveCount].promoted == QUEEN_BLACK))) {
+			if (SEE(_moveGenInfo->_availableMoves[moveCount]) > 0) {
+			   MoveInfo moveTemp = _moveGenInfo->_availableMoves[endGoodCapture];
+			   _moveGenInfo->_availableMoves[endGoodCapture++] = _moveGenInfo->_availableMoves[moveCount];
+			   _moveGenInfo->_availableMoves[moveCount] = moveTemp;
+			}
+			else {
+				MoveInfo moveTemp = _moveGenInfo->_availableMoves[--beginBadCapture];
+				_moveGenInfo->_availableMoves[beginBadCapture] = _moveGenInfo->_availableMoves[moveCount];
+				_moveGenInfo->_availableMoves[moveCount] = moveTemp;
+			}
+		}
+	}
+
+	std::sort(_moveGenInfo->_availableMoves + _moveGenInfo->_currentMovePos, _moveGenInfo->_availableMoves + endGoodCapture, moveSortOrder);
+	// TODO: Implement sorting for quite evasion moves based on history heuristic
+	std::sort(_moveGenInfo->_availableMoves + beginBadCapture, _moveGenInfo->_availableMoves + _moveGenInfo->_availableMovesSize, moveSortOrder);
 }
 
 void MoveGenerator::sortQuiteMoves()
 {
+	// TODO: Implement sorting quite moves based on history heuristic
 }
 
 MoveGenerator::~MoveGenerator()

@@ -53,11 +53,13 @@ private:
 	// promoted piece is not a queen
 	void generateQuiteMoves();
 
-	void sortCapturingMoves();
+	void sortGoodCapturingMoves();
+	void sortBadCapturingMoves();
 	void sortCheckingMoves();
 	void sortEvasionMoves();
 	void sortQuiteMoves();
 
+	static bool moveSortOrder(const MoveInfo& first, const MoveInfo& second);
 	bool equal(const MoveInfo& first, const MoveInfo& second) const;
 
 
