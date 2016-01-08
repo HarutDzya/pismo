@@ -7,7 +7,18 @@
 namespace pismo
 {
 class PositionState;
-const unsigned int MATERIAL_HASH_SIZE = 10000;
+
+struct MaterialInfo
+{
+	int16_t value;
+	// TODO: Later add aditional things
+};
+
+const unsigned int MATERIAL_TABLE_SIZE = 2 * 2 * 3 * 3 * 3 * 3 * 3 * 3 * 9 * 9; 
+
+extern const uint16_t materialPieceIndex[PIECE_NB];
+extern const uint8_t materialMaxUsual[PIECE_NB];
+extern const uint16_t materialToFlag[PIECE_NB];
 
 /**
  * https://chessprogramming.wikispaces.com/Evaluation
@@ -38,33 +49,27 @@ public:
 	 */
   
 	PositionEvaluation();
+	~PositionEvaluation();
 
 	int16_t evaluate(const PositionState& pos);
   
 
 private:
+	// Initializes material table to precomputed
+	// values using materialPieceIndex to compute
+	// index
+	void initMaterialTable();
 	
 	void evalMaterial(const PositionState& pos);
 	void evalPieceSquare(const PositionState& pos);  
 	void evalMobility(const PositionState& pos);
 
-	unsigned int hashFunction(const ZobKey& materialZobKey) const;
-
-	struct MaterialInfo {
-		int16_t materialValue;
-		ZobKey materialZobKey;
-
-		MaterialInfo(int16_t mv = 0, ZobKey mz = 0)
-		: materialValue(mv),
-		materialZobKey(mz)
-	 	{
-	 	}
-	};
-
 	//position value in centi pawns
 	int16_t _posValue;
 
-	std::vector<MaterialInfo> _materialHash;
+	// Material table of the material values
+	// for usual cases of material (no extra promoted pieces)
+	MaterialInfo* _materialTable;
 };
 
 }

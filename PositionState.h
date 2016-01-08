@@ -85,8 +85,6 @@ public:
 
 	unsigned int getPieceCount(Piece p) const {return _pieceCount[p];}
 
-	ZobKey getMaterialZobKey() const {return _materialZobKey;}
-
 	int getPstValue() const {return _pstValue;}
 
 	bool whiteToPlay() const {return _whiteToPlay;}
@@ -111,6 +109,10 @@ public:
 
 	Bitboard const (&getPiecePos() const)[PIECE_NB] {return _piecePos;}
 	Bitboard const (&getDirectCheck() const)[PIECE_NB] {return _directCheck;}
+
+	uint8_t const (&getPieceCount() const)[PIECE_NB] {return _pieceCount;}
+	uint32_t materialKey() const {return _materialKey;}
+	uint16_t unusualMaterial() const {return _unusualMaterial;}
 
 	Square enPassantTarget() const {return _enPassantFile == -1 ? INVALID_SQUARE : (_whiteToPlay ? (Square) (A6 + _enPassantFile) : (Square) (A3 + _enPassantFile));}
 
@@ -217,7 +219,7 @@ private:
 
 	// Each memeber of the array shows the number of appropriate 
 	// piece available 
-	unsigned int _pieceCount[PIECE_NB];
+	uint8_t _pieceCount[PIECE_NB];
 
 	// Bitboard for each piece where set bits show the
 	// positions from which it can attack the king	
@@ -268,8 +270,13 @@ private:
 	// Zobrist key for the state of the game
 	ZobKey _zobKey;
 	
-	// Zobrist key for material of the game
-	ZobKey _materialZobKey;
+	// Index key for material of the game
+	uint32_t _materialKey;
+
+	// Unusual material flag
+	// Appropriate bit set if material
+   	// count is out of usual range
+	uint16_t _unusualMaterial;
 
 	// Piece Square Table value for the state of the game
 	int _pstValue;
