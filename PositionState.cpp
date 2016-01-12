@@ -73,9 +73,9 @@ void PositionState::setPiece(Square s, Piece p)
 	_pstValue += calculatePstValue(p, s);
 	_zobKey ^=  _zobKeyImpl->getPieceAtSquareKey(p, s);
 
-	_materialKey += materialPieceIndex[p];
-	if (_pieceCount[p] == materialMaxUsual[p] + 1) {
-		_unusualMaterial |= materialToFlag[p];
+	_materialKey += pieceIndexForMaterialTable[p];
+	if (_pieceCount[p] == initialNumberOfPieces[p] + 1) {
+		_unusualMaterial |= pieceMask[p];
 	}
 }
 
@@ -1176,9 +1176,9 @@ void PositionState::makeCaptureMove(const MoveInfo& move)
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 	--_pieceCount[pto];
-	_materialKey -= materialPieceIndex[pto];
-	if (_pieceCount[pto] == materialMaxUsual[pto]) {
-		_unusualMaterial &= ~materialToFlag[pto];
+	_materialKey -= pieceIndexForMaterialTable[pto];
+	if (_pieceCount[pto] == initialNumberOfPieces[pto]) {
+		_unusualMaterial &= ~pieceMask[pto];
 	}
 	if (_enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(_enPassantFile);
@@ -1298,7 +1298,7 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		_board[mRank(move.to) - 1][mFile(move.to)] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
-		_materialKey -= materialPieceIndex[PAWN_BLACK];
+		_materialKey -= pieceIndexForMaterialTable[PAWN_BLACK];
 	}
 	else {
 		removePieceFromBitboards<BLACK>(move.from, pfrom);
@@ -1308,7 +1308,7 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		_board[mRank(move.to) + 1][mFile(move.to)] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
-		_materialKey -= materialPieceIndex[PAWN_WHITE];
+		_materialKey -= pieceIndexForMaterialTable[PAWN_WHITE];
 	}
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 	_board[mRank(move.to)][mFile(move.to)] = pfrom;
@@ -1335,9 +1335,9 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 			_pstValue -= calculatePstValue(pto, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 			--_pieceCount[pto];
-			_materialKey -= materialPieceIndex[pto];
-			if (_pieceCount[pto] == materialMaxUsual[pto]) {
-				_unusualMaterial &= ~materialToFlag[pto];
+			_materialKey -= pieceIndexForMaterialTable[pto];
+			if (_pieceCount[pto] == initialNumberOfPieces[pto]) {
+				_unusualMaterial &= ~pieceMask[pto];
 			}
 		}
 	}
@@ -1350,9 +1350,9 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 			_pstValue -= calculatePstValue(pto, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 			--_pieceCount[pto];
-			_materialKey -= materialPieceIndex[pto];
-			if (_pieceCount[pto] == materialMaxUsual[pto]) {
-				_unusualMaterial &= ~materialToFlag[pto];
+			_materialKey -= pieceIndexForMaterialTable[pto];
+			if (_pieceCount[pto] == initialNumberOfPieces[pto]) {
+				_unusualMaterial &= ~pieceMask[pto];
 			}
 		}
 	}
@@ -1365,10 +1365,10 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.promoted, move.to);
-	_materialKey -= materialPieceIndex[pfrom];
-	_materialKey += materialPieceIndex[move.promoted];
-	if (_pieceCount[move.promoted] == materialMaxUsual[move.promoted] + 1) {
-		_unusualMaterial |= materialToFlag[move.promoted];
+	_materialKey -= pieceIndexForMaterialTable[pfrom];
+	_materialKey += pieceIndexForMaterialTable[move.promoted];
+	if (_pieceCount[move.promoted] == initialNumberOfPieces[move.promoted] + 1) {
+		_unusualMaterial |= pieceMask[move.promoted];
 	}
 
 	if (_enPassantFile != -1) {
@@ -1597,9 +1597,9 @@ void PositionState::undoCaptureMove(const UndoMoveInfo& move)
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 	++_pieceCount[move.capturedPiece];
-	_materialKey += materialPieceIndex[move.capturedPiece];
-	if (_pieceCount[move.capturedPiece] == materialMaxUsual[move.capturedPiece] + 1) {
-		_unusualMaterial |= materialToFlag[move.capturedPiece];
+	_materialKey += pieceIndexForMaterialTable[move.capturedPiece];
+	if (_pieceCount[move.capturedPiece] == initialNumberOfPieces[move.capturedPiece] + 1) {
+		_unusualMaterial |= pieceMask[move.capturedPiece];
 	}
 	if (move.enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(move.enPassantFile);
@@ -1718,7 +1718,7 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		_board[mRank(move.to) + 1][mFile(move.to)] = PAWN_WHITE;
 		_pstValue += calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
-		_materialKey += materialPieceIndex[PAWN_WHITE];
+		_materialKey += pieceIndexForMaterialTable[PAWN_WHITE];
 	}
 	else {
 		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
@@ -1728,7 +1728,7 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		_board[mRank(move.to) - 1][mFile(move.to)] = PAWN_BLACK;
 		_pstValue += calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
-		_materialKey += materialPieceIndex[PAWN_BLACK];
+		_materialKey += pieceIndexForMaterialTable[PAWN_BLACK];
 	}
 	assert(_board[mRank(move.to)][mFile(move.to)] != ETY_SQUARE);	
 	_board[mRank(move.to)][mFile(move.to)] = ETY_SQUARE;
@@ -1755,9 +1755,9 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 			_pstValue += calculatePstValue(move.capturedPiece, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 			++_pieceCount[move.capturedPiece];
-			_materialKey += materialPieceIndex[move.capturedPiece];
-			if (_pieceCount[move.capturedPiece] == materialMaxUsual[move.capturedPiece] + 1) {
-				_unusualMaterial |= materialToFlag[move.capturedPiece];
+			_materialKey += pieceIndexForMaterialTable[move.capturedPiece];
+			if (_pieceCount[move.capturedPiece] == initialNumberOfPieces[move.capturedPiece] + 1) {
+				_unusualMaterial |= pieceMask[move.capturedPiece];
 			}
 		}
 	}
@@ -1770,9 +1770,9 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 			_pstValue += calculatePstValue(move.capturedPiece, move.to);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 			++_pieceCount[move.capturedPiece];
-			_materialKey += materialPieceIndex[move.capturedPiece];
-			if (_pieceCount[move.capturedPiece] == materialMaxUsual[move.capturedPiece] + 1) {
-				_unusualMaterial |= materialToFlag[move.capturedPiece];
+			_materialKey += pieceIndexForMaterialTable[move.capturedPiece];
+			if (_pieceCount[move.capturedPiece] == initialNumberOfPieces[move.capturedPiece] + 1) {
+				_unusualMaterial |= pieceMask[move.capturedPiece];
 			}
 		}
 	}
@@ -1786,11 +1786,11 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(promoted, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
-	_materialKey -= materialPieceIndex[promoted];
-	if (_pieceCount[promoted] == materialMaxUsual[promoted]) {
-		_unusualMaterial &= ~materialToFlag[promoted];
+	_materialKey -= pieceIndexForMaterialTable[promoted];
+	if (_pieceCount[promoted] == initialNumberOfPieces[promoted]) {
+		_unusualMaterial &= ~pieceMask[promoted];
 	}
-	_materialKey += materialPieceIndex[move.movedPiece];
+	_materialKey += pieceIndexForMaterialTable[move.movedPiece];
 
 	if (move.enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(move.enPassantFile);

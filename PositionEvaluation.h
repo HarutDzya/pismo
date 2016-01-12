@@ -16,9 +16,9 @@ struct MaterialInfo
 
 const unsigned int MATERIAL_TABLE_SIZE = 2 * 2 * 3 * 3 * 3 * 3 * 3 * 3 * 9 * 9; 
 
-extern const uint16_t materialPieceIndex[PIECE_NB];
-extern const uint8_t materialMaxUsual[PIECE_NB];
-extern const uint16_t materialToFlag[PIECE_NB];
+extern const uint16_t pieceIndexForMaterialTable[PIECE_NB];
+extern const uint8_t initialNumberOfPieces[PIECE_NB];
+extern const uint16_t pieceMask[PIECE_NB];
 
 /**
  * https://chessprogramming.wikispaces.com/Evaluation

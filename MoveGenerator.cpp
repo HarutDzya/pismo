@@ -1469,12 +1469,16 @@ bool MoveGenerator::moveSortOrder(const MoveInfo& first, const MoveInfo& second)
 void MoveGenerator::sortGoodCapturingMoves()
 {
 	_moveGenInfo->_badCaptureSize = _moveGenInfo->_availableMovesSize;
-	for (uint16_t moveCount = _moveGenInfo->_currentMovePos; moveCount < _moveGenInfo->_availableMovesSize; ++moveCount) {
+	uint16_t moveCount = _moveGenInfo->_currentMovePos;
+	while (moveCount < _moveGenInfo->_badCaptureSize) {
 		if (SEE(_moveGenInfo->_availableMoves[moveCount]) > 0) {
 			--(_moveGenInfo->_badCaptureSize);
 			MoveInfo goodCapture = _moveGenInfo->_availableMoves[moveCount];
 		   _moveGenInfo->_availableMoves[moveCount] = _moveGenInfo->_availableMoves[_moveGenInfo->_badCaptureSize];
 	   	   _moveGenInfo->_availableMoves[_moveGenInfo->_badCaptureSize] = goodCapture;
+		}
+		else {
+			++moveCount;
 		}
 	}
 
@@ -1497,6 +1501,7 @@ int16_t MoveGenerator::SEE(const MoveInfo& move)
 	}
 	uint16_t depth = 0;
 	bool whiteToPlay = _positionState->whiteToPlay();
+	bool isNextCapturingPieceKing = false;
 	Bitboard occupiedSquares = _positionState->occupiedSquares();
 	Bitboard movedPieces = 0;
 	Bitboard attackingPiecePos = squareToBitboard[move.from];
@@ -1524,6 +1529,15 @@ int16_t MoveGenerator::SEE(const MoveInfo& move)
 		}
 	}
 	while (attackingPiecePos) {
+		if (isNextCapturingPieceKing) {
+			break;
+		}
+		if (attackingPiece == KING_WHITE || attackingPiece == KING_BLACK) {
+				isNextCapturingPieceKing = true;
+				// isNextCapturingPieceKing is needed to consider the case
+				// when last capturing piece is a king and there is no 
+				// subsequent move from other side
+		}
 		++depth;
 		whiteToPlay = !whiteToPlay;
 		_gainSEE[depth] = PIECE_VALUES[attackingPiece] - _gainSEE[depth - 1];
@@ -1578,6 +1592,13 @@ Bitboard MoveGenerator::getLeastValuablePiece(Square to, bool whiteToPlay, const
 			attackingPiece = QUEEN_WHITE;
 			return attackingPos & -attackingPos;
 		}
+		attackingPos = _bitboardImpl->kingAttackTo(to, _positionState->getPiecePos()[KING_WHITE]);
+		// There is no need to and it with ~movedPieces, because king can be only the last 
+		// moved piece
+		if (attackingPos) {
+			attackingPiece = KING_WHITE;
+			return attackingPos & -attackingPos;
+		}
 	}
 	else {
 		attackingPos = _bitboardImpl->pawnsWhiteAttackTo(to, _positionState->getPiecePos()[PAWN_BLACK]) & ~movedPieces;
@@ -1603,6 +1624,13 @@ Bitboard MoveGenerator::getLeastValuablePiece(Square to, bool whiteToPlay, const
 		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->getPiecePos()[QUEEN_BLACK]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = QUEEN_BLACK;
+			return attackingPos & -attackingPos;
+		}
+		attackingPos = _bitboardImpl->kingAttackTo(to, _positionState->getPiecePos()[KING_BLACK]);
+		// There is no need to and it with ~movedPieces, because king can be only the last 
+		// moved piece
+		if (attackingPos) {
+			attackingPiece = KING_BLACK;
 			return attackingPos & -attackingPos;
 		}
 	}
@@ -1635,7 +1663,8 @@ void MoveGenerator::sortEvasionMoves()
 {
 	uint16_t endGoodCapture = _moveGenInfo->_currentMovePos;
 	uint16_t beginBadCapture = _moveGenInfo->_availableMovesSize;
-	for (uint16_t moveCount = _moveGenInfo->_currentMovePos; moveCount < _moveGenInfo->_availableMovesSize; ++moveCount) {
+	uint16_t moveCount = endGoodCapture;
+	while (moveCount < beginBadCapture) {
 		MoveType type = _moveGenInfo->_availableMoves[moveCount].type;
 		if (type == CAPTURE_MOVE || type == EN_PASSANT_CAPTURE ||
 				(type == PROMOTION_MOVE && (_moveGenInfo->_availableMoves[moveCount].promoted == QUEEN_WHITE ||
@@ -1643,7 +1672,7 @@ void MoveGenerator::sortEvasionMoves()
 			if (SEE(_moveGenInfo->_availableMoves[moveCount]) > 0) {
 			   MoveInfo moveTemp = _moveGenInfo->_availableMoves[endGoodCapture];
 			   _moveGenInfo->_availableMoves[endGoodCapture++] = _moveGenInfo->_availableMoves[moveCount];
-			   _moveGenInfo->_availableMoves[moveCount] = moveTemp;
+			   _moveGenInfo->_availableMoves[moveCount++] = moveTemp;
 			}
 			else {
 				MoveInfo moveTemp = _moveGenInfo->_availableMoves[--beginBadCapture];

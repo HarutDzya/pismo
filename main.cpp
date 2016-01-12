@@ -20,7 +20,7 @@ int main()
 	MemPool::initMoveGenInfo();
 	PositionState pos;
 
-	pos.initPositionFEN("8/7p/p5pb/4k3/P1pPn3/8/P5PP/1rB2RK1 b - d3 0 28");
+	pos.initPositionFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
 	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
 		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;

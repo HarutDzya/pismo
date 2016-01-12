@@ -4,7 +4,7 @@
 namespace pismo
 {
 
-const uint16_t materialPieceIndex[PIECE_NB] =
+const uint16_t pieceIndexForMaterialTable[PIECE_NB] =
 {
 	2 * 2 * 3 * 3 * 3 * 3 * 3 * 3,
 	2 * 2, 2 * 2 * 3 * 3,
@@ -16,13 +16,13 @@ const uint16_t materialPieceIndex[PIECE_NB] =
 	2, 0
 };
 
-const uint8_t materialMaxUsual[PIECE_NB] =
+const uint8_t initialNumberOfPieces[PIECE_NB] =
 {
 	8, 2, 2, 2, 1, 1,
 	8, 2, 2, 2, 1, 1
 };
 
-const uint16_t materialToFlag[PIECE_NB] =
+const uint16_t pieceMask[PIECE_NB] =
 {
 	1 << 0, 1 << 1, 1 << 2, 1 << 3,
 	1 << 4, 1 << 5, 1 << 6, 1 << 7,
@@ -42,28 +42,28 @@ void PositionEvaluation::initMaterialTable()
 	unsigned int pieceCount[PIECE_NB];
 	for (unsigned int index = 0; index < MATERIAL_TABLE_SIZE; ++index) {
 		// Order of finding pieceCount here depends on the value
-		// of materialPieceIndex (big to small)
+		// of pieceIndexForMaterialTable (big to small)
 		unsigned int tempIndex = index;
-		pieceCount[PAWN_BLACK] = tempIndex / materialPieceIndex[PAWN_BLACK];
-		tempIndex %= materialPieceIndex[PAWN_BLACK];
-		pieceCount[PAWN_WHITE] = tempIndex / materialPieceIndex[PAWN_WHITE];
-		tempIndex %= materialPieceIndex[PAWN_WHITE];
-		pieceCount[ROOK_BLACK] = tempIndex / materialPieceIndex[ROOK_BLACK];
-		tempIndex %= materialPieceIndex[ROOK_BLACK];
-		pieceCount[ROOK_WHITE] = tempIndex / materialPieceIndex[ROOK_WHITE];
-		tempIndex %= materialPieceIndex[ROOK_WHITE];
-		pieceCount[BISHOP_BLACK] = tempIndex / materialPieceIndex[BISHOP_BLACK];
-		tempIndex %= materialPieceIndex[BISHOP_BLACK];
-		pieceCount[BISHOP_WHITE] = tempIndex / materialPieceIndex[BISHOP_WHITE];
-		tempIndex %= materialPieceIndex[BISHOP_WHITE];
-		pieceCount[KNIGHT_BLACK] = tempIndex / materialPieceIndex[KNIGHT_BLACK];
-		tempIndex %= materialPieceIndex[KNIGHT_BLACK];
-		pieceCount[KNIGHT_WHITE] = tempIndex / materialPieceIndex[KNIGHT_WHITE];
-		tempIndex %= materialPieceIndex[KNIGHT_WHITE];
-		pieceCount[QUEEN_BLACK] = tempIndex / materialPieceIndex[QUEEN_BLACK];
-		tempIndex %= materialPieceIndex[QUEEN_BLACK];
-		pieceCount[QUEEN_WHITE] = tempIndex / materialPieceIndex[QUEEN_WHITE];
-		tempIndex %= materialPieceIndex[QUEEN_WHITE];
+		pieceCount[PAWN_BLACK] = tempIndex / pieceIndexForMaterialTable[PAWN_BLACK];
+		tempIndex %= pieceIndexForMaterialTable[PAWN_BLACK];
+		pieceCount[PAWN_WHITE] = tempIndex / pieceIndexForMaterialTable[PAWN_WHITE];
+		tempIndex %= pieceIndexForMaterialTable[PAWN_WHITE];
+		pieceCount[ROOK_BLACK] = tempIndex / pieceIndexForMaterialTable[ROOK_BLACK];
+		tempIndex %= pieceIndexForMaterialTable[ROOK_BLACK];
+		pieceCount[ROOK_WHITE] = tempIndex / pieceIndexForMaterialTable[ROOK_WHITE];
+		tempIndex %= pieceIndexForMaterialTable[ROOK_WHITE];
+		pieceCount[BISHOP_BLACK] = tempIndex / pieceIndexForMaterialTable[BISHOP_BLACK];
+		tempIndex %= pieceIndexForMaterialTable[BISHOP_BLACK];
+		pieceCount[BISHOP_WHITE] = tempIndex / pieceIndexForMaterialTable[BISHOP_WHITE];
+		tempIndex %= pieceIndexForMaterialTable[BISHOP_WHITE];
+		pieceCount[KNIGHT_BLACK] = tempIndex / pieceIndexForMaterialTable[KNIGHT_BLACK];
+		tempIndex %= pieceIndexForMaterialTable[KNIGHT_BLACK];
+		pieceCount[KNIGHT_WHITE] = tempIndex / pieceIndexForMaterialTable[KNIGHT_WHITE];
+		tempIndex %= pieceIndexForMaterialTable[KNIGHT_WHITE];
+		pieceCount[QUEEN_BLACK] = tempIndex / pieceIndexForMaterialTable[QUEEN_BLACK];
+		tempIndex %= pieceIndexForMaterialTable[QUEEN_BLACK];
+		pieceCount[QUEEN_WHITE] = tempIndex / pieceIndexForMaterialTable[QUEEN_WHITE];
+		tempIndex %= pieceIndexForMaterialTable[QUEEN_WHITE];
 		pieceCount[KING_BLACK] = 1;
 		pieceCount[KING_WHITE] = 1;
 		_materialTable[index].value = pieceCount[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
@@ -98,7 +98,7 @@ void PositionEvaluation::evalMaterial(const PositionState& pos)
 		_posValue += _materialTable[pos.materialKey()].value;
 	}
 	else {
-		_posValue = pos.getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
+		_posValue += pos.getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
 			pos.getPieceCount()[KNIGHT_WHITE] * PIECE_VALUES[KNIGHT_WHITE] +
 			pos.getPieceCount()[BISHOP_WHITE] * PIECE_VALUES[BISHOP_WHITE] +
 			pos.getPieceCount()[ROOK_WHITE] * PIECE_VALUES[ROOK_WHITE] +
