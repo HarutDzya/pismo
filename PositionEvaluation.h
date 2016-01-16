@@ -20,6 +20,16 @@ extern const uint16_t pieceIndexForMaterialTable[PIECE_NB];
 extern const uint8_t initialNumberOfPieces[PIECE_NB];
 extern const uint16_t pieceMask[PIECE_NB];
 
+struct PawnEvalInfo
+{
+	int16_t score;
+	ZobKey key;
+};
+
+const unsigned int PAWN_HASH_SIZE = 1 << 15;
+const unsigned int PAWN_HASH_INDEX_MASK = PAWN_HASH_SIZE - 1;
+
+
 /**
  * https://chessprogramming.wikispaces.com/Evaluation
  */
@@ -51,6 +61,8 @@ public:
 	PositionEvaluation();
 	~PositionEvaluation();
 
+	void initPosEval();
+
 	int16_t evaluate(const PositionState& pos);
   
 
@@ -59,8 +71,23 @@ private:
 	// values using materialPieceIndex to compute
 	// index
 	void initMaterialTable();
-	
+
+	// Evaluates position material and adds the
+	// value to the _posValue
 	void evalMaterial(const PositionState& pos);
+
+
+	// Initializes pawn hash table, by allocating space
+	// and assigning all entries to 0 value
+	void initPawnHash();
+
+	// Fetches position state pawns value from hash table
+	// and adds it to the _posValue
+	void evalPawnsState(const PositionState& pos);
+
+	// Evaluates position state pawns value
+	int16_t evaluatePawns(const PositionState& pos) const;
+
 	void evalPieceSquare(const PositionState& pos);  
 	void evalMobility(const PositionState& pos);
 
@@ -70,6 +97,10 @@ private:
 	// Material table of the material values
 	// for usual cases of material (no extra promoted pieces)
 	MaterialInfo* _materialTable;
+
+	// Hash table of the pawn state evaluation
+	PawnEvalInfo* _pawnHash;
+
 };
 
 }

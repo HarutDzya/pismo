@@ -31,6 +31,7 @@ _blackLeftCastling(false),
 _blackRightCastling(false),
 _isMiddleGame(true),
 _zobKey(0),
+_pawnZobKey(0),
 _materialKey(0),
 _unusualMaterial(false),
 _pstValue(0),
@@ -72,6 +73,9 @@ void PositionState::setPiece(Square s, Piece p)
 	++_pieceCount[p];
 	_pstValue += calculatePstValue(p, s);
 	_zobKey ^=  _zobKeyImpl->getPieceAtSquareKey(p, s);
+	if (p == PAWN_WHITE || p == PAWN_BLACK) {
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(p, s);
+	}
 
 	_materialKey += pieceIndexForMaterialTable[p];
 	if (_pieceCount[p] == initialNumberOfPieces[p] + 1) {
@@ -1141,6 +1145,10 @@ void PositionState::makeNormalMove(const MoveInfo& move)
 	_pstValue += calculatePstValue(pfrom, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
+	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
+	}
 	if (_enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(_enPassantFile);
 		_enPassantFile = -1;				
@@ -1155,16 +1163,30 @@ void PositionState::makeCaptureMove(const MoveInfo& move)
 		removePieceFromBitboards<WHITE>(move.from, pfrom);
 		addPieceToBitboards<WHITE>(move.to, pfrom);
 		removePieceFromBitboards<BLACK>(move.to, pto);
+		if (pto == PAWN_BLACK) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
+		}
 		if (pfrom == KING_WHITE) {
 			_whiteKingPosition = move.to;
+		}
+		else if (pfrom == PAWN_WHITE) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 		}
 	}
 	else {
 		removePieceFromBitboards<BLACK>(move.from, pfrom);
 		addPieceToBitboards<BLACK>(move.to, pfrom);
 		removePieceFromBitboards<WHITE>(move.to, pto);
+		if (pto == PAWN_WHITE) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
+		}
 		if (pfrom == KING_BLACK) {
 			_blackKingPosition = move.to;
+		}
+		else if (pfrom == PAWN_BLACK) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 		}
 	}
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
@@ -1279,6 +1301,8 @@ void PositionState::makeEnPassantMove(const MoveInfo& move)
 	_pstValue += calculatePstValue(pfrom, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	if (_enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(_enPassantFile);
 	}
@@ -1298,6 +1322,7 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		_board[mRank(move.to) - 1][mFile(move.to)] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
 		_materialKey -= pieceIndexForMaterialTable[PAWN_BLACK];
 	}
 	else {
@@ -1308,6 +1333,7 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		_board[mRank(move.to) + 1][mFile(move.to)] = ETY_SQUARE;
 		_pstValue -= calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
 		_materialKey -= pieceIndexForMaterialTable[PAWN_WHITE];
 	}
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
@@ -1316,6 +1342,8 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 	_pstValue += calculatePstValue(pfrom, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	if (_enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(_enPassantFile);
 		_enPassantFile = -1;				
@@ -1365,6 +1393,7 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.promoted, move.to);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_materialKey -= pieceIndexForMaterialTable[pfrom];
 	_materialKey += pieceIndexForMaterialTable[move.promoted];
 	if (_pieceCount[move.promoted] == initialNumberOfPieces[move.promoted] + 1) {
@@ -1564,6 +1593,10 @@ void PositionState::undoNormalMove(const UndoMoveInfo& move)
 	_pstValue += calculatePstValue(move.movedPiece, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+	if (move.movedPiece == PAWN_WHITE || move.movedPiece == PAWN_BLACK) {
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+	}
 	if (move.enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(move.enPassantFile);
 		_enPassantFile = move.enPassantFile;
@@ -1579,6 +1612,13 @@ void PositionState::undoCaptureMove(const UndoMoveInfo& move)
 		if (move.movedPiece == KING_BLACK) {
 			_blackKingPosition = move.from;
 		}
+		else if (move.movedPiece == PAWN_BLACK) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+		}
+		if (move.capturedPiece == PAWN_WHITE) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
+		}
 	}
 	else {
 		removePieceFromBitboards<WHITE>(move.to, move.movedPiece);
@@ -1586,6 +1626,13 @@ void PositionState::undoCaptureMove(const UndoMoveInfo& move)
 		addPieceToBitboards<BLACK>(move.to, move.capturedPiece);
 		if (move.movedPiece == KING_WHITE) {
 			_whiteKingPosition = move.from;
+		}
+		else if (move.movedPiece == PAWN_WHITE) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+		}
+		if (move.capturedPiece == PAWN_BLACK) {
+			_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 		}
 	}
 	_board[mRank(move.from)][mFile(move.from)] = move.movedPiece;
@@ -1701,6 +1748,8 @@ void PositionState::undoEnPassantMove(const UndoMoveInfo& move)
 	_pstValue += calculatePstValue(move.movedPiece, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	_zobKey ^= _zobKeyImpl->getEnPassantKey(_enPassantFile);
 	if (move.enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(move.enPassantFile);
@@ -1718,6 +1767,7 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		_board[mRank(move.to) + 1][mFile(move.to)] = PAWN_WHITE;
 		_pstValue += calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
 		_materialKey += pieceIndexForMaterialTable[PAWN_WHITE];
 	}
 	else {
@@ -1728,6 +1778,7 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		_board[mRank(move.to) - 1][mFile(move.to)] = PAWN_BLACK;
 		_pstValue += calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
+		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
 		_materialKey += pieceIndexForMaterialTable[PAWN_BLACK];
 	}
 	assert(_board[mRank(move.to)][mFile(move.to)] != ETY_SQUARE);	
@@ -1737,6 +1788,8 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 	_pstValue += calculatePstValue(move.movedPiece, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	if (move.enPassantFile != -1) {
 		_zobKey ^= _zobKeyImpl->getEnPassantKey(move.enPassantFile);
 		_enPassantFile = move.enPassantFile;				
@@ -1786,6 +1839,7 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(promoted, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
+	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	_materialKey -= pieceIndexForMaterialTable[promoted];
 	if (_pieceCount[promoted] == initialNumberOfPieces[promoted]) {
 		_unusualMaterial &= ~pieceMask[promoted];

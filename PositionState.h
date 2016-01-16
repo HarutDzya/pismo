@@ -80,6 +80,7 @@ public:
 	const std::string getStateFEN() const;
 
 	ZobKey getZobKey() const {return _zobKey;}
+	ZobKey getPawnKey() const {return _pawnZobKey;}
 
 	Piece const (&getBoard()const)[8][8] {return _board;}
 
@@ -269,6 +270,9 @@ private:
 
 	// Zobrist key for the state of the game
 	ZobKey _zobKey;
+
+	// Zobrist key for the pawns state of the game
+	ZobKey _pawnZobKey;
 	
 	// Index key for material of the game
 	uint32_t _materialKey;

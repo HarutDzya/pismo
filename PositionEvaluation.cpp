@@ -32,8 +32,15 @@ const uint16_t pieceMask[PIECE_NB] =
 
 PositionEvaluation::PositionEvaluation():
 	_posValue(0),
-	_materialTable(0)
+	_materialTable(0),
+	_pawnHash(0)
 {
+}
+
+void PositionEvaluation::initPosEval()
+{
+	initMaterialTable();
+	initPawnHash();
 }
 
 void PositionEvaluation::initMaterialTable()
@@ -81,6 +88,15 @@ void PositionEvaluation::initMaterialTable()
 	}
 }
 
+void PositionEvaluation::initPawnHash()
+{
+	_pawnHash = new PawnEvalInfo[PAWN_HASH_SIZE];
+	for (unsigned int index = 0; index < PAWN_HASH_SIZE; ++index) {
+		_pawnHash[index].score = 0;
+		_pawnHash[index].key = 0;
+	}
+}
+
 int16_t PositionEvaluation::evaluate(const PositionState& pos)
 {
 	_posValue = 0;
@@ -94,6 +110,8 @@ int16_t PositionEvaluation::evaluate(const PositionState& pos)
 
 void PositionEvaluation::evalMaterial(const PositionState& pos)
 {
+	// TODO: Make the following improvement
+	// http://www.talkchess.com/forum/viewtopic.php?topic_view=threads&p=340115&t=33561
 	if (!pos.unusualMaterial()) {
 		_posValue += _materialTable[pos.materialKey()].value;
 	}
@@ -113,6 +131,23 @@ void PositionEvaluation::evalMaterial(const PositionState& pos)
 	}
 }
 
+void PositionEvaluation::evalPawnsState(const PositionState& pos)
+{
+	PawnEvalInfo* pawnEval = &_pawnHash[pos.getPawnKey() & PAWN_HASH_INDEX_MASK];
+	if (pawnEval->key != pos.getPawnKey()) {
+		pawnEval->key = pos.getPawnKey();
+		pawnEval->score = evaluatePawns(pos);
+	}
+
+	_posValue += pawnEval->score;
+}
+
+int16_t PositionEvaluation::evaluatePawns(const PositionState& pos) const
+{
+	// TODO: Add pawn state evaluation
+	return 0;
+}
+
 void PositionEvaluation::evalPieceSquare(const PositionState& pos)
 {
 	_posValue += pos.getPstValue();
@@ -125,6 +160,7 @@ void PositionEvaluation::evalMobility(const PositionState& pos)
 PositionEvaluation::~PositionEvaluation()
 {
 	delete[] _materialTable;
+	delete[] _pawnHash;
 }
 
 }
