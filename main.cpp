@@ -84,7 +84,8 @@ int main()
 		}
     else if (choice == "f") {
       std::cout << pos.getStateFEN() << std::endl;
-	  std::cout << "Position value: " << posEval.evaluate(pos) << std::endl;
+      int eval = posEval.evaluate(pos);
+	  std::cout << "Position value: " << eval << std::endl;
     }
 		std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
 			"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;

@@ -4,6 +4,21 @@
 
 #include <assert.h>
 
+
+#define LOG_EVAL
+
+#ifndef LOG_EVAL
+
+#define incr(a, b, c) a+=b
+#define decr(a, b, c) a-=b
+
+#define resetEvalLog()
+#define printEvalLog()
+
+#else
+#include "LogEval.h"
+#endif
+
 namespace pismo
 {
 
@@ -38,8 +53,8 @@ int QueenMobility[2][28] =
 		44, 45, 46, 47, 47, 47, 47, 48, 48, 48, 49, 49, 50
 	},
 	{
-	  0, 3, 7, 15, 25, 27, 28, 30, 32, 34, 36, 38, 40, 42, 43,
-	  44, 45, 46, 47, 47, 47, 47, 48, 48, 48, 49, 49, 50
+		0, 3, 7, 15, 25, 27, 28, 30, 32, 34, 36, 38, 40, 42, 43,
+		44, 45, 46, 47, 47, 47, 47, 48, 48, 48, 49, 49, 50
 	}
 };
 
@@ -146,9 +161,12 @@ void PositionEvaluation::reset(const PositionState& pos)
 	_pos = &pos;
 
 	//TODO: memcpy is somewhat faster here
+  _value = 0;
 	_currentPawnEval = 0;
 	_whiteFreeSpace = 0;
 	_blackFreeSpace = 0;
+
+	resetEvalLog();
 }
 
 /////////// evaluation
@@ -157,7 +175,7 @@ int16_t PositionEvaluation::evaluate(const PositionState& pos)
 {
 	reset(pos);
 
-	_value = _pos->getPstValue();
+	incr(_value, _pos->getPstValue(), pst);
 
 	evalMaterial();
 
@@ -177,6 +195,8 @@ int16_t PositionEvaluation::evaluate(const PositionState& pos)
 
 	// evalKingSafety();
 	
+	printEvalLog();
+
 	return _value;
 }
 
@@ -185,10 +205,10 @@ void PositionEvaluation::evalMaterial()
 	// TODO: Make the following improvement
 	// http://www.talkchess.com/forum/viewtopic.php?topic_view=threads&p=340115&t=33561
 	if (!_pos->unusualMaterial()) {
-	  _value += _materialTable[_pos->materialKey()].value;
+	  incr(_value, _materialTable[_pos->materialKey()].value, material);
 	}
 	else {
-	  _value += _pos->getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
+	  incr(_value, _pos->getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
 	      _pos->getPieceCount()[KNIGHT_WHITE] * PIECE_VALUES[KNIGHT_WHITE] +
 	      _pos->getPieceCount()[BISHOP_WHITE] * PIECE_VALUES[BISHOP_WHITE] +
 	      _pos->getPieceCount()[ROOK_WHITE] * PIECE_VALUES[ROOK_WHITE] +
@@ -199,7 +219,7 @@ void PositionEvaluation::evalMaterial()
 	      _pos->getPieceCount()[BISHOP_BLACK] * PIECE_VALUES[BISHOP_BLACK] -
 	      _pos->getPieceCount()[ROOK_BLACK] * PIECE_VALUES[ROOK_BLACK] -
 	      _pos->getPieceCount()[QUEEN_BLACK] * PIECE_VALUES[QUEEN_BLACK] -
-	      _pos->getPieceCount()[KING_BLACK] * PIECE_VALUES[KING_BLACK];
+	      _pos->getPieceCount()[KING_BLACK] * PIECE_VALUES[KING_BLACK], material);
 	}
 }
 
@@ -240,11 +260,11 @@ void PositionEvaluation::evalKnights()
 		from = (Square)BitboardImpl::instance()->lsb(knightsPos);
 		if (clr == WHITE) {
 			count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _whiteFreeSpace);
-			_value = _value + KnightMobility[BEGINNING][count];
+			incr(_value, KnightMobility[BEGINNING][count], whiteMobility);
 		}
 		else {
 			count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _blackFreeSpace);
-			_value = _value - KnightMobility[BEGINNING][count];
+			decr(_value, KnightMobility[BEGINNING][count], blackMobility);
 		}
 
 		knightsPos &= (knightsPos - 1);
@@ -262,10 +282,10 @@ void PositionEvaluation::evalBishops()
 		from = (Square)BitboardImpl::instance()->lsb(bishopsPos);
 		if (clr == WHITE) {
 			count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
-			_value = _value + BishopMobility[BEGINNING][count];
+			incr(_value, BishopMobility[BEGINNING][count], whiteMobility);
 		} else {
 			count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
-			_value = _value - BishopMobility[BEGINNING][count];
+			decr(_value, BishopMobility[BEGINNING][count], blackMobility);
 		}
 
 		bishopsPos &= (bishopsPos - 1);
@@ -283,10 +303,10 @@ void PositionEvaluation::evalRooks()
 		from = (Square)BitboardImpl::instance()->lsb(rooksPos);
 		if (clr == WHITE) {
 			count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
-			_value = _value + RookMobility[BEGINNING][count];
+			incr(_value, RookMobility[BEGINNING][count], whiteMobility);
 		} else {
 			count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
-			_value = _value - RookMobility[BEGINNING][count];
+			decr(_value, RookMobility[BEGINNING][count], blackMobility);
 		}
 
 		rooksPos &= (rooksPos - 1);
@@ -304,10 +324,10 @@ void PositionEvaluation::evalQueens()
 		from = (Square)BitboardImpl::instance()->lsb(queensPos);
 		if (clr == WHITE) {
 			count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
-			_value = _value + QueenMobility[BEGINNING][count];
+			incr(_value, QueenMobility[BEGINNING][count], whiteMobility);
 		} else {
 			count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
-			_value = _value - QueenMobility[BEGINNING][count];
+			decr(_value, QueenMobility[BEGINNING][count], blackMobility);
 		}
 
 		queensPos &= (queensPos - 1);
