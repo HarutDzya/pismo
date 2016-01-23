@@ -1,10 +1,50 @@
 #include "PositionEvaluation.h"
 #include "PositionState.h"
+#include "BitboardImpl.h"
+
+#include <assert.h>
 
 namespace pismo
 {
 
-const uint16_t pieceIndexForMaterialTable[PIECE_NB] =
+extern int bitCount(uint64_t);
+
+//first index is stage of game (begin, end)
+//second index is number of attacked squares
+
+int KnightMobility[2][9] =
+{
+	{ 0, 1, 2, 4, 7, 10, 12, 14, 17},
+	{ 0, 1, 2, 4, 7, 10, 12, 14, 17}
+};
+
+int BishopMobility[2][14] =
+{
+	{ 0, 0, 1, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17, 19 },
+	{ 0, 0, 1, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17, 19 }
+};
+
+int RookMobility[2][16] =
+{
+	{ 0, 0, 1, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17, 18, 20, 22 },
+	{ 0, 0, 1, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17, 18, 20, 22 },
+};
+
+
+int QueenMobility[2][28] =
+{
+	{
+		0, 0, 1, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17, 18, 20,
+		21, 23, 25, 26, 27, 29, 31, 33, 38, 42, 45, 47, 50
+	},
+	{
+		0, 0, 1, 3, 4, 5, 7, 8, 9, 12, 13, 16, 17, 18, 20,
+		21, 23, 25, 26, 27, 29, 31, 33, 38, 42, 45, 47, 50
+	}
+};
+
+
+const uint16_t pieceIndexForMaterialTable[PIECE_COUNT] =
 {
 	2 * 2 * 3 * 3 * 3 * 3 * 3 * 3,
 	2 * 2, 2 * 2 * 3 * 3,
@@ -16,13 +56,13 @@ const uint16_t pieceIndexForMaterialTable[PIECE_NB] =
 	2, 0
 };
 
-const uint8_t initialNumberOfPieces[PIECE_NB] =
+const uint8_t initialNumberOfPieces[PIECE_COUNT] =
 {
 	8, 2, 2, 2, 1, 1,
 	8, 2, 2, 2, 1, 1
 };
 
-const uint16_t pieceMask[PIECE_NB] =
+const uint16_t pieceMask[PIECE_COUNT] =
 {
 	1 << 0, 1 << 1, 1 << 2, 1 << 3,
 	1 << 4, 1 << 5, 1 << 6, 1 << 7,
@@ -31,9 +71,12 @@ const uint16_t pieceMask[PIECE_NB] =
 
 
 PositionEvaluation::PositionEvaluation():
-	_posValue(0),
+	_value(0),
 	_materialTable(0),
-	_pawnHash(0)
+	_pawnHash(0),
+	_currentPawnEval(0),
+	_whiteFreeSpace(0),
+	_blackFreeSpace(0)
 {
 }
 
@@ -46,7 +89,7 @@ void PositionEvaluation::initPosEval()
 void PositionEvaluation::initMaterialTable()
 {
 	_materialTable = new MaterialInfo[MATERIAL_TABLE_SIZE];
-	unsigned int pieceCount[PIECE_NB];
+	unsigned int pieceCount[PIECE_COUNT];
 	for (unsigned int index = 0; index < MATERIAL_TABLE_SIZE; ++index) {
 		// Order of finding pieceCount here depends on the value
 		// of pieceIndexForMaterialTable (big to small)
@@ -97,64 +140,178 @@ void PositionEvaluation::initPawnHash()
 	}
 }
 
-int16_t PositionEvaluation::evaluate(const PositionState& pos)
+void PositionEvaluation::reset(const PositionState& pos)
 {
-	_posValue = 0;
-	evalMaterial(pos);
-	evalPieceSquare(pos);
-	evalMobility(pos);
-	// kingSafety();
-	
-	return _posValue;
+	//TODO: Init PositionState globally, and do not pass it into functions
+	_pos = &pos;
+
+	//TODO: memcpy is somewhat faster here
+	_currentPawnEval = 0;
+	_whiteFreeSpace = 0;
+	_blackFreeSpace = 0;
 }
 
-void PositionEvaluation::evalMaterial(const PositionState& pos)
+/////////// evaluation
+
+int16_t PositionEvaluation::evaluate(const PositionState& pos)
+{
+	reset(pos);
+
+	_value = _pos->getPstValue();
+
+	evalMaterial();
+
+	evalPawnsState();
+
+	evalKnights<WHITE>();
+	evalKnights<BLACK>();
+
+	evalBishops<WHITE>();
+	evalBishops<BLACK>();
+
+	evalRooks<WHITE>();
+	evalRooks<BLACK>();
+
+	evalQueens<WHITE>();
+	evalQueens<BLACK>();
+
+	// evalKingSafety();
+	
+	return _value;
+}
+
+void PositionEvaluation::evalMaterial()
 {
 	// TODO: Make the following improvement
 	// http://www.talkchess.com/forum/viewtopic.php?topic_view=threads&p=340115&t=33561
-	if (!pos.unusualMaterial()) {
-		_posValue += _materialTable[pos.materialKey()].value;
+	if (!_pos->unusualMaterial()) {
+	  _value += _materialTable[_pos->materialKey()].value;
 	}
 	else {
-		_posValue += pos.getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
-			pos.getPieceCount()[KNIGHT_WHITE] * PIECE_VALUES[KNIGHT_WHITE] +
-			pos.getPieceCount()[BISHOP_WHITE] * PIECE_VALUES[BISHOP_WHITE] +
-			pos.getPieceCount()[ROOK_WHITE] * PIECE_VALUES[ROOK_WHITE] +
-			pos.getPieceCount()[QUEEN_WHITE] * PIECE_VALUES[QUEEN_WHITE] +
-			pos.getPieceCount()[KING_WHITE] * PIECE_VALUES[KING_WHITE] -
-			pos.getPieceCount()[PAWN_BLACK] * PIECE_VALUES[PAWN_BLACK] -
-			pos.getPieceCount()[KNIGHT_BLACK] * PIECE_VALUES[KNIGHT_BLACK] -
-			pos.getPieceCount()[BISHOP_BLACK] * PIECE_VALUES[BISHOP_BLACK] - 
-			pos.getPieceCount()[ROOK_BLACK] * PIECE_VALUES[ROOK_BLACK] -
-			pos.getPieceCount()[QUEEN_BLACK] * PIECE_VALUES[QUEEN_BLACK] -
-			pos.getPieceCount()[KING_BLACK] * PIECE_VALUES[KING_BLACK];
+	  _value += _pos->getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
+	      _pos->getPieceCount()[KNIGHT_WHITE] * PIECE_VALUES[KNIGHT_WHITE] +
+	      _pos->getPieceCount()[BISHOP_WHITE] * PIECE_VALUES[BISHOP_WHITE] +
+	      _pos->getPieceCount()[ROOK_WHITE] * PIECE_VALUES[ROOK_WHITE] +
+	      _pos->getPieceCount()[QUEEN_WHITE] * PIECE_VALUES[QUEEN_WHITE] +
+	      _pos->getPieceCount()[KING_WHITE] * PIECE_VALUES[KING_WHITE] -
+	      _pos->getPieceCount()[PAWN_BLACK] * PIECE_VALUES[PAWN_BLACK] -
+	      _pos->getPieceCount()[KNIGHT_BLACK] * PIECE_VALUES[KNIGHT_BLACK] -
+	      _pos->getPieceCount()[BISHOP_BLACK] * PIECE_VALUES[BISHOP_BLACK] -
+	      _pos->getPieceCount()[ROOK_BLACK] * PIECE_VALUES[ROOK_BLACK] -
+	      _pos->getPieceCount()[QUEEN_BLACK] * PIECE_VALUES[QUEEN_BLACK] -
+	      _pos->getPieceCount()[KING_BLACK] * PIECE_VALUES[KING_BLACK];
 	}
 }
 
-void PositionEvaluation::evalPawnsState(const PositionState& pos)
+void PositionEvaluation::evalPawnsState()
 {
-	PawnEvalInfo* pawnEval = &_pawnHash[pos.getPawnKey() & PAWN_HASH_INDEX_MASK];
-	if (pawnEval->key != pos.getPawnKey()) {
-		pawnEval->key = pos.getPawnKey();
-		pawnEval->score = evaluatePawns(pos);
+	_currentPawnEval = &_pawnHash[_pos->getPawnKey() & PAWN_HASH_INDEX_MASK];
+	if (_currentPawnEval->key == _pos->getPawnKey()) {
+		_whiteFreeSpace = ~(_currentPawnEval->blackPawnAttacks |
+	                    _pos->getPiecePos()[PAWN_WHITE] | _pos->getPiecePos()[KING_WHITE]);
+	
+		_blackFreeSpace = ~(_currentPawnEval->whitePawnAttacks |
+	                  _pos->getPiecePos()[PAWN_BLACK] | _pos->getPiecePos()[KING_BLACK]);
+	    return;
 	}
+	
+	_currentPawnEval->key = _pos->getPawnKey();
+	
+	_currentPawnEval->whitePawnAttacks = BitboardImpl::instance()->whitePawnAnyAttacks(_pos->getPiecePos()[PAWN_WHITE]);
+	_currentPawnEval->blackPawnAttacks = BitboardImpl::instance()->blackPawnAnyAttacks(_pos->getPiecePos()[PAWN_BLACK]);
+	
+	_whiteFreeSpace = ~(_currentPawnEval->blackPawnAttacks |
+						_pos->getPiecePos()[PAWN_WHITE] | _pos->getPiecePos()[KING_WHITE]);
 
-	_posValue += pawnEval->score;
+	_blackFreeSpace = ~(_currentPawnEval->whitePawnAttacks |
+						_pos->getPiecePos()[PAWN_BLACK] | _pos->getPiecePos()[KING_BLACK]);
 }
 
-int16_t PositionEvaluation::evaluatePawns(const PositionState& pos) const
+template <Color clr>
+void PositionEvaluation::evalKnights()
 {
-	// TODO: Add pawn state evaluation
-	return 0;
+	assert(_currentPawnEval);
+	
+	Bitboard knightsPos = _pos->getPiecePos()[clr == WHITE ? KNIGHT_WHITE : KNIGHT_BLACK];
+	int count = 0;
+	Square from = INVALID_SQUARE;
+	
+	while (knightsPos) {
+		from = (Square)BitboardImpl::instance()->lsb(knightsPos);
+		if (clr == WHITE) {
+			count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _whiteFreeSpace);
+			_value = _value + KnightMobility[BEGINNING][count];
+		}
+		else {
+			count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _blackFreeSpace);
+			_value = _value - KnightMobility[BEGINNING][count];
+		}
+
+		knightsPos &= (knightsPos - 1);
+	}
 }
 
-void PositionEvaluation::evalPieceSquare(const PositionState& pos)
+template <Color clr>
+void PositionEvaluation::evalBishops()
 {
-	_posValue += pos.getPstValue();
+	Bitboard bishopsPos = _pos->getPiecePos()[clr == WHITE ? BISHOP_WHITE : BISHOP_BLACK];
+	int count = 0;
+	Square from = INVALID_SQUARE;
+	
+	while (bishopsPos) {
+		from = (Square)BitboardImpl::instance()->lsb(bishopsPos);
+		if (clr == WHITE) {
+			count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
+			_value = _value + BishopMobility[BEGINNING][count];
+		} else {
+			count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
+			_value = _value - BishopMobility[BEGINNING][count];
+		}
+
+		bishopsPos &= (bishopsPos - 1);
+	}
 }
 
-void PositionEvaluation::evalMobility(const PositionState& pos)
+template <Color clr>
+void PositionEvaluation::evalRooks()
 {
+	Bitboard rooksPos = _pos->getPiecePos()[clr == WHITE ? ROOK_WHITE : ROOK_BLACK];
+	int count = 0;
+	Square from = INVALID_SQUARE;
+
+	while (rooksPos) {
+		from = (Square)BitboardImpl::instance()->lsb(rooksPos);
+		if (clr == WHITE) {
+			count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
+			_value = _value + RookMobility[BEGINNING][count];
+		} else {
+			count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
+			_value = _value - RookMobility[BEGINNING][count];
+		}
+
+		rooksPos &= (rooksPos - 1);
+	}
+}
+
+template <Color clr>
+void PositionEvaluation::evalQueens()
+{
+	Bitboard queensPos = _pos->getPiecePos()[clr == WHITE ? QUEEN_WHITE : QUEEN_BLACK];
+	int count = 0;
+	Square from = INVALID_SQUARE;
+
+	while (queensPos) {
+		from = (Square)BitboardImpl::instance()->lsb(queensPos);
+		if (clr == WHITE) {
+			count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
+			_value = _value + QueenMobility[BEGINNING][count];
+		} else {
+			count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
+			_value = _value - QueenMobility[BEGINNING][count];
+		}
+
+		queensPos &= (queensPos - 1);
+	}
 }
 
 PositionEvaluation::~PositionEvaluation()

@@ -21,7 +21,7 @@ enum Piece {
 	PAWN_WHITE = 0, KNIGHT_WHITE, BISHOP_WHITE, ROOK_WHITE, 
 	QUEEN_WHITE, KING_WHITE, PAWN_BLACK, KNIGHT_BLACK,
 	BISHOP_BLACK, ROOK_BLACK, QUEEN_BLACK, KING_BLACK,
-	PIECE_NB = 12, ETY_SQUARE = 13
+	PIECE_COUNT = 12, ETY_SQUARE = 13
 };
 
 enum Square {
@@ -33,20 +33,25 @@ enum Square {
 	A6, B6, C6, D6, E6, F6, G6, H6,
 	A7, B7, C7, D7, E7, F7, G7, H7,
 	A8, B8, C8, D8, E8, F8, G8, H8,
-	NUMBER_OF_SQUARES, // = 64
+	SQUARES_COUNT, // = 64
 	INVALID_SQUARE
 };
 
 enum Rank {
 	RANK_1 = 0, RANK_2, RANK_3,
 	RANK_4, RANK_5, RANK_6, RANK_7,
-	RANK_8
+	RANK_8, RANKS_COUNT = 8
 };
 
 enum File {
 	FILE_A = 0, FILE_B, FILE_C,
 	FILE_D, FILE_E, FILE_F, FILE_G,
-	FILE_H
+	FILE_H, FILES_COUNT = 8
+};
+
+enum GameStage
+{
+  BEGINNING, ENDGAME
 };
 
 enum MoveType {
@@ -101,7 +106,7 @@ struct EvalInfo
 };
 
 // Material Piece values according to enum Piece 
-const int PIECE_VALUES[PIECE_NB] = 
+const int PIECE_VALUES[PIECE_COUNT] = 
 	{100,  320,  330,  500,  900,  0,
 	100, 320, 330, 500, 900, 0};
 

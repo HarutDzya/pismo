@@ -108,10 +108,10 @@ public:
 	Bitboard whitePieces() const {return _whitePieces;}
 	Bitboard blackPieces() const {return _blackPieces;}
 
-	Bitboard const (&getPiecePos() const)[PIECE_NB] {return _piecePos;}
-	Bitboard const (&getDirectCheck() const)[PIECE_NB] {return _directCheck;}
+	Bitboard const (&getPiecePos() const)[PIECE_COUNT] {return _piecePos;}
+	Bitboard const (&getDirectCheck() const)[PIECE_COUNT] {return _directCheck;}
 
-	uint8_t const (&getPieceCount() const)[PIECE_NB] {return _pieceCount;}
+	uint8_t const (&getPieceCount() const)[PIECE_COUNT] {return _pieceCount;}
 	uint32_t materialKey() const {return _materialKey;}
 	uint16_t unusualMaterial() const {return _unusualMaterial;}
 
@@ -216,15 +216,15 @@ private:
 	Bitboard _occupiedSquares;
 
 	// Occupation bitboards for each peace
-	Bitboard _piecePos[PIECE_NB];
+	Bitboard _piecePos[PIECE_COUNT];
 
 	// Each memeber of the array shows the number of appropriate 
 	// piece available 
-	uint8_t _pieceCount[PIECE_NB];
+	uint8_t _pieceCount[PIECE_COUNT];
 
 	// Bitboard for each piece where set bits show the
 	// positions from which it can attack the king	
-	Bitboard _directCheck[PIECE_NB];
+	Bitboard _directCheck[PIECE_COUNT];
 
 	// Bitboard of the positions where discovered 
 	// pieces are located; opposite color discovered 

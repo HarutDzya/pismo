@@ -60,8 +60,8 @@ ZobKey ZobKeyImpl::getMaterialKey(Piece piece, unsigned int count) const
 
 void ZobKeyImpl::initPieceAtSquareKeys()
 {
-	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
-		for (unsigned int square = A1; square < NUMBER_OF_SQUARES; ++square) {
+	for (unsigned int piece = PAWN_WHITE; piece < PIECE_COUNT; ++piece) {
+		for (unsigned int square = A1; square < SQUARES_COUNT; ++square) {
 			if ((piece != PAWN_WHITE && piece != PAWN_BLACK) || (square >= A2 && square <= H7)) {
 				_pieceAtSquareKeys[piece][square] = getRandomNumber();
 			}
@@ -92,7 +92,7 @@ void ZobKeyImpl::initCastlingKeys()
 void ZobKeyImpl::initMaterialKeys()
 {
 	//for kings it doesn't make sense to generate all values, but we did it to reduce code size
-	for (unsigned int piece = PAWN_WHITE; piece < PIECE_NB; ++piece) {
+	for (unsigned int piece = PAWN_WHITE; piece < PIECE_COUNT; ++piece) {
 		for (unsigned int count = 0; count <= POSSIBLE_SAME_PIECES; ++count) {
 			_materialKeys[piece][count] = getRandomNumber();
 		}

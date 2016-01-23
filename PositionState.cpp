@@ -44,7 +44,7 @@ _fullmoveCount(1)
 			_board[i][j] = ETY_SQUARE;
 		}
 	}
-	for (unsigned int i = 0; i < PIECE_NB; ++i) {
+	for (unsigned int i = 0; i < PIECE_COUNT; ++i) {
 		_piecePos[i] = 0;
 		_pieceCount[i] = 0;
 	} 
@@ -114,11 +114,11 @@ void PositionState::initPosition(const std::vector<std::pair<Square, Piece> >& p
 */
 bool PositionState::initPositionIsValid(const std::vector<std::pair<Square, Piece> >& pieces) const
 {
-	Piece board[NUMBER_OF_SQUARES];
-	for (unsigned int sq = A1; sq < NUMBER_OF_SQUARES; ++sq) {
+	Piece board[SQUARES_COUNT];
+	for (unsigned int sq = A1; sq < SQUARES_COUNT; ++sq) {
 		board[sq] = ETY_SQUARE;
 	} 
-	unsigned int piecesCount[PIECE_NB] = {};
+	unsigned int piecesCount[PIECE_COUNT] = {};
 	unsigned int whitePiecesSum = 0;
 	unsigned int blackPiecesSum = 0;
 	for (std::size_t i = 0; i < pieces.size(); ++i) {

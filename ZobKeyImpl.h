@@ -34,7 +34,7 @@ private:
 
 	ZobKey getRandomNumber() const;
 
-	ZobKey _pieceAtSquareKeys[PIECE_NB][NUMBER_OF_SQUARES];
+	ZobKey _pieceAtSquareKeys[PIECE_COUNT][SQUARES_COUNT];
 	ZobKey _blackToPlayKey;
 	ZobKey _enPassantKeys[8];
 	ZobKey _whiteLeftCastlingKey;
@@ -42,7 +42,7 @@ private:
 	ZobKey _blackLeftCastlingKey;
 	ZobKey _blackRightCastlingKey;
 
-	ZobKey _materialKeys[PIECE_NB][POSSIBLE_SAME_PIECES + 1];
+	ZobKey _materialKeys[PIECE_COUNT][POSSIBLE_SAME_PIECES + 1];
 };
 
 }

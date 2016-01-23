@@ -4,7 +4,7 @@
 
 namespace pismo
 {
-Bitboard squareToBitboard[NUMBER_OF_SQUARES] =
+Bitboard squareToBitboard[SQUARES_COUNT] =
 {
 	1UL << 0,  1UL << 1,  1UL << 2,  1UL << 3,  1UL << 4,  1UL << 5,  1UL << 6,  1UL << 7,
 	1UL << 8,  1UL << 9,  1UL << 10, 1UL << 11, 1UL << 12, 1UL << 13, 1UL << 14, 1UL << 15,
@@ -30,7 +30,7 @@ E.g. for square E6 it returns following bitboard
 00001000
 */
 
-Bitboard RankFileMask[NUMBER_OF_SQUARES] =
+Bitboard RankFileMask[SQUARES_COUNT] =
 {
     0x1010101010101fe, 0x2020202020202fd, 0x4040404040404fb, 0x8080808080808f7, 0x10101010101010ef, 0x20202020202020df, 0x40404040404040bf, 0x808080808080807f,
     0x10101010101fe01, 0x20202020202fd02, 0x40404040404fb04, 0x80808080808f708, 0x101010101010ef10, 0x202020202020df20, 0x404040404040bf40, 0x8080808080807f80,
@@ -56,7 +56,7 @@ For square B6 it returs following bitboard
 
 */
 
-Bitboard DiagonalMask[NUMBER_OF_SQUARES] =
+Bitboard DiagonalMask[SQUARES_COUNT] =
 {
     0x8040201008040200, 0x80402010080500, 0x804020110a00, 0x8041221400, 0x182442800, 0x10204885000, 0x102040810a000, 0x102040810204000,
     0x4020100804020002, 0x8040201008050005, 0x804020110a000a, 0x804122140014, 0x18244280028, 0x1020488500050, 0x102040810a000a0, 0x204081020400040,
@@ -67,6 +67,23 @@ Bitboard DiagonalMask[NUMBER_OF_SQUARES] =
     0x200020408102040, 0x500050810204080, 0xa000a1120408000, 0x1400142241800000, 0x2800284482010000, 0x5000508804020100, 0xa000a01008040201, 0x4000402010080402,
     0x2040810204080, 0x5081020408000, 0xa112040800000, 0x14224180000000, 0x28448201000000, 0x50880402010000, 0xa0100804020100, 0x40201008040201
 };
+
+const Bitboard FileABitboard = 0x0101010101010101;
+
+Bitboard FileBitboard[FILES_COUNT] =
+{
+    FileABitboard << FILE_A, FileABitboard << FILE_B, FileABitboard << FILE_C, FileABitboard << FILE_D,
+    FileABitboard << FILE_E, FileABitboard << FILE_F, FileABitboard << FILE_G, FileABitboard << FILE_H
+};
+
+const Bitboard Rank1Bitboard = 0x00000000000000FF;
+
+Bitboard RankBitboard[RANKS_COUNT] =
+{
+    Rank1Bitboard << RANK_1 * 8, Rank1Bitboard << RANK_2 * 8, Rank1Bitboard << RANK_3 * 8, Rank1Bitboard << RANK_4 * 8,
+    Rank1Bitboard << RANK_5 * 8, Rank1Bitboard << RANK_6 * 8, Rank1Bitboard << RANK_7 * 8, Rank1Bitboard << RANK_8 * 8,
+};
+
 
 const Bitboard BITSCAN_MAGIC = 0x07EDD5E59A4E28C2;
 
@@ -424,13 +441,13 @@ void BitboardImpl::initAttackingPosBoardPawnBlack()
 // to 0
 void BitboardImpl::initSquaresBetween()
 {
-	for (unsigned int pieceSq = A1; pieceSq < NUMBER_OF_SQUARES; ++ pieceSq) {
-		for (unsigned int kingSq = A1; kingSq < NUMBER_OF_SQUARES; ++kingSq) {
+	for (unsigned int pieceSq = A1; pieceSq < SQUARES_COUNT; ++ pieceSq) {
+		for (unsigned int kingSq = A1; kingSq < SQUARES_COUNT; ++kingSq) {
 			_squaresBetween[pieceSq][kingSq] = 0;
 		}
 	}
 
-	for (unsigned int pieceSq = A1; pieceSq < NUMBER_OF_SQUARES; ++pieceSq) {
+	for (unsigned int pieceSq = A1; pieceSq < SQUARES_COUNT; ++pieceSq) {
 		Bitboard kingRankFilePos = RankFileMask[pieceSq];
 		while (kingRankFilePos) {
 			unsigned int kingSq = lsb(kingRankFilePos);
@@ -454,7 +471,7 @@ void BitboardImpl::initSquaresBetween()
 // Uses magic number to compute the index
 void BitboardImpl::initBitScanTable()
 {
-	for (unsigned int bitPos = 0; bitPos < NUMBER_OF_SQUARES; ++bitPos) {
+	for (unsigned int bitPos = 0; bitPos < SQUARES_COUNT; ++bitPos) {
 		Bitboard board = 1UL << bitPos;
 		_bitScanTable[(board * BITSCAN_MAGIC) >> 58] = bitPos;
 	}

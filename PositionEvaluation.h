@@ -16,14 +16,16 @@ struct MaterialInfo
 
 const unsigned int MATERIAL_TABLE_SIZE = 2 * 2 * 3 * 3 * 3 * 3 * 3 * 3 * 9 * 9; 
 
-extern const uint16_t pieceIndexForMaterialTable[PIECE_NB];
-extern const uint8_t initialNumberOfPieces[PIECE_NB];
-extern const uint16_t pieceMask[PIECE_NB];
+extern const uint16_t pieceIndexForMaterialTable[PIECE_COUNT];
+extern const uint8_t initialNumberOfPieces[PIECE_COUNT];
+extern const uint16_t pieceMask[PIECE_COUNT];
 
 struct PawnEvalInfo
 {
 	int16_t score;
 	ZobKey key;
+	Bitboard whitePawnAttacks;
+	Bitboard blackPawnAttacks;
 };
 
 const unsigned int PAWN_HASH_SIZE = 1 << 15;
@@ -67,6 +69,8 @@ public:
   
 
 private:
+	void reset(const PositionState& pos);
+
 	// Initializes material table to precomputed
 	// values using materialPieceIndex to compute
 	// index
@@ -74,25 +78,30 @@ private:
 
 	// Evaluates position material and adds the
 	// value to the _posValue
-	void evalMaterial(const PositionState& pos);
+	void evalMaterial();
 
 
 	// Initializes pawn hash table, by allocating space
 	// and assigning all entries to 0 value
 	void initPawnHash();
 
-	// Fetches position state pawns value from hash table
-	// and adds it to the _posValue
-	void evalPawnsState(const PositionState& pos);
+	//evaluate pawn structure
+	void evalPawnsState();
 
-	// Evaluates position state pawns value
-	int16_t evaluatePawns(const PositionState& pos) const;
+	template <Color clr>
+	void evalKnights();
 
-	void evalPieceSquare(const PositionState& pos);  
-	void evalMobility(const PositionState& pos);
+	template <Color clr>
+	void evalBishops();
 
-	//position value in centi pawns
-	int16_t _posValue;
+	template <Color clr>
+	void evalRooks();
+
+	template <Color clr>
+	void evalQueens();
+
+	//Current position value in centi pawns
+	int16_t _value;
 
 	// Material table of the material values
 	// for usual cases of material (no extra promoted pieces)
@@ -101,6 +110,12 @@ private:
 	// Hash table of the pawn state evaluation
 	PawnEvalInfo* _pawnHash;
 
+	PawnEvalInfo* _currentPawnEval;
+
+	const PositionState* _pos;
+
+	Bitboard _whiteFreeSpace;
+	Bitboard _blackFreeSpace;
 };
 
 }

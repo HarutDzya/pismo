@@ -40,9 +40,13 @@ const Bitboard KING_MOVES_B2 = 0x0000000000070507; // Bitboard for possible move
 const Bitboard KING_MOVES_A2 = 0x0000000000030203; // Bitboard for possible moves of king at Square A2
 const Bitboard KING_MOVES_H2 = 0x0000000000C040C0; // Bitboard for possible moves of king at Square H2 
 
-extern Bitboard squareToBitboard[NUMBER_OF_SQUARES];
-extern Bitboard RankFileMask[NUMBER_OF_SQUARES];
-extern Bitboard DiagonalMask[NUMBER_OF_SQUARES];
+extern Bitboard squareToBitboard[SQUARES_COUNT];
+extern Bitboard RankFileMask[SQUARES_COUNT];
+extern Bitboard DiagonalMask[SQUARES_COUNT];
+
+extern Bitboard FileBitboard[FILES_COUNT];
+extern Bitboard RankBitboard[RANKS_COUNT];
+
 
 class BitboardImpl
 {
@@ -70,6 +74,66 @@ public:
 	Bitboard pawnBlackMovesFrom(Square from, const Bitboard& occupiedSquares) const;
 	Bitboard pawnWhiteMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsWhitePos) const;
 	Bitboard pawnBlackMovesTo(Square to, const Bitboard& occupiedSquares, const Bitboard& pawnsBlackPos) const;
+
+	//https://chessprogramming.wikispaces.com/Pawn+Attacks+(Bitboards)
+
+	Bitboard shiftNorthEast(Bitboard pawns) const
+	{
+	  return (pawns << 9) & ~FileBitboard[FILE_A];
+	}
+
+	Bitboard shiftNorthWest(Bitboard pawns) const
+	{
+		return (pawns << 7) & ~FileBitboard[FILE_H];
+	}
+	
+	Bitboard shiftSouthEast(Bitboard pawns) const
+	{
+		return (pawns >> 7) & ~FileBitboard[FILE_A];
+	}
+	
+	Bitboard shiftSouthWest(Bitboard pawns) const
+	{
+		return (pawns >> 9) & ~FileBitboard[FILE_H];
+	}
+
+	Bitboard whitePawnEastAttacks(Bitboard whitePawns) const {return shiftNorthEast(whitePawns);}
+	Bitboard whitePawnWestAttacks(Bitboard whitePawns) const {return shiftNorthWest(whitePawns);}
+
+	Bitboard blackPawnEastAttacks(Bitboard bpawns) const {return shiftSouthEast(bpawns);}
+	Bitboard blackPawnWestAttacks(Bitboard bpawns) const {return shiftSouthWest(bpawns);}
+
+	Bitboard whitePawnAnyAttacks(Bitboard whitePawns) const
+	{
+		return whitePawnEastAttacks(whitePawns) | whitePawnWestAttacks(whitePawns);
+	}
+
+	Bitboard whitePawnDblAttacks(Bitboard whitePawns) const
+	{
+		return whitePawnEastAttacks(whitePawns) & whitePawnWestAttacks(whitePawns);
+	}
+
+	Bitboard whitePawnSingleAttacks(Bitboard whitePawns) const
+	{
+		return whitePawnEastAttacks(whitePawns) ^ whitePawnWestAttacks(whitePawns);
+	}
+
+	Bitboard blackPawnAnyAttacks(Bitboard blackPawns) const
+	{
+		return blackPawnEastAttacks(blackPawns) | blackPawnWestAttacks(blackPawns);
+	}
+
+	Bitboard blackPawnDblAttacks(Bitboard blackPawns) const
+	{
+		return blackPawnEastAttacks(blackPawns) & blackPawnWestAttacks(blackPawns);
+	}
+	
+	Bitboard blackPawnSingleAttacks(Bitboard blackPawns) const
+	{
+		return blackPawnEastAttacks(blackPawns) ^ blackPawnWestAttacks(blackPawns);
+	}
+
+
 
 	void getEnPassantPinInfo(Square from, Square to, const Bitboard& occupiedSquares, Square& leftPos, Square& rightPos) const;
 
@@ -100,14 +164,14 @@ private:
 private:
 	static BitboardImpl* _instance;
 
-	Bitboard _movePosBoardKnight[NUMBER_OF_SQUARES];
-	Bitboard _movePosBoardKing[NUMBER_OF_SQUARES];
-	Bitboard _attackingPosBoardPawnWhite[NUMBER_OF_SQUARES - 16];
-	Bitboard _attackingPosBoardPawnBlack[NUMBER_OF_SQUARES - 16];
+	Bitboard _movePosBoardKnight[SQUARES_COUNT];
+	Bitboard _movePosBoardKing[SQUARES_COUNT];
+	Bitboard _attackingPosBoardPawnWhite[SQUARES_COUNT - 16];
+	Bitboard _attackingPosBoardPawnBlack[SQUARES_COUNT - 16];
 
-	Bitboard _squaresBetween[NUMBER_OF_SQUARES][NUMBER_OF_SQUARES];
+	Bitboard _squaresBetween[SQUARES_COUNT][SQUARES_COUNT];
 
-	unsigned int _bitScanTable[NUMBER_OF_SQUARES];
+	unsigned int _bitScanTable[SQUARES_COUNT];
 };
 }
 
