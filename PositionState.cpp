@@ -29,12 +29,11 @@ _whiteLeftCastling(false),
 _whiteRightCastling(false),
 _blackLeftCastling(false),
 _blackRightCastling(false),
-_isMiddleGame(true),
 _zobKey(0),
 _pawnZobKey(0),
 _materialKey(0),
 _unusualMaterial(false),
-_pstValue(0),
+_pstValue(0,0),
 _moveStack(),
 _halfmoveClock(0),
 _fullmoveCount(1)
@@ -71,7 +70,7 @@ void PositionState::setPiece(Square s, Piece p)
 		addPieceToBitboards<BLACK>(s, p);
 	}
 	++_pieceCount[p];
-	_pstValue += calculatePstValue(p, s);
+	addScore(_pstValue, PST_MG[p][s], PST_EG[p][s]);
 	_zobKey ^=  _zobKeyImpl->getPieceAtSquareKey(p, s);
 	if (p == PAWN_WHITE || p == PAWN_BLACK) {
 		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(p, s);
@@ -101,7 +100,6 @@ void PositionState::initPosition(const std::vector<std::pair<Square, Piece> >& p
 
 		_occupiedSquares = _whitePieces | _blackPieces;
 		updateCheckStatus();
-		updateGameStatus();
 	}
 }
 /* Checks for the following conditions for initial position validty:
@@ -214,7 +212,6 @@ void PositionState::initPositionFEN(const std::string& fen)
 
 	_occupiedSquares = _whitePieces | _blackPieces;	
 	updateCheckStatus();
-	updateGameStatus();
 	assert(charCount == fen.size());
 }
 
@@ -1115,7 +1112,6 @@ void PositionState::makeMove(const MoveInfo& move)
 	}
 
 	updateCastlingRights(move);
-	updateGameStatus();
 
 	_occupiedSquares = _whitePieces | _blackPieces;	
 	_whiteToPlay = !_whiteToPlay;
@@ -1141,8 +1137,8 @@ void PositionState::makeNormalMove(const MoveInfo& move)
 	}
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 	_board[mRank(move.to)][mFile(move.to)] = pfrom;
-	_pstValue -= calculatePstValue(pfrom, move.from);
-	_pstValue += calculatePstValue(pfrom, move.to);
+	subScore(_pstValue, PST_MG[pfrom][move.from], PST_EG[pfrom][move.from]);
+	addScore(_pstValue, PST_MG[pfrom][move.to], PST_EG[pfrom][move.to]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	if (pfrom == PAWN_WHITE || pfrom == PAWN_BLACK) {
@@ -1191,9 +1187,9 @@ void PositionState::makeCaptureMove(const MoveInfo& move)
 	}
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 	_board[mRank(move.to)][mFile(move.to)] = pfrom;
-	_pstValue -= calculatePstValue(pfrom, move.from);
-	_pstValue += calculatePstValue(pfrom, move.to);
-	_pstValue -= calculatePstValue(pto, move.to);
+  subScore(_pstValue, PST_MG[pfrom][move.from], PST_EG[pfrom][move.from]);
+  addScore(_pstValue, PST_MG[pfrom][move.to], PST_EG[pfrom][move.to]);
+  subScore(_pstValue, PST_MG[pto][move.to], PST_EG[pto][move.to]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
@@ -1217,8 +1213,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 		addPieceToBitboards<WHITE>(move.to, KING_WHITE);
 		_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 		_board[mRank(move.to)][mFile(move.to)] = KING_WHITE;
-		_pstValue -= calculatePstValue(KING_WHITE, move.from);
-		_pstValue += calculatePstValue(KING_WHITE, move.to);
+	  subScore(_pstValue, PST_MG[KING_WHITE][move.from], PST_EG[KING_WHITE][move.from]);
+	  addScore(_pstValue, PST_MG[KING_WHITE][move.to], PST_EG[KING_WHITE][move.to]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_WHITE, move.from);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_WHITE, move.to);
 		_whiteKingPosition = move.to;
@@ -1227,8 +1223,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 			addPieceToBitboards<WHITE>(D1, ROOK_WHITE);
 			_board[mRank(A1)][mFile(A1)] = ETY_SQUARE;
 			_board[mRank(D1)][mFile(D1)] = ROOK_WHITE;
-			_pstValue -= calculatePstValue(ROOK_WHITE, A1);
-			_pstValue += calculatePstValue(ROOK_WHITE, D1);
+	    subScore(_pstValue, PST_MG[ROOK_WHITE][A1], PST_EG[ROOK_WHITE][A1]);
+	    addScore(_pstValue, PST_MG[ROOK_WHITE][D1], PST_EG[ROOK_WHITE][D1]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, A1);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, D1);
 		}	
@@ -1238,8 +1234,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 			addPieceToBitboards<WHITE>(F1, ROOK_WHITE);
 			_board[mRank(H1)][mFile(H1)] = ETY_SQUARE;
 			_board[mRank(F1)][mFile(F1)] = ROOK_WHITE;
-			_pstValue -= calculatePstValue(ROOK_WHITE, H1);
-			_pstValue += calculatePstValue(ROOK_WHITE, F1);
+      subScore(_pstValue, PST_MG[ROOK_WHITE][A1], PST_EG[ROOK_WHITE][H1]);
+      addScore(_pstValue, PST_MG[ROOK_WHITE][D1], PST_EG[ROOK_WHITE][F1]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, H1);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, F1);
 
@@ -1251,8 +1247,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 		addPieceToBitboards<BLACK>(move.to, KING_BLACK);
 		_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 		_board[mRank(move.to)][mFile(move.to)] = KING_BLACK;
-		_pstValue -= calculatePstValue(KING_BLACK, move.from);
-		_pstValue += calculatePstValue(KING_BLACK, move.to);
+    subScore(_pstValue, PST_MG[KING_BLACK][move.from], PST_EG[KING_BLACK][move.from]);
+    addScore(_pstValue, PST_MG[KING_BLACK][move.to], PST_EG[KING_BLACK][move.to]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_BLACK, move.from);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_BLACK, move.to);
 		_blackKingPosition = move.to;
@@ -1261,8 +1257,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 			addPieceToBitboards<BLACK>(D8, ROOK_BLACK);
 			_board[mRank(A8)][mFile(A8)] = ETY_SQUARE;
 			_board[mRank(D8)][mFile(D8)] = ROOK_BLACK;
-			_pstValue -= calculatePstValue(ROOK_BLACK, A8);
-			_pstValue += calculatePstValue(ROOK_BLACK, D8);
+	    subScore(_pstValue, PST_MG[ROOK_BLACK][A8], PST_EG[ROOK_BLACK][A8]);
+	    addScore(_pstValue, PST_MG[ROOK_BLACK][D8], PST_EG[ROOK_BLACK][D8]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, A8);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, D8);
 		}	
@@ -1272,8 +1268,8 @@ void PositionState::makeCastlingMove(const MoveInfo& move)
 			addPieceToBitboards<BLACK>(F8, ROOK_BLACK);
 			_board[mRank(H8)][mFile(H8)] = ETY_SQUARE;
 			_board[mRank(F8)][mFile(F8)] = ROOK_BLACK;
-			_pstValue -= calculatePstValue(ROOK_BLACK, H8);
-			_pstValue += calculatePstValue(ROOK_BLACK, F8);
+      subScore(_pstValue, PST_MG[ROOK_BLACK][H8], PST_EG[ROOK_BLACK][H8]);
+      addScore(_pstValue, PST_MG[ROOK_BLACK][F8], PST_EG[ROOK_BLACK][F8]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, H8);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, F8);
 		}
@@ -1297,8 +1293,8 @@ void PositionState::makeEnPassantMove(const MoveInfo& move)
 	}	
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 	_board[mRank(move.to)][mFile(move.to)] = pfrom;
-	_pstValue -= calculatePstValue(pfrom, move.from);
-	_pstValue += calculatePstValue(pfrom, move.to);
+  subScore(_pstValue, PST_MG[pfrom][move.from], PST_EG[pfrom][move.from]);
+  addScore(_pstValue, PST_MG[pfrom][move.to], PST_EG[pfrom][move.to]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
@@ -1320,7 +1316,7 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		removePieceFromBitboards<BLACK>((Square) (move.to - 8), PAWN_BLACK);
 		--_pieceCount[PAWN_BLACK];
 		_board[mRank(move.to) - 1][mFile(move.to)] = ETY_SQUARE;
-		_pstValue -= calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
+	  subScore(_pstValue, PST_MG[PAWN_BLACK][ (Square) (move.to - 8)], PST_EG[PAWN_BLACK][ (Square) (move.to - 8)]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
 		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
 		_materialKey -= pieceIndexForMaterialTable[PAWN_BLACK];
@@ -1331,15 +1327,15 @@ void PositionState::makeEnPassantCapture(const MoveInfo& move)
 		removePieceFromBitboards<WHITE>((Square) (move.to + 8), PAWN_WHITE);
 		--_pieceCount[PAWN_WHITE];
 		_board[mRank(move.to) + 1][mFile(move.to)] = ETY_SQUARE;
-		_pstValue -= calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
+		subScore(_pstValue, PST_MG[PAWN_WHITE][ (Square) (move.to + 8)], PST_EG[PAWN_BLACK][ (Square) (move.to + 8)]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
 		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
 		_materialKey -= pieceIndexForMaterialTable[PAWN_WHITE];
 	}
 	_board[mRank(move.from)][mFile(move.from)] = ETY_SQUARE;
 	_board[mRank(move.to)][mFile(move.to)] = pfrom;
-	_pstValue -= calculatePstValue(pfrom, move.from);
-	_pstValue += calculatePstValue(pfrom, move.to);
+  subScore(_pstValue, PST_MG[pfrom][move.from], PST_EG[pfrom][move.from]);
+  addScore(_pstValue, PST_MG[pfrom][move.to], PST_EG[pfrom][move.to]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.to);
 	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
@@ -1360,7 +1356,7 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 		addPieceToBitboards<WHITE>(move.to, move.promoted);
 		if (pto != ETY_SQUARE) {
 			removePieceFromBitboards<BLACK>(move.to, pto);
-			_pstValue -= calculatePstValue(pto, move.to);
+		  subScore(_pstValue, PST_MG[pto][move.to], PST_EG[pto][move.to]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 			--_pieceCount[pto];
 			_materialKey -= pieceIndexForMaterialTable[pto];
@@ -1375,7 +1371,7 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 		addPieceToBitboards<BLACK>(move.to, move.promoted);
 		if (pto != ETY_SQUARE) {
 			removePieceFromBitboards<WHITE>(move.to, pto);
-			_pstValue -= calculatePstValue(pto, move.to);
+      subScore(_pstValue, PST_MG[pto][move.to], PST_EG[pto][move.to]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pto, move.to);
 			--_pieceCount[pto];
 			_materialKey -= pieceIndexForMaterialTable[pto];
@@ -1388,8 +1384,8 @@ void PositionState::makePromotionMove(const MoveInfo& move)
 	_board[mRank(move.to)][mFile(move.to)] = move.promoted;
 	--_pieceCount[pfrom];
 	++_pieceCount[move.promoted];
-	_pstValue -= calculatePstValue(pfrom, move.from);
-	_pstValue += calculatePstValue(move.promoted, move.to);
+  subScore(_pstValue, PST_MG[pfrom][move.from], PST_EG[pfrom][move.from]);
+  addScore(_pstValue, PST_MG[move.promoted][move.to], PST_EG[move.promoted][move.to]);
 
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(pfrom, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.promoted, move.to);
@@ -1502,27 +1498,6 @@ void PositionState::removePieceFromBitboards(Square sq, Piece p)
 	_piecePos[p] ^= squareToBitboard[sq];
 }
 
-int PositionState::calculatePstValue(Piece p, Square s) const
-{
-	if (_isMiddleGame) {
-		return PST_MIDDLE_VALUE[p][s];
-	}
-	else {
-		return PST_END_VALUE[p][s];
-	}
-}
-
-// Updates the status of the game by setting 
-// isMiddleGame variable true or false
-// TODO: Needs improvement on classifing middle and end game
-void PositionState::updateGameStatus()
-{
-	if (_pieceCount[QUEEN_WHITE] == 0 && _pieceCount[QUEEN_BLACK] == 0) {
-		_isMiddleGame = false;
-	}
-}
-
-
 void PositionState::undoMove()
 {
 	const UndoMoveInfo* move = _moveStack.pop();
@@ -1551,7 +1526,6 @@ void PositionState::undoMove()
 	}
 
 	revertCastlingRights(*move);
-	updateGameStatus();
 	_isDoubleCheck = move->isDoubleCheck;
 	_absolutePinsPos = move->absolutePinsPos;
 	if (_isDoubleCheck) {
@@ -1589,8 +1563,9 @@ void PositionState::undoNormalMove(const UndoMoveInfo& move)
 	}
 	_board[mRank(move.from)][mFile(move.from)] = move.movedPiece;
 	_board[mRank(move.to)][mFile(move.to)] = ETY_SQUARE;
-	_pstValue -= calculatePstValue(move.movedPiece, move.to);
-	_pstValue += calculatePstValue(move.movedPiece, move.from);
+  subScore(_pstValue, PST_MG[move.movedPiece][move.to], PST_EG[move.movedPiece][move.to]);
+  addScore(_pstValue, PST_MG[move.movedPiece][move.from], PST_EG[move.movedPiece][move.from]);
+
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	if (move.movedPiece == PAWN_WHITE || move.movedPiece == PAWN_BLACK) {
@@ -1637,9 +1612,9 @@ void PositionState::undoCaptureMove(const UndoMoveInfo& move)
 	}
 	_board[mRank(move.from)][mFile(move.from)] = move.movedPiece;
 	_board[mRank(move.to)][mFile(move.to)] = move.capturedPiece;
-	_pstValue -= calculatePstValue(move.movedPiece, move.to);
-	_pstValue += calculatePstValue(move.movedPiece, move.from);
-	_pstValue += calculatePstValue(move.capturedPiece, move.to);
+  subScore(_pstValue, PST_MG[move.movedPiece][move.to], PST_EG[move.movedPiece][move.to]);
+  addScore(_pstValue, PST_MG[move.movedPiece][move.from], PST_EG[move.movedPiece][move.from]);
+  addScore(_pstValue, PST_MG[move.movedPiece][move.to], PST_EG[move.movedPiece][move.to]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
@@ -1663,8 +1638,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
 		_board[mRank(move.from)][mFile(move.from)] = KING_BLACK;
 		_board[mRank(move.to)][mFile(move.to)] = ETY_SQUARE;
-		_pstValue -= calculatePstValue(KING_BLACK, move.to);
-		_pstValue += calculatePstValue(KING_BLACK, move.from);
+	  subScore(_pstValue, PST_MG[KING_BLACK][move.to], PST_EG[KING_BLACK][move.to]);
+	  addScore(_pstValue, PST_MG[KING_BLACK][move.from], PST_EG[KING_BLACK][move.from]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_BLACK, move.to);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_BLACK, move.from);
 		_blackKingPosition = move.from;
@@ -1673,8 +1648,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 			addPieceToBitboards<BLACK>(A8, ROOK_BLACK);
 			_board[mRank(D8)][mFile(D8)] = ETY_SQUARE;
 			_board[mRank(A8)][mFile(A8)] = ROOK_BLACK;
-			_pstValue -= calculatePstValue(ROOK_BLACK, D8);
-			_pstValue += calculatePstValue(ROOK_BLACK, A8);
+	    subScore(_pstValue, PST_MG[ROOK_BLACK][D8], PST_EG[ROOK_BLACK][D8]);
+	    addScore(_pstValue, PST_MG[ROOK_BLACK][A8], PST_EG[ROOK_BLACK][A8]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, D8);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, A8);
 		}	
@@ -1684,8 +1659,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 			addPieceToBitboards<BLACK>(H8, ROOK_BLACK);
 			_board[mRank(F8)][mFile(F8)] = ETY_SQUARE;
 			_board[mRank(H8)][mFile(H8)] = ROOK_BLACK;
-			_pstValue -= calculatePstValue(ROOK_BLACK, F8);
-			_pstValue += calculatePstValue(ROOK_BLACK, H8);
+      subScore(_pstValue, PST_MG[ROOK_BLACK][F8], PST_EG[ROOK_BLACK][F8]);
+      addScore(_pstValue, PST_MG[ROOK_BLACK][H8], PST_EG[ROOK_BLACK][H8]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, F8);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_BLACK, H8);
 		}
@@ -1697,8 +1672,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
 		_board[mRank(move.to)][mFile(move.to)] = ETY_SQUARE;
 		_board[mRank(move.from)][mFile(move.from)] = KING_WHITE;
-		_pstValue -= calculatePstValue(KING_WHITE, move.to);
-		_pstValue += calculatePstValue(KING_WHITE, move.from);
+    subScore(_pstValue, PST_MG[KING_WHITE][move.to], PST_EG[KING_WHITE][move.to]);
+    addScore(_pstValue, PST_MG[KING_WHITE][move.from], PST_EG[KING_WHITE][move.from]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_WHITE, move.to);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(KING_WHITE, move.from);
 		_whiteKingPosition = move.from;
@@ -1707,8 +1682,8 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 			addPieceToBitboards<WHITE>(A1, ROOK_WHITE);
 			_board[mRank(D1)][mFile(D1)] = ETY_SQUARE;
 			_board[mRank(A1)][mFile(A1)] = ROOK_WHITE;
-			_pstValue -= calculatePstValue(ROOK_WHITE, D1);
-			_pstValue += calculatePstValue(ROOK_WHITE, A1);
+	    subScore(_pstValue, PST_MG[ROOK_WHITE][D1], PST_EG[ROOK_WHITE][D1]);
+	    addScore(_pstValue, PST_MG[ROOK_WHITE][A1], PST_EG[ROOK_WHITE][A1]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, D1);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, A1);
 		}	
@@ -1718,8 +1693,9 @@ void PositionState::undoCastlingMove(const UndoMoveInfo& move)
 			addPieceToBitboards<WHITE>(H1, ROOK_WHITE);
 			_board[mRank(F1)][mFile(F1)] = ETY_SQUARE;
 			_board[mRank(H1)][mFile(H1)] = ROOK_WHITE;
-			_pstValue -= calculatePstValue(ROOK_WHITE, F1);
-			_pstValue += calculatePstValue(ROOK_WHITE, H1);
+	    subScore(_pstValue, PST_MG[ROOK_WHITE][F1], PST_EG[ROOK_WHITE][F1]);
+	    addScore(_pstValue, PST_MG[ROOK_WHITE][H1], PST_EG[ROOK_WHITE][H1]);
+
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, F1);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(ROOK_WHITE, H1);
 
@@ -1744,8 +1720,8 @@ void PositionState::undoEnPassantMove(const UndoMoveInfo& move)
 	assert(_board[mRank(move.to)][mFile(move.to)] != ETY_SQUARE);	
 	_board[mRank(move.to)][mFile(move.to)] = ETY_SQUARE;
 	_board[mRank(move.from)][mFile(move.from)] = move.movedPiece;
-	_pstValue -= calculatePstValue(move.movedPiece, move.to);
-	_pstValue += calculatePstValue(move.movedPiece, move.from);
+  subScore(_pstValue, PST_MG[move.movedPiece][move.to], PST_EG[move.movedPiece][move.to]);
+  addScore(_pstValue, PST_MG[move.movedPiece][move.from], PST_EG[move.movedPiece][move.from]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
@@ -1765,7 +1741,7 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		addPieceToBitboards<WHITE>((Square) (move.to + 8), PAWN_WHITE);
 		++_pieceCount[PAWN_WHITE];
 		_board[mRank(move.to) + 1][mFile(move.to)] = PAWN_WHITE;
-		_pstValue += calculatePstValue(PAWN_WHITE, (Square) (move.to + 8));
+    addScore(_pstValue, PST_MG[PAWN_WHITE][(Square) (move.to + 8)], PST_EG[PAWN_WHITE][(Square) (move.to + 8)]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
 		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_WHITE, (Square) (move.to + 8));
 		_materialKey += pieceIndexForMaterialTable[PAWN_WHITE];
@@ -1776,7 +1752,7 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 		addPieceToBitboards<BLACK>((Square) (move.to - 8), PAWN_BLACK);
 		++_pieceCount[PAWN_BLACK];
 		_board[mRank(move.to) - 1][mFile(move.to)] = PAWN_BLACK;
-		_pstValue += calculatePstValue(PAWN_BLACK, (Square) (move.to - 8));
+    addScore(_pstValue, PST_MG[PAWN_BLACK][(Square) (move.to - 8)], PST_EG[PAWN_BLACK][(Square) (move.to - 8)]);
 		_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
 		_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(PAWN_BLACK, (Square) (move.to - 8));
 		_materialKey += pieceIndexForMaterialTable[PAWN_BLACK];
@@ -1784,8 +1760,8 @@ void PositionState::undoEnPassantCapture(const UndoMoveInfo& move)
 	assert(_board[mRank(move.to)][mFile(move.to)] != ETY_SQUARE);	
 	_board[mRank(move.to)][mFile(move.to)] = ETY_SQUARE;
 	_board[mRank(move.from)][mFile(move.from)] = move.movedPiece;
-	_pstValue -= calculatePstValue(move.movedPiece, move.to);
-	_pstValue += calculatePstValue(move.movedPiece, move.from);
+  subScore(_pstValue, PST_MG[move.movedPiece][move.to], PST_EG[move.movedPiece][move.to]);
+  addScore(_pstValue, PST_MG[move.movedPiece][move.from], PST_EG[move.movedPiece][move.from]);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);
 	_pawnZobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.to);
@@ -1805,7 +1781,7 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 		addPieceToBitboards<BLACK>(move.from, move.movedPiece);
 		if (move.capturedPiece != ETY_SQUARE) {
 			addPieceToBitboards<WHITE>(move.to, move.capturedPiece);
-			_pstValue += calculatePstValue(move.capturedPiece, move.to);
+      addScore(_pstValue, PST_MG[move.capturedPiece][move.to], PST_EG[move.capturedPiece][move.to]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 			++_pieceCount[move.capturedPiece];
 			_materialKey += pieceIndexForMaterialTable[move.capturedPiece];
@@ -1820,7 +1796,7 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 		addPieceToBitboards<WHITE>(move.from, move.movedPiece);
 		if (move.capturedPiece != ETY_SQUARE) {
 			addPieceToBitboards<BLACK>(move.to, move.capturedPiece);
-			_pstValue += calculatePstValue(move.capturedPiece, move.to);
+		  addScore(_pstValue, PST_MG[move.capturedPiece][move.to], PST_EG[move.capturedPiece][move.to]);
 			_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.capturedPiece, move.to);
 			++_pieceCount[move.capturedPiece];
 			_materialKey += pieceIndexForMaterialTable[move.capturedPiece];
@@ -1834,8 +1810,8 @@ void PositionState::undoPromotionMove(const UndoMoveInfo& move)
 	_board[mRank(move.from)][mFile(move.from)] = move.movedPiece;
 	--_pieceCount[promoted];
 	++_pieceCount[move.movedPiece];
-	_pstValue -= calculatePstValue(promoted, move.to);
-	_pstValue += calculatePstValue(move.movedPiece, move.from);
+  subScore(_pstValue, PST_MG[promoted][move.to], PST_EG[promoted][move.to]);
+  addScore(_pstValue, PST_MG[move.movedPiece][move.from], PST_EG[move.movedPiece][move.from]);
 
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(promoted, move.to);
 	_zobKey ^= _zobKeyImpl->getPieceAtSquareKey(move.movedPiece, move.from);

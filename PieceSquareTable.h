@@ -7,7 +7,7 @@ namespace pismo
 {
 
 // Piece square tables for middle game 
-const int PST_MIDDLE_VALUE[PIECE_COUNT][SQUARES_COUNT] = 
+const int PST_MG[PIECE_COUNT][SQUARES_COUNT] =
 {	
 	// PAWN_WHITE VALUES
 {
@@ -146,7 +146,7 @@ const int PST_MIDDLE_VALUE[PIECE_COUNT][SQUARES_COUNT] =
 };
 
 // Piece square tables for end game	
-const int PST_END_VALUE[PIECE_COUNT][SQUARES_COUNT] = 
+const int PST_EG[PIECE_COUNT][SQUARES_COUNT] =
 {
 	// PAWN_WHITE VALUES
 {

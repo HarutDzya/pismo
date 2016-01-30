@@ -12,6 +12,9 @@
 #define incr(a, b, c) a+=b
 #define decr(a, b, c) a-=b
 
+#define incrScore(a, b, c, d) a._mgScore +=b; a._egScore += c;
+#define decrScore(a, b, c, d) a._mgScore -=b; a._egScore -= c;
+
 #define resetEvalLog()
 #define printEvalLog()
 
@@ -24,7 +27,11 @@ namespace pismo
 
 extern int bitCount(uint64_t);
 
-//first index is stage of game (begin, end)
+uint16_t piecePhaseValue[PEACE_TYPE_COUNT] = {10, 32, 32, 50, 92, 0}; //all together
+uint16_t maxPhase = 750; //all pieces values minus minor piece
+uint16_t minPhase = 50;  //a bit bigger than minor piece and pawn
+
+//first index is stage of game (middlegame, endgame)
 //second index is number of attacked squares
 
 int KnightMobility[2][9] =
@@ -86,12 +93,10 @@ const uint16_t pieceMask[PIECE_COUNT] =
 
 
 PositionEvaluation::PositionEvaluation():
-	_value(0),
+	_score(0, 0),
 	_materialTable(0),
 	_pawnHash(0),
-	_currentPawnEval(0),
-	_whiteFreeSpace(0),
-	_blackFreeSpace(0)
+	_currentPawnEval(0)
 {
 }
 
@@ -143,6 +148,19 @@ void PositionEvaluation::initMaterialTable()
 			pieceCount[ROOK_BLACK] * PIECE_VALUES[ROOK_BLACK] -
 			pieceCount[QUEEN_BLACK] * PIECE_VALUES[QUEEN_BLACK] -
 			pieceCount[KING_BLACK] * PIECE_VALUES[KING_BLACK];
+
+		uint16_t p = piecePhaseValue[PAWN] * (pieceCount[PAWN_WHITE] + pieceCount[PAWN_WHITE]) +
+		                              piecePhaseValue[KNIGHT] * (pieceCount[KNIGHT_WHITE] + pieceCount[KNIGHT_BLACK]) +
+		                              piecePhaseValue[BISHOP] * (pieceCount[BISHOP_WHITE] + pieceCount[BISHOP_BLACK]) +
+		                              piecePhaseValue[ROOK] * (pieceCount[ROOK_WHITE] + pieceCount[ROOK_BLACK]) +
+		                              piecePhaseValue[QUEEN] * (pieceCount[QUEEN_WHITE] + pieceCount[QUEEN_BLACK]);
+
+
+		//https://chessprogramming.wikispaces.com/Tapered+Eval
+
+		//linear mapping from range [minPhase, maxPhase] to [0, 128]
+		 p = std::max(minPhase, std::min( p, maxPhase));
+		_materialTable[index].phase = (p - minPhase) * 128 / (maxPhase - minPhase);
 	}
 }
 
@@ -161,10 +179,11 @@ void PositionEvaluation::reset(const PositionState& pos)
 	_pos = &pos;
 
 	//TODO: memcpy is somewhat faster here
-  _value = 0;
+  _score._mgScore = 0;
+  _score._egScore = 0;
 	_currentPawnEval = 0;
-	_whiteFreeSpace = 0;
-	_blackFreeSpace = 0;
+  _freeSpace[WHITE] = 0;
+  _freeSpace[BLACK] = 0;
 
 	resetEvalLog();
 }
@@ -175,9 +194,9 @@ int16_t PositionEvaluation::evaluate(const PositionState& pos)
 {
 	reset(pos);
 
-	incr(_value, _pos->getPstValue(), pst);
+	incrScore(_score, _pos->getPstValue()._mgScore, _pos->getPstValue()._egScore, pst);
 
-	evalMaterial();
+	int16_t mValue = evalMaterial();
 
 	evalPawnsState();
 
@@ -194,32 +213,38 @@ int16_t PositionEvaluation::evaluate(const PositionState& pos)
 	evalQueens<BLACK>();
 
 	// evalKingSafety();
-	
-	printEvalLog();
 
-	return _value;
+	//interpolate value between MG and EG phases and add material
+	// ( in material score phase should already already be considered)
+	int16_t phase = _materialTable[_pos->materialKey()].phase;
+  printEvalLog(phase);
+
+	int16_t value = (_score._mgScore * phase  + _score._egScore * (128 - (int)phase) ) / 128 + mValue;
+
+	return value;
 }
 
-void PositionEvaluation::evalMaterial()
+int16_t PositionEvaluation::evalMaterial()
 {
 	// TODO: Make the following improvement
 	// http://www.talkchess.com/forum/viewtopic.php?topic_view=threads&p=340115&t=33561
 	if (!_pos->unusualMaterial()) {
-	  incr(_value, _materialTable[_pos->materialKey()].value, material);
+	  return _materialTable[_pos->materialKey()].value;
 	}
 	else {
-	  incr(_value, _pos->getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
-	      _pos->getPieceCount()[KNIGHT_WHITE] * PIECE_VALUES[KNIGHT_WHITE] +
-	      _pos->getPieceCount()[BISHOP_WHITE] * PIECE_VALUES[BISHOP_WHITE] +
-	      _pos->getPieceCount()[ROOK_WHITE] * PIECE_VALUES[ROOK_WHITE] +
-	      _pos->getPieceCount()[QUEEN_WHITE] * PIECE_VALUES[QUEEN_WHITE] +
-	      _pos->getPieceCount()[KING_WHITE] * PIECE_VALUES[KING_WHITE] -
-	      _pos->getPieceCount()[PAWN_BLACK] * PIECE_VALUES[PAWN_BLACK] -
-	      _pos->getPieceCount()[KNIGHT_BLACK] * PIECE_VALUES[KNIGHT_BLACK] -
-	      _pos->getPieceCount()[BISHOP_BLACK] * PIECE_VALUES[BISHOP_BLACK] -
-	      _pos->getPieceCount()[ROOK_BLACK] * PIECE_VALUES[ROOK_BLACK] -
-	      _pos->getPieceCount()[QUEEN_BLACK] * PIECE_VALUES[QUEEN_BLACK] -
-	      _pos->getPieceCount()[KING_BLACK] * PIECE_VALUES[KING_BLACK], material);
+	  return _pos->getPieceCount()[PAWN_WHITE] * PIECE_VALUES[PAWN_WHITE] +
+        _pos->getPieceCount()[KNIGHT_WHITE] * PIECE_VALUES[KNIGHT_WHITE] +
+        _pos->getPieceCount()[BISHOP_WHITE] * PIECE_VALUES[BISHOP_WHITE] +
+        _pos->getPieceCount()[ROOK_WHITE] * PIECE_VALUES[ROOK_WHITE] +
+        _pos->getPieceCount()[QUEEN_WHITE] * PIECE_VALUES[QUEEN_WHITE] +
+        _pos->getPieceCount()[KING_WHITE] * PIECE_VALUES[KING_WHITE] -
+        _pos->getPieceCount()[PAWN_BLACK] * PIECE_VALUES[PAWN_BLACK] -
+        _pos->getPieceCount()[KNIGHT_BLACK] * PIECE_VALUES[KNIGHT_BLACK] -
+        _pos->getPieceCount()[BISHOP_BLACK] * PIECE_VALUES[BISHOP_BLACK] -
+        _pos->getPieceCount()[ROOK_BLACK] * PIECE_VALUES[ROOK_BLACK] -
+        _pos->getPieceCount()[QUEEN_BLACK] * PIECE_VALUES[QUEEN_BLACK] -
+        _pos->getPieceCount()[KING_BLACK] * PIECE_VALUES[KING_BLACK];
+	  //TODO calculate phase
 	}
 }
 
@@ -227,10 +252,10 @@ void PositionEvaluation::evalPawnsState()
 {
 	_currentPawnEval = &_pawnHash[_pos->getPawnKey() & PAWN_HASH_INDEX_MASK];
 	if (_currentPawnEval->key == _pos->getPawnKey()) {
-		_whiteFreeSpace = ~(_currentPawnEval->blackPawnAttacks |
+		_freeSpace[WHITE] = ~(_currentPawnEval->blackPawnAttacks |
 	                    _pos->getPiecePos()[PAWN_WHITE] | _pos->getPiecePos()[KING_WHITE]);
 	
-		_blackFreeSpace = ~(_currentPawnEval->whitePawnAttacks |
+		_freeSpace[BLACK] = ~(_currentPawnEval->whitePawnAttacks |
 	                  _pos->getPiecePos()[PAWN_BLACK] | _pos->getPiecePos()[KING_BLACK]);
 	    return;
 	}
@@ -240,10 +265,10 @@ void PositionEvaluation::evalPawnsState()
 	_currentPawnEval->whitePawnAttacks = BitboardImpl::instance()->whitePawnAnyAttacks(_pos->getPiecePos()[PAWN_WHITE]);
 	_currentPawnEval->blackPawnAttacks = BitboardImpl::instance()->blackPawnAnyAttacks(_pos->getPiecePos()[PAWN_BLACK]);
 	
-	_whiteFreeSpace = ~(_currentPawnEval->blackPawnAttacks |
+	_freeSpace[WHITE] = ~(_currentPawnEval->blackPawnAttacks |
 						_pos->getPiecePos()[PAWN_WHITE] | _pos->getPiecePos()[KING_WHITE]);
 
-	_blackFreeSpace = ~(_currentPawnEval->whitePawnAttacks |
+	_freeSpace[BLACK] = ~(_currentPawnEval->whitePawnAttacks |
 						_pos->getPiecePos()[PAWN_BLACK] | _pos->getPiecePos()[KING_BLACK]);
 }
 
@@ -258,13 +283,12 @@ void PositionEvaluation::evalKnights()
 	
 	while (knightsPos) {
 		from = (Square)BitboardImpl::instance()->lsb(knightsPos);
+		count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _freeSpace[clr]);
 		if (clr == WHITE) {
-			count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _whiteFreeSpace);
-			incr(_value, KnightMobility[BEGINNING][count], whiteMobility);
+			incrScore(_score, KnightMobility[MIDDLE_GAME][count], KnightMobility[END_GAME][count], whiteMobility);
 		}
 		else {
-			count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _blackFreeSpace);
-			decr(_value, KnightMobility[BEGINNING][count], blackMobility);
+			decrScore(_score, KnightMobility[MIDDLE_GAME][count], KnightMobility[END_GAME][count], blackMobility);
 		}
 
 		knightsPos &= (knightsPos - 1);
@@ -280,12 +304,11 @@ void PositionEvaluation::evalBishops()
 	
 	while (bishopsPos) {
 		from = (Square)BitboardImpl::instance()->lsb(bishopsPos);
+		count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _freeSpace[clr]);
 		if (clr == WHITE) {
-			count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
-			incr(_value, BishopMobility[BEGINNING][count], whiteMobility);
+			incrScore(_score, BishopMobility[MIDDLE_GAME][count], BishopMobility[END_GAME][count], whiteMobility);
 		} else {
-			count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
-			decr(_value, BishopMobility[BEGINNING][count], blackMobility);
+			decrScore(_score, BishopMobility[MIDDLE_GAME][count], BishopMobility[END_GAME][count], blackMobility);
 		}
 
 		bishopsPos &= (bishopsPos - 1);
@@ -301,12 +324,11 @@ void PositionEvaluation::evalRooks()
 
 	while (rooksPos) {
 		from = (Square)BitboardImpl::instance()->lsb(rooksPos);
+    count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _freeSpace[clr]);
 		if (clr == WHITE) {
-			count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
-			incr(_value, RookMobility[BEGINNING][count], whiteMobility);
+			incrScore(_score, RookMobility[MIDDLE_GAME][count], RookMobility[END_GAME][count], whiteMobility);
 		} else {
-			count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
-			decr(_value, RookMobility[BEGINNING][count], blackMobility);
+			decrScore(_score, RookMobility[MIDDLE_GAME][count], RookMobility[END_GAME][count], blackMobility);
 		}
 
 		rooksPos &= (rooksPos - 1);
@@ -322,12 +344,11 @@ void PositionEvaluation::evalQueens()
 
 	while (queensPos) {
 		from = (Square)BitboardImpl::instance()->lsb(queensPos);
+    count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _freeSpace[clr]);
 		if (clr == WHITE) {
-			count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _whiteFreeSpace);
-			incr(_value, QueenMobility[BEGINNING][count], whiteMobility);
+			incrScore(_score, QueenMobility[MIDDLE_GAME][count], QueenMobility[END_GAME][count], whiteMobility);
 		} else {
-			count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _blackFreeSpace);
-			decr(_value, QueenMobility[BEGINNING][count], blackMobility);
+			decrScore(_score, QueenMobility[MIDDLE_GAME][count], QueenMobility[END_GAME][count], blackMobility);
 		}
 
 		queensPos &= (queensPos - 1);

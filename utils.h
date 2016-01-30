@@ -24,6 +24,10 @@ enum Piece {
 	PIECE_COUNT = 12, ETY_SQUARE = 13
 };
 
+enum PieceType {
+  PAWN = 0, KNIGHT, BISHOP, ROOK, QUEEN, KING, PEACE_TYPE_COUNT = 6
+};
+
 enum Square {
 	A1 = 0, B1, C1, D1, E1, F1, G1, H1,
 	A2, B2, C2, D2, E2, F2, G2, H2,
@@ -49,9 +53,9 @@ enum File {
 	FILE_H, FILES_COUNT = 8
 };
 
-enum GameStage
+enum GamePhase
 {
-  BEGINNING, ENDGAME
+  MIDDLE_GAME = 0, END_GAME = 1
 };
 
 enum MoveType {

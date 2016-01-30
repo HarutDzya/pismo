@@ -2,6 +2,7 @@
 #define _POSITION_EVALUATION_
 
 #include "utils.h"
+#include "Score.h"
 #include <vector>
 
 namespace pismo
@@ -11,6 +12,7 @@ class PositionState;
 struct MaterialInfo
 {
 	int16_t value;
+	uint8_t phase;
 	// TODO: Later add aditional things
 };
 
@@ -78,7 +80,7 @@ private:
 
 	// Evaluates position material and adds the
 	// value to the _posValue
-	void evalMaterial();
+	int16_t evalMaterial();
 
 
 	// Initializes pawn hash table, by allocating space
@@ -101,7 +103,7 @@ private:
 	void evalQueens();
 
 	//Current position value in centi pawns
-	int16_t _value;
+	Score _score;
 
 	// Material table of the material values
 	// for usual cases of material (no extra promoted pieces)
@@ -114,8 +116,8 @@ private:
 
 	const PositionState* _pos;
 
-	Bitboard _whiteFreeSpace;
-	Bitboard _blackFreeSpace;
+	//white and black free space
+	Bitboard _freeSpace[2];
 };
 
 }

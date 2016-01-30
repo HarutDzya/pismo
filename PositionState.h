@@ -2,6 +2,7 @@
 #define POSITIONSTATE_H_
 
 #include "utils.h"
+#include "Score.h"
 #include <vector>
 #include <string>
 
@@ -86,7 +87,7 @@ public:
 
 	unsigned int getPieceCount(Piece p) const {return _pieceCount[p];}
 
-	int getPstValue() const {return _pstValue;}
+	Score getPstValue() const {return _pstValue;}
 
 	bool whiteToPlay() const {return _whiteToPlay;}
 
@@ -155,9 +156,6 @@ private:
 	bool squareUnderAttack(Square s) const;
 	bool pinMoveOpensCheck(const MoveInfo& move) const;
 	bool pinEnPassantCaptureOpensCheck(const MoveInfo& move) const;
-
-	int calculatePstValue(Piece p, Square s) const;
-	void updateGameStatus();
 
 
 	void constructMaterialFEN(std::string& fen) const;
@@ -265,9 +263,6 @@ private:
 	bool _blackLeftCastling;
 	bool _blackRightCastling;
 
-	// true if it is a middle game
-	bool _isMiddleGame;
-
 	// Zobrist key for the state of the game
 	ZobKey _zobKey;
 
@@ -283,7 +278,7 @@ private:
 	uint16_t _unusualMaterial;
 
 	// Piece Square Table value for the state of the game
-	int _pstValue;
+	Score _pstValue;
 
 	// Stack of the moves to be used by undoMove
 	MoveStack _moveStack;
