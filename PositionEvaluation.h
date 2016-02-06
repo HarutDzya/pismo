@@ -82,6 +82,8 @@ private:
 	// value to the _posValue
 	int16_t evalMaterial();
 
+	template <Color clr>
+	int16_t materialImbalance(unsigned int pieceCount[]);
 
 	// Initializes pawn hash table, by allocating space
 	// and assigning all entries to 0 value
@@ -113,6 +115,8 @@ private:
 	PawnEvalInfo* _pawnHash;
 
 	PawnEvalInfo* _currentPawnEval;
+
+	int16_t _unusualMaterialPhase;
 
 	const PositionState* _pos;
 

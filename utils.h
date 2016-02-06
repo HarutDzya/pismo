@@ -111,8 +111,8 @@ struct EvalInfo
 
 // Material Piece values according to enum Piece 
 const int PIECE_VALUES[PIECE_COUNT] = 
-	{100,  320,  330,  500,  900,  0,
-	100, 320, 330, 500, 900, 0};
+	{100,  325,  325,  500,  975,  0,
+	100, 325, 325, 500, 975, 0};
 
 const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE black wins)
 

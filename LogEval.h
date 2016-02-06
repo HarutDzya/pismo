@@ -51,16 +51,16 @@ void incrScore_blackMobility(Score& s, int16_t b, int16_t c)
 {
   s._mgScore += b;
   s._egScore += c;
-  eLog._whiteMobility._mgScore += b;
-  eLog._whiteMobility._egScore += c;
+  eLog._blackMobility._mgScore += b;
+  eLog._blackMobility._egScore += c;
 }
 
 void decrScore_whiteMobility(Score& s, int16_t b, int16_t c)
 {
   s._mgScore -= b;
   s._egScore -= c;
-  eLog._blackMobility._mgScore += b;
-  eLog._blackMobility._egScore += c;
+  eLog._whiteMobility._mgScore += b;
+  eLog._whiteMobility._egScore += c;
 }
 
 void decrScore_blackMobility(Score& s, int16_t b, int16_t c)

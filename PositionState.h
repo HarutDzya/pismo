@@ -85,8 +85,6 @@ public:
 
 	Piece const (&getBoard()const)[8][8] {return _board;}
 
-	unsigned int getPieceCount(Piece p) const {return _pieceCount[p];}
-
 	Score getPstValue() const {return _pstValue;}
 
 	bool whiteToPlay() const {return _whiteToPlay;}
@@ -112,7 +110,6 @@ public:
 	Bitboard const (&getPiecePos() const)[PIECE_COUNT] {return _piecePos;}
 	Bitboard const (&getDirectCheck() const)[PIECE_COUNT] {return _directCheck;}
 
-	uint8_t const (&getPieceCount() const)[PIECE_COUNT] {return _pieceCount;}
 	uint32_t materialKey() const {return _materialKey;}
 	uint16_t unusualMaterial() const {return _unusualMaterial;}
 
@@ -202,6 +199,12 @@ private:
 			uint32_t _stackSize;
 	};
 	
+public:
+
+  // Each memeber of the array shows the number of appropriate
+  // piece available
+  uint8_t _pieceCount[PIECE_COUNT];
+
 //data members
 private:
 	Piece _board[8][8];
@@ -215,10 +218,6 @@ private:
 
 	// Occupation bitboards for each peace
 	Bitboard _piecePos[PIECE_COUNT];
-
-	// Each memeber of the array shows the number of appropriate 
-	// piece available 
-	uint8_t _pieceCount[PIECE_COUNT];
 
 	// Bitboard for each piece where set bits show the
 	// positions from which it can attack the king	

@@ -4,6 +4,8 @@
 namespace pismo
 {
 
+//http://www.talkchess.com/forum/viewtopic.php?t=42054
+
 struct Score
 {
   int16_t _mgScore;
