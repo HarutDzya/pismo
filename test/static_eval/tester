@@ -1,0 +1,48 @@
+#!/bin/bash
+if [[ $# -ne 2 ]]; then
+	echo "Usage:	$0 input_file threshold_value"
+	exit 1
+fi
+
+positions="$1"
+thresholdValue="$2"
+IFS="\n"
+while read -r fen; do
+	stockfishScore=$(./stockfish/stockfish <<< "position fen $fen") 
+	gullScore=$(./gull/gull <<< "position fen $fen")
+	pismoScore=0.0#$(./pismo/pismo <<< "position fen $fen")
+	if (( $(bc <<< "$stockfishScore <= $gullScore") )); then
+		if (( $(bc <<< "$pismoScore >= $stockfishScore") )); then
+			if (( $(bc <<< "$pismoScore <= $gullScore") )); then
+				testStat="great"
+			elif (( $(bc <<< "$pismoScore < $gullScore + $thresholdValue") )); then
+				testStat="good"
+			else
+				testStat="bad"
+			fi
+		elif (( $(bc <<< "$pismoScore > $stockfishScore - $thresholdValue") )); then
+			testStat="good"
+		else
+			testStat="bad"
+		fi
+	else
+		if (( $(bc <<< "$pismoScore >= $gullScore") )); then
+			if (( $(bc <<< "$pismoScore <= $stockfishScore") )); then
+				testStat="great"
+			elif (( $(bc <<< "$pismoScore < $stockfishScore + $thresholdValue") )); then
+				testStat="good"
+			else
+				testStat="bad"
+			fi
+		elif (( $(bc <<< "$pismoScore > $gullScore - $thresholdValue") )); then
+			testStat="good"
+		else
+			testStat="bad"
+		fi
+	fi
+	echo "$fen"
+	echo $stockfishScore
+	echo $gullScore
+	echo $pismoScore
+	echo $testStat
+done < "$positions"
