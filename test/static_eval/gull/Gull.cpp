@@ -7069,7 +7069,7 @@ int main(int argc, char *argv[]) {
         WinParId = 0;
         CPUs = sysconf(_SC_NPROCESSORS_ONLN);       // TODO: HT?
         PrN = CPUs;
-        atexit(cleanup);
+        //atexit(cleanup);
         signal(SIGHUP, handler);                    // TODO: better way?
         signal(SIGINT, handler);
         signal(SIGQUIT, handler);
