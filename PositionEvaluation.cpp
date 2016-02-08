@@ -5,7 +5,7 @@
 #include <assert.h>
 
 
-#define LOG_EVAL
+//#define LOG_EVAL
 
 #ifndef LOG_EVAL
 
@@ -16,7 +16,7 @@
 #define decrScore(a, b, c, d) a._mgScore -=b; a._egScore -= c;
 
 #define resetEvalLog()
-#define printEvalLog()
+#define printEvalLog(a)
 
 #else
 #include "LogEval.h"

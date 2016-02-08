@@ -7,42 +7,64 @@ fi
 positions="$1"
 thresholdValue="$2"
 IFS="\n"
+testCount=0
+greatTestCount=0
+goodTestCount=0
+badTestCount=0
+printf "%12s|%12s|%12s|%12s|%12s\n" "pismo" "stockfish" "gull" "status" "FEN"
+printf "%.s-" {1..70}
+printf "\n"
 while read -r fen; do
-	stockfishScore=$(./stockfish/stockfish <<< "position fen $fen") 
+	stockfishScore=$(./stockfish/stockfish <<< "position fen $fen")
 	gullScore=$(./gull/gull <<< "position fen $fen")
-	pismoScore=0.0#$(./pismo/pismo <<< "position fen $fen")
+	pismoScore=$(./pismo/pismo <<< "position fen $fen")
 	if (( $(bc <<< "$stockfishScore <= $gullScore") )); then
 		if (( $(bc <<< "$pismoScore >= $stockfishScore") )); then
 			if (( $(bc <<< "$pismoScore <= $gullScore") )); then
 				testStat="great"
+				greatTestCount=$(( $greatTestCount + 1 ))
 			elif (( $(bc <<< "$pismoScore < $gullScore + $thresholdValue") )); then
 				testStat="good"
+				goodTestCount=$(( $goodTestCount + 1 ))
 			else
 				testStat="bad"
+				badTestCount=$(( $badTestCount + 1 ))
 			fi
 		elif (( $(bc <<< "$pismoScore > $stockfishScore - $thresholdValue") )); then
 			testStat="good"
+			goodTestCount=$(( $goodTestCount + 1 ))
 		else
 			testStat="bad"
+			badTestCount=$(( $badTestCount + 1 ))
 		fi
 	else
 		if (( $(bc <<< "$pismoScore >= $gullScore") )); then
 			if (( $(bc <<< "$pismoScore <= $stockfishScore") )); then
 				testStat="great"
+				greatTestCount=$(( $greatTestCount + 1 ))
 			elif (( $(bc <<< "$pismoScore < $stockfishScore + $thresholdValue") )); then
 				testStat="good"
+				goodTestCount=$(( $goodTestCount + 1 ))
 			else
 				testStat="bad"
+				badTestCount=$(( $badTestCount + 1 ))
 			fi
 		elif (( $(bc <<< "$pismoScore > $gullScore - $thresholdValue") )); then
 			testStat="good"
+			goodTestCount=$(( $goodTestCount + 1 ))
 		else
 			testStat="bad"
+			badTestCount=$(( $badTestCount + 1 ))
 		fi
 	fi
-	echo "$fen"
-	echo $stockfishScore
-	echo $gullScore
-	echo $pismoScore
-	echo $testStat
+	testCount=$(( $testCount + 1 ))
+	printf "%12.2f|%12.2f|%12.2f|%12s|%12s\n" "$pismoScore" "$stockfishScore" "$gullScore" "$testStat" "$fen"
 done < "$positions"
+
+printf "Total: %d (threshold %.2f)\n" "$testCount" "$thresholdValue"
+greatPercentage=$(bc -l <<< "$greatTestCount * 100.0 / $testCount")
+printf "great - %.2f%% (%d positions)\n" "$greatPercentage" "$greatTestCount" 
+goodPercentage=$(bc -l <<< "$goodTestCount * 100.0 / $testCount")
+printf "good - %.2f%% (%d positions)\n" "$goodPercentage" "$goodTestCount"
+badPercentage=$(bc -l <<< "$badTestCount * 100.0 / $testCount")
+printf "bad - %.2f%% (%d positions)\n" "$badPercentage" "$badTestCount" 
