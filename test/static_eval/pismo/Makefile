@@ -22,4 +22,4 @@ $(OBJS): %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	rm -f ../../../*.o pismo
+	rm -f ../../../*.o *.o pismo

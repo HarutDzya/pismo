@@ -16,6 +16,7 @@ printf "%.s-" {1..70}
 printf "\n"
 while read -r fen; do
 	stockfishScore=$(./stockfish/stockfish <<< "position fen $fen")
+  if (( testCount % 10 == 0 )); then killall gull; fi
 	gullScore=$(./gull/gull <<< "position fen $fen")
 	pismoScore=$(./pismo/pismo <<< "position fen $fen")
 	if (( $(bc <<< "$stockfishScore <= $gullScore") )); then
