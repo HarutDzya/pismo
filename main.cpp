@@ -1,10 +1,8 @@
 #include <iostream>
 #include <map>
 #include "PositionState.h"
-#include "MoveGenerator.h"
-//#include "Core.h"
+#include "ABCore.h"
 #include "MemPool.h"
-#include "PositionEvaluation.h"
 
 void printBitboard(const pismo::Bitboard& board);
 
@@ -21,16 +19,13 @@ int main()
 	MemPool::initMoveGenInfo();
 	PositionState pos;
 
-	pos.initPositionFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+	pos.initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
 		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
 	std::string choice;
-	PositionEvaluation posEval;
-	posEval.initPosEval();
 
-
- //	Core* p = new Core();
+	ABCore* p = new ABCore();
 
 	while(std::cin >> choice && choice != "q") {
 		if (choice == "n") {
@@ -58,8 +53,8 @@ int main()
 				move.promoted = ETY_SQUARE;
 			}
 		  		
-			pos.updateDirectCheckArray();
-			pos.updateDiscoveredChecksInfo();
+			//pos.updateDirectCheckArray();
+			//pos.updateDiscoveredChecksInfo();
 			pos.makeMove(move);
 			pos.printBoard();	
 		}
@@ -68,24 +63,13 @@ int main()
 			pos.printBoard();
 		} 
 		else if (choice == "t") {
-			if (pos.kingUnderCheck()) {
-				MoveGenerator::instance()->prepareMoveGeneration(EVASION_SEARCH, MoveInfo(), 0);
-			}
-			else {
-				MoveGenerator::instance()->prepareMoveGeneration(USUAL_SEARCH, MoveInfo(), 0);
-			}
-			std::cout << "Move: " << moveToNotation(MoveGenerator::instance()->getTopMove(pos, 0)) << std::endl;
-			/*
-			MoveInfo mv = p->think(pos, 5);
+			MoveInfo mv = p->think(pos, 1);
 			pos.makeMove(mv);
 			pos.printBoard();
 			std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;
-			*/
 		}
     else if (choice == "f") {
       std::cout << pos.getStateFEN() << std::endl;
-      int eval = posEval.evaluate(pos);
-	  std::cout << "Position value: " << eval << std::endl;
     }
 		std::cout << "Please enter: \n\tn - to make next move, \n\tu - to undo the move"
 			"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;

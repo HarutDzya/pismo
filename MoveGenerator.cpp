@@ -35,7 +35,7 @@ MoveGenerator::MoveGenerator() :
 
 void MoveGenerator::prepareMoveGeneration(SearchType type, const MoveInfo& transTableMove, uint16_t depth)	
 {
-	_moveGenInfo = MemPool::getMoveGenInfo(depth);
+	_moveGenInfo = type != QUIESCENCE_SEARCH ? MemPool::getMoveGenInfo(depth) : MemPool::getQuiescenceMoveGenInfo(depth);
 	_moveGenInfo->_searchType = type;
 	_moveGenInfo->_cachedMove = transTableMove; 
 	switch (_moveGenInfo->_searchType) {

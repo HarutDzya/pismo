@@ -35,6 +35,8 @@ _materialKey(0),
 _unusualMaterial(false),
 _pstValue(0,0),
 _moveStack(),
+_checkDepth(-1),
+_pinDepth(-1),
 _halfmoveClock(0),
 _fullmoveCount(1)
 {
@@ -538,6 +540,17 @@ bool PositionState::pieceIsSlidingPiece(Piece piece) const
 	return false;
 }
 
+void PositionState::updateCheckInfo(int depth)
+{
+	if (_checkDepth == depth) {
+		return;
+	}
+
+	updateDirectCheckArray();
+	updateDiscoveredChecksInfo();
+	_checkDepth = depth;
+}
+
 void PositionState::updateDirectCheckArray()
 {
 	if (_whiteToPlay) {
@@ -853,8 +866,13 @@ bool PositionState::promotionMoveChecksOpponentKing(const MoveInfo& move) const
 	return false;
 }
 
-void PositionState::updateStatePinInfo()
+void PositionState::updateStatePinInfo(int depth)
 {
+	if (_pinDepth == depth) {
+		return;
+	}
+
+	_pinDepth = depth;
 	_pinPiecePos = 0;
 	if (_whiteToPlay) 
   {

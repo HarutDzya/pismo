@@ -1,51 +1,55 @@
 #include "ABCore.h"
 #include "MoveGenerator.h"
-#include "MemPool.h"
 #include "PositionState.h"
 #include "PositionEvaluation.h"
 #include "TranspositionTable.h"
 
 namespace pismo
 {
+
 MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 {
-	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
-	possibleMoves.clear();
-	pos.whiteToPlay() ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
-		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
+	_pos = &pos;
+	_moveGen = MoveGenerator::instance();
 
-	if (possibleMoves.empty()) {
-		return MATE_MOVE;
-	}
+	_moveGen->prepareMoveGeneration(_pos->kingUnderCheck() ? EVASION_SEARCH : USUAL_SEARCH,
+			MoveInfo(), depth);
 
-	if (possibleMoves.size() == 1) {
-		return possibleMoves[0];
-	}
-
-	MoveInfo move;
+	MoveInfo generatedMove = _moveGen->getTopMove(*_pos, depth);
+	MoveInfo move = MATE_MOVE;
 	int16_t score;
-	if (pos.whiteToPlay()) {
+	if (_pos->whiteToPlay()) {
 		score = -MAX_SCORE;
-		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.makeMove(possibleMoves[i]);
-			int16_t s = alphaBetaIterative(pos, depth - 1, score, MAX_SCORE, pos.whiteToPlay());
-			pos.undoMove();
-			if (s > score) {
-				score = s;
-				move = possibleMoves[i];
+		while(generatedMove.from != INVALID_SQUARE) {
+			_pos->updateStatePinInfo(depth);
+			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				_pos->updateCheckInfo(depth);
+				_pos->makeMove(generatedMove);
+				int16_t s = alphaBetaIterative(depth - 1, score, MAX_SCORE);
+				_pos->undoMove();
+				if (s > score) {
+					score = s;
+					move = generatedMove;
+				}
 			}
+			generatedMove = _moveGen->getTopMove(*_pos, depth);
 		}
 	}
 	else {
 		score = MAX_SCORE;
-		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.makeMove(possibleMoves[i]);
-			int16_t s = alphaBetaIterative(pos, depth - 1, -MAX_SCORE, score, pos.whiteToPlay());
-			pos.undoMove();
-			if (s < score) {
-				score = s;
-				move = possibleMoves[i];
+		while(generatedMove.from != INVALID_SQUARE) {
+			_pos->updateStatePinInfo(depth);
+			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				_pos->updateCheckInfo(depth);
+				_pos->makeMove(generatedMove);
+				int16_t s = alphaBetaIterative(depth - 1, -MAX_SCORE, score);
+				_pos->undoMove();
+				if (s < score) {
+					score = s;
+					move = generatedMove;
+				}
 			}
+			generatedMove = _moveGen->getTopMove(*_pos, depth);
 		}
 	}
 	
@@ -55,7 +59,7 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 	return move;
 }
 
-int16_t ABCore::alphaBetaIterative(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool whiteToPlay)
+int16_t ABCore::alphaBetaIterative(uint16_t depth, int16_t alpha, int16_t beta)
 {
 	int16_t score;
 	uint16_t currentDepth = 0;
@@ -63,7 +67,7 @@ int16_t ABCore::alphaBetaIterative(PositionState& pos, uint16_t depth, int16_t a
 	int16_t currentBeta = beta;
 	uint16_t tryCount = 0;
 	while (currentDepth <= depth) {
-		score = alphaBeta(pos, currentDepth, currentAlpha, currentBeta, whiteToPlay);
+		score = alphaBeta(currentDepth, currentAlpha, currentBeta);
 		if (score <= currentAlpha) {
 			if (tryCount < MAX_TRY) {
 				currentAlpha -= (tryCount + 1) * DELTA;
@@ -95,63 +99,73 @@ int16_t ABCore::alphaBetaIterative(PositionState& pos, uint16_t depth, int16_t a
 	return score;
 }
 
-int16_t ABCore::alphaBeta(PositionState& pos, uint16_t depth, int16_t alpha, int16_t beta, bool whiteToPlay)
+int16_t ABCore::alphaBeta(uint16_t depth, int16_t alpha, int16_t beta)
 {
 	if (depth == 0) {
-		return quiescenceSearch(pos, depth, alpha, beta, whiteToPlay);
+		return quiescenceSearch(depth, alpha, beta);
 	}
 
 	EvalInfo eval;
-	if (_transTable->contains(pos, eval) && eval.depth >= depth) {
+	if (_transTable->contains(*_pos, eval) && eval.depth >= depth) {
 		return eval.posValue;
 	}
 
-	MovesArray& possibleMoves = MemPool::instance()->getMovesArray(depth);
-	possibleMoves.clear();
-	whiteToPlay ? MoveGenerator::instance()->generateWhiteMoves(pos, possibleMoves) :
-		MoveGenerator::instance()->generateBlackMoves(pos, possibleMoves);
+	_moveGen->prepareMoveGeneration(_pos->kingUnderCheck() ? EVASION_SEARCH : USUAL_SEARCH,
+			MoveInfo(), depth);
+
+	MoveInfo generatedMove = _moveGen->getTopMove(*_pos, depth);
 
 	int16_t score;
 	int16_t currentAlpha = alpha;
 	int16_t currentBeta = beta;
-	if (whiteToPlay) {
+	if (_pos->whiteToPlay()) {
 		score = -MAX_SCORE;
-		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.makeMove(possibleMoves[i]);
-			int16_t s = alphaBeta(pos, depth - 1, currentAlpha, currentBeta, !whiteToPlay);
-			pos.undoMove();
-			if (s > score) {
-				score = s;
+		while(generatedMove.from != INVALID_SQUARE) {
+			_pos->updateStatePinInfo(depth);
+			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				_pos->updateCheckInfo(depth);
+				_pos->makeMove(generatedMove);
+				int16_t s = alphaBeta(depth - 1, currentAlpha, currentBeta);
+				_pos->undoMove();
+				if (s > score) {
+					score = s;
+				}
+				if (score > currentAlpha) {
+					currentAlpha = score;
+				}
+				if (score >= currentBeta) {
+					break;
+				}
 			}
-			if (score > currentAlpha) {
-				currentAlpha = score;
-			}
-			if (score >= currentBeta) {
-				break;
-			}
+			generatedMove = _moveGen->getTopMove(*_pos, depth);
 		}
 	}
 	else {
 		score = MAX_SCORE;
-		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.makeMove(possibleMoves[i]);
-			int16_t s = alphaBeta(pos, depth - 1, currentAlpha, currentBeta, !whiteToPlay);
-			pos.undoMove();
-			if (s < score) {
-				score = s;
+		while(generatedMove.from != INVALID_SQUARE) {
+			_pos->updateStatePinInfo(depth);
+			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				_pos->updateCheckInfo(depth);
+				_pos->makeMove(generatedMove);
+				int16_t s = alphaBeta(depth - 1, currentAlpha, currentBeta);
+				_pos->undoMove();
+				if (s < score) {
+					score = s;
+				}
+				if (score < currentBeta) {
+					currentBeta = score;
+				}
+				if (score <= currentAlpha) {
+					break;
+				}
 			}
-			if (score < currentBeta) {
-				currentBeta = score;
-			}
-			if (score <= currentAlpha) {
-				break;
-			}
+			generatedMove = _moveGen->getTopMove(*_pos, depth);
 		}
 	}
 	
 	if (score > alpha && score < beta) {
 		eval.posValue = score;
-		eval.zobKey = pos.getZobKey();
+		eval.zobKey = _pos->getZobKey();
 		eval.depth = depth;
 		_transTable->forcePush(eval);
 	}
@@ -159,29 +173,33 @@ int16_t ABCore::alphaBeta(PositionState& pos, uint16_t depth, int16_t alpha, int
 	return score;
 }
 
-int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t alpha, int16_t beta, bool whiteToPlay)
+int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 {
-	//TODO : Consider check evasions
 	EvalInfo eval;
 	int16_t val;
-	if (_transTable->contains(pos, eval) && eval.depth >= 0) {
+	if (_transTable->contains(*_pos, eval)) {
+	   if (eval.depth > 0) {
+		   return eval.posValue;
+	   }
+	   else {
 		val = eval.posValue;
+	   }
 	}
 	else {
-		val = _posEval->evaluate(pos);
+		val = _posEval->evaluate(*_pos);
 		eval.posValue = val;
-		eval.zobKey = pos.getZobKey();
+		eval.zobKey = _pos->getZobKey();
 		eval.depth = 0;
 		_transTable->forcePush(eval);
 	}
 
-	if (qsDepth == -MAX_QUIET_DEPTH) {
+	if (qsDepth == MAX_QUIESCENCE_DEPTH) {
 		return val;
 	}
 
 	int16_t currentAlpha = alpha;
 	int16_t currentBeta = beta;
-	if (whiteToPlay) {	
+	if (_pos->whiteToPlay()) {
 		if (val >= currentBeta) {
 			return val;
 		}
@@ -189,21 +207,28 @@ int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t al
 		if (val > currentAlpha) {
 			currentAlpha = val;
 		}
-		MovesArray possibleMoves; //TODO: Implement memory pool for quiescence search
-		//MoveGenerator::instance()->generateWhiteNonQuietMoves(pos, possibleMoves);
+		_moveGen->prepareMoveGeneration(QUIESCENCE_SEARCH, MoveInfo(), qsDepth);
+
+		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
 		int16_t score;
-		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.makeMove(possibleMoves[i]);
-			score = quiescenceSearch(pos, qsDepth - 1, currentAlpha, currentBeta, !whiteToPlay);
-			pos.undoMove();
-			if (score > currentAlpha) {
-				currentAlpha = score;
+		while(generatedMove.from != INVALID_SQUARE) {
+			_pos->updateStatePinInfo(qsDepth);
+			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				_pos->updateCheckInfo(qsDepth);
+				_pos->makeMove(generatedMove);
+				score = quiescenceSearch(qsDepth + 1, currentAlpha, currentBeta);
+				_pos->undoMove();
+				if (score > currentAlpha) {
+					currentAlpha = score;
+				}
+				if (score >= currentBeta) {
+					break;
+				}
 			}
-			if (score >= currentBeta) {
-				break;
-			} 
+			generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
 		}
-		return currentAlpha;	
+
+		return currentAlpha;
 	}
 	else {
 		if (val <= currentAlpha) {
@@ -213,21 +238,28 @@ int16_t ABCore::quiescenceSearch(PositionState& pos, int16_t qsDepth, int16_t al
 		if (val < currentBeta) {
 			currentBeta = val;
 		}
-		MovesArray possibleMoves; //TODO: Implement memory pool for quiescence search
-		//MoveGenerator::instance()->generateBlackNonQuietMoves(pos, possibleMoves);
+		_moveGen->prepareMoveGeneration(QUIESCENCE_SEARCH, MoveInfo(), qsDepth);
+
+		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
 		int16_t score;
-		for (uint16_t i = 0; i < possibleMoves.size(); ++i) {
-			pos.makeMove(possibleMoves[i]);
-			score = quiescenceSearch(pos, qsDepth - 1, currentAlpha, currentBeta, !whiteToPlay);
-			pos.undoMove();
-			if (score < currentBeta) {
-				currentBeta = score;
+		while(generatedMove.from != INVALID_SQUARE) {
+			_pos->updateStatePinInfo(qsDepth);
+			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				_pos->updateCheckInfo(qsDepth);
+				_pos->makeMove(generatedMove);
+				score = quiescenceSearch(qsDepth + 1, currentAlpha, currentBeta);
+				_pos->undoMove();
+				if (score < currentBeta) {
+					currentBeta = score;
+				}
+				if (score <= currentAlpha) {
+					break;
+				}
 			}
-			if (score <= currentAlpha) {
-				break;
-			} 
+			generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
 		}
-		return currentBeta;	
+
+		return currentBeta;
 	}
 }
 
@@ -235,6 +267,7 @@ ABCore::ABCore() :
 _posEval(new PositionEvaluation()),
 _transTable(new TranspositionTable())
 {
+	_posEval->initPosEval();
 }
 
 ABCore::~ABCore()

@@ -91,7 +91,7 @@ struct MoveInfo {
 	}
 };
 
-const MoveInfo MATE_MOVE(INVALID_SQUARE, INVALID_SQUARE, ETY_SQUARE);
+const MoveInfo MATE_MOVE = MoveInfo();
 
 struct EvalInfo
 {

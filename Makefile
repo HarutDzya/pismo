@@ -9,7 +9,6 @@ SRCS = PositionState.cpp \
 			ZobKeyImpl.cpp \
 			TranspositionTable.cpp \
 			PositionEvaluation.cpp \
-			Core.cpp \
 			ABCore.cpp \
 			MemPool.cpp \
 			main.cpp \

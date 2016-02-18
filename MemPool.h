@@ -14,6 +14,7 @@ const int MAX_POSSIBLE_MOVES = 100;
 
 
 const int MAX_SEARCH_DEPTH = 60;
+const int MAX_QUIESCENCE_SEARCH_DEPTH = 10;
 
 struct MoveGenInfo
 {
@@ -36,9 +37,13 @@ namespace MemPool
 	void destroyMoveGenInfo();
 
 
-	// Returns the move generator info for the 
+	// Returns the move generator info for the
 	// appropriate depth
 	MoveGenInfo* getMoveGenInfo(uint16_t depth);
+
+	// Returns the quiescence search move generator info for the
+	// appropriate depth
+	MoveGenInfo* getQuiescenceMoveGenInfo(uint16_t depth);
 }
 
 }

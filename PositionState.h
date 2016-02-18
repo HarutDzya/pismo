@@ -38,9 +38,6 @@ public:
 	*/
 	void undoMove();
 
-	void updateDirectCheckArray();
-	void updateDiscoveredChecksInfo();
-
 	/* Checks to see whether pseudoMove is legal
 	   by checking whether the move is not pinned
 	   piece move which opens check
@@ -49,14 +46,20 @@ public:
 	*/
 	bool pseudoMoveIsLegalMove(const MoveInfo& move) const;
 
-	void updateStatePinInfo();	
-
-	/*
-	 * returns true if move covers king check
-	 * or captures the attacking piece, false otherwise
+	/* Updates direct check and discovered checks
+	   info if depth is different from previous call,
+	   otherwise do nothing. This function should be called
+	   before calling makeMove
 	 */
-	bool isInterposeMove(const MoveInfo& move) const;
-	
+	void updateCheckInfo(int depth);
+
+	/* Updates state pin info if depth is different
+	   from previous call, otherwise do nothing.
+	   This function should be called before calling
+	   pseudoMoveIsLegalMove
+	*/
+	void updateStatePinInfo(int depth);
+
 	/*
 	Prints board for white pieces using information from 
 	_whitePieces Bitboard
@@ -143,11 +146,20 @@ private:
 	template <Color clr>
 	void removePieceFromBitboards(Square sq, Piece p);
 
+	void updateDirectCheckArray();
+	void updateDiscoveredChecksInfo();
+
 	void updateMoveChecksOpponentKing(const MoveInfo& move);	
 	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool castlingChecksOpponentKing(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool enPassantCaptureDiscoveresCheck(const MoveInfo& move, Square& slidingPiecePos) const;
 	bool promotionMoveChecksOpponentKing(const MoveInfo& move) const;
+
+	/*
+	 * returns true if move covers king check
+	 * or captures the attacking piece, false otherwise
+	 */
+	bool isInterposeMove(const MoveInfo& move) const;
 
 	bool kingPseudoMoveIsLegal(const MoveInfo& move) const;
 	bool squareUnderAttack(Square s) const;
@@ -281,6 +293,12 @@ private:
 
 	// Stack of the moves to be used by undoMove
 	MoveStack _moveStack;
+
+	// UpdateCheckInfo previous call depth
+	int _checkDepth;
+
+	//UpdateStatePinInfo previous call depth
+	int _pinDepth;
 
 	// Halfmove count for fifty move rule
 	uint16_t _halfmoveClock;
