@@ -74,9 +74,9 @@ void MoveGenerator::generatePerftMoves(const PositionState& pos, uint16_t depth)
   }
 }
 
-MoveInfo MoveGenerator::getTopMove(const PositionState& pos, uint16_t depth)
+MoveInfo MoveGenerator::getTopMove(const PositionState& pos, uint16_t depth, bool isQuiescenceSearch)
 {
-	_moveGenInfo = MemPool::getMoveGenInfo(depth);
+	_moveGenInfo = isQuiescenceSearch ? MemPool::getQuiescenceMoveGenInfo(depth) : MemPool::getMoveGenInfo(depth);
 	assert(_moveGenInfo);
 	_positionState = &pos;
 	if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize && 

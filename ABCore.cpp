@@ -129,12 +129,12 @@ int16_t ABCore::alphaBeta(uint16_t depth, int16_t alpha, int16_t beta)
 				_pos->undoMove();
 				if (s > score) {
 					score = s;
-				}
-				if (score > currentAlpha) {
-					currentAlpha = score;
-				}
-				if (score >= currentBeta) {
-					break;
+					if (score > currentAlpha) {
+						currentAlpha = score;
+					}
+					if (score >= currentBeta) {
+						break;
+					}
 				}
 			}
 			generatedMove = _moveGen->getTopMove(*_pos, depth);
@@ -151,12 +151,12 @@ int16_t ABCore::alphaBeta(uint16_t depth, int16_t alpha, int16_t beta)
 				_pos->undoMove();
 				if (s < score) {
 					score = s;
-				}
-				if (score < currentBeta) {
-					currentBeta = score;
-				}
-				if (score <= currentAlpha) {
-					break;
+					if (score < currentBeta) {
+						currentBeta = score;
+					}
+					if (score <= currentAlpha) {
+						break;
+					}
 				}
 			}
 			generatedMove = _moveGen->getTopMove(*_pos, depth);
@@ -182,7 +182,7 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 		   return eval.posValue;
 	   }
 	   else {
-		val = eval.posValue;
+		   val = eval.posValue;
 	   }
 	}
 	else {
@@ -199,6 +199,7 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 
 	int16_t currentAlpha = alpha;
 	int16_t currentBeta = beta;
+	int16_t score;
 	if (_pos->whiteToPlay()) {
 		if (val >= currentBeta) {
 			return val;
@@ -209,8 +210,7 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 		}
 		_moveGen->prepareMoveGeneration(QUIESCENCE_SEARCH, MoveInfo(), qsDepth);
 
-		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
-		int16_t score;
+		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth, true);
 		while(generatedMove.from != INVALID_SQUARE) {
 			_pos->updateStatePinInfo(qsDepth);
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
@@ -225,7 +225,7 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 					break;
 				}
 			}
-			generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
+			generatedMove = _moveGen->getTopMove(*_pos, qsDepth, true);
 		}
 
 		return currentAlpha;
@@ -240,7 +240,7 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 		}
 		_moveGen->prepareMoveGeneration(QUIESCENCE_SEARCH, MoveInfo(), qsDepth);
 
-		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
+		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth, true);
 		int16_t score;
 		while(generatedMove.from != INVALID_SQUARE) {
 			_pos->updateStatePinInfo(qsDepth);
@@ -256,7 +256,7 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 					break;
 				}
 			}
-			generatedMove = _moveGen->getTopMove(*_pos, qsDepth);
+			generatedMove = _moveGen->getTopMove(*_pos, qsDepth, true);
 		}
 
 		return currentBeta;

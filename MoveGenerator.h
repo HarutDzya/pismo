@@ -18,7 +18,7 @@ public:
 	void destroy();
 
 	void prepareMoveGeneration(SearchType type, const MoveInfo& transTableMove, uint16_t depth);
-	MoveInfo getTopMove(const PositionState& pos, uint16_t depth);
+	MoveInfo getTopMove(const PositionState& pos, uint16_t depth, bool isQuiescenceSearch = false);
 
 	// used only for perft testing
 	void generatePerftMoves(const PositionState& pos, uint16_t depth);
