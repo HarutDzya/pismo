@@ -19,7 +19,7 @@ int main()
 	MemPool::initMoveGenInfo();
 	PositionState pos;
 
-	pos.initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	pos.initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 1");
 	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
 		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
@@ -52,9 +52,8 @@ int main()
 				move.to = boardRep[sqto];
 				move.promoted = ETY_SQUARE;
 			}
-		  		
-			//pos.updateDirectCheckArray();
-			//pos.updateDiscoveredChecksInfo();
+			pos.updateMoveType(move);
+			pos.updateCheckInfo(MAX_SEARCH_DEPTH);
 			pos.makeMove(move);
 			pos.printBoard();	
 		}
@@ -63,7 +62,7 @@ int main()
 			pos.printBoard();
 		} 
 		else if (choice == "t") {
-			MoveInfo mv = p->think(pos, 4);
+			MoveInfo mv = p->think(pos, 3);
 			pos.makeMove(mv);
 			pos.printBoard();
 			std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;

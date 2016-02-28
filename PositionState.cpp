@@ -1086,6 +1086,62 @@ bool PositionState::pinEnPassantCaptureOpensCheck(const MoveInfo& move) const
 	return false;
 }
 
+void PositionState::updateMoveType(MoveInfo& move)
+{
+	Piece pfrom = _board[mRank(move.from)][mFile(move.from)];
+	Piece pto = _board[mRank(move.to)][mFile(move.to)];
+	if (pfrom == PAWN_WHITE) {
+		if (move.from >= A7) {
+			move.type = PROMOTION_MOVE;
+		}
+		else if (move.from >= A2 && move.from <= H2 && (move.to - move.from) == 16) {
+			move.type = EN_PASSANT_MOVE;
+		}
+		else if (pto != ETY_SQUARE) {
+			move.type = CAPTURE_MOVE;
+		}
+		else if (move.to - move.from != 8) {
+			move.type = EN_PASSANT_CAPTURE;
+		}
+		else {
+			move.type = NORMAL_MOVE;
+		}
+	}
+	else if (pfrom == PAWN_BLACK) {
+		if (move.from <= H2) {
+			move.type = PROMOTION_MOVE;
+		}
+		else if (move.from >= A7 && move.from <= H7 && (move.from - move.to) == 16) {
+			move.type = EN_PASSANT_MOVE;
+		}
+		else if (pto != ETY_SQUARE) {
+			move.type = CAPTURE_MOVE;
+		}
+		else if (move.from - move.to != 8) {
+			move.type = EN_PASSANT_CAPTURE;
+		}
+		else {
+			move.type = NORMAL_MOVE;
+		}
+	}
+	else if (pfrom == KING_WHITE || pfrom == KING_BLACK) {
+		if (std::abs(move.to - move.from) == 2) {
+			move.type = CASTLING_MOVE;
+		}
+		else {
+			move.type = NORMAL_MOVE;
+		}
+	}
+	else {
+		if (pto != ETY_SQUARE) {
+			move.type = CAPTURE_MOVE;
+		}
+		else {
+			move.type = NORMAL_MOVE;
+		}
+	}
+}
+
 void PositionState::makeMove(const MoveInfo& move)
 {
 	Piece pfrom = _board[mRank(move.from)][mFile(move.from)];

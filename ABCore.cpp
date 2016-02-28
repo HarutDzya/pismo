@@ -212,9 +212,9 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 
 		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth, true);
 		while(generatedMove.from != INVALID_SQUARE) {
-			_pos->updateStatePinInfo(qsDepth);
+			_pos->updateStatePinInfo(-qsDepth);
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
-				_pos->updateCheckInfo(qsDepth);
+				_pos->updateCheckInfo(-qsDepth);
 				_pos->makeMove(generatedMove);
 				score = quiescenceSearch(qsDepth + 1, currentAlpha, currentBeta);
 				_pos->undoMove();
@@ -243,9 +243,9 @@ int16_t ABCore::quiescenceSearch(int16_t qsDepth, int16_t alpha, int16_t beta)
 		MoveInfo generatedMove = _moveGen->getTopMove(*_pos, qsDepth, true);
 		int16_t score;
 		while(generatedMove.from != INVALID_SQUARE) {
-			_pos->updateStatePinInfo(qsDepth);
+			_pos->updateStatePinInfo(-qsDepth);
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
-				_pos->updateCheckInfo(qsDepth);
+				_pos->updateCheckInfo(-qsDepth);
 				_pos->makeMove(generatedMove);
 				score = quiescenceSearch(qsDepth + 1, currentAlpha, currentBeta);
 				_pos->undoMove();

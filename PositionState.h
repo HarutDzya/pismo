@@ -60,6 +60,11 @@ public:
 	*/
 	void updateStatePinInfo(int depth);
 
+	/* Updates the move type, so that
+	   the move can be processed by makeMove
+	*/
+	void updateMoveType(MoveInfo& move);
+
 	/*
 	Prints board for white pieces using information from 
 	_whitePieces Bitboard
