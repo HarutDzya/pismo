@@ -23,6 +23,7 @@ int main(int argc, char* argv[])
 			ofStream << "Output format: State\tElapsed_time\tActual_result\tExpected_result\tFEN\tDepth" << std::endl;  
 			std::string line;
 			pismo::MemPool::initMoveGenInfo();
+			pismo::MemPool::initCheckPinInfo();
 			while(std::getline(ifStream, line)) {
 				std::string fen;
 				uint16_t depth;
@@ -59,6 +60,7 @@ int main(int argc, char* argv[])
 			ofStream.close();
 		}
 		pismo::MemPool::destroyMoveGenInfo();
+		pismo::MemPool::destroyCheckPinInfo();
 	}
 }
 

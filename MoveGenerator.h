@@ -10,6 +10,7 @@ class PositionState;
 class PossibleMoves;
 class BitboardImpl;
 struct MoveGenInfo;
+struct CheckPinInfo;
 
 class MoveGenerator
 {
@@ -109,6 +110,7 @@ private:
 	const BitboardImpl* _bitboardImpl;
 	const PositionState* _positionState;
 	MoveGenInfo* _moveGenInfo;
+	CheckPinInfo *_checkPinInfo;
 	int32_t* _gainSEE;
 };
 

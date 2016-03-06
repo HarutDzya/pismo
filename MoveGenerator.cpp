@@ -60,6 +60,7 @@ void MoveGenerator::generatePerftMoves(const PositionState& pos, uint16_t depth)
 {
   _positionState = &pos;
   _moveGenInfo = MemPool::getMoveGenInfo(depth);
+  _checkPinInfo = MemPool::getCheckPinInfo(depth);
   _moveGenInfo->_currentMovePos = 0;
   _moveGenInfo->_availableMovesSize = 0;
 
@@ -76,7 +77,14 @@ void MoveGenerator::generatePerftMoves(const PositionState& pos, uint16_t depth)
 
 MoveInfo MoveGenerator::getTopMove(const PositionState& pos, uint16_t depth, bool isQuiescenceSearch)
 {
-	_moveGenInfo = isQuiescenceSearch ? MemPool::getQuiescenceMoveGenInfo(depth) : MemPool::getMoveGenInfo(depth);
+	if (!isQuiescenceSearch) {
+		_moveGenInfo = MemPool::getMoveGenInfo(depth);
+		_checkPinInfo = MemPool::getCheckPinInfo(depth);
+	}
+	else {
+		_moveGenInfo = MemPool::getQuiescenceMoveGenInfo(depth);
+		_checkPinInfo = MemPool::getQuiescenceCheckPinInfo(depth);
+	}
 	assert(_moveGenInfo);
 	_positionState = &pos;
 	if (_moveGenInfo->_currentMovePos < _moveGenInfo->_availableMovesSize && 
@@ -853,7 +861,7 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 		if (from < A7) {
 			// Promotion moves are not considered here, because they were already considered in generatePawnWhiteCapturingMoves
 			Bitboard moveBoard = _bitboardImpl->pawnWhiteMovesFrom(from, _positionState->occupiedSquares()) &
-			   	_positionState->getDirectCheck()[PAWN_WHITE];
+				_checkPinInfo->_directCheck[PAWN_WHITE];
 			if (moveBoard) {
 				Square to = (Square) _bitboardImpl->lsb(moveBoard);
 				if (to - from == 16) {
@@ -869,7 +877,7 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 		if (from > H2) {
 			// Promotion moves are not considered here, because they were already considered in generatePawnBlackCapturingMoves
 			Bitboard moveBoard = _bitboardImpl->pawnBlackMovesFrom(from, _positionState->occupiedSquares()) &
-			   	_positionState->getDirectCheck()[PAWN_BLACK];
+				_checkPinInfo->_directCheck[PAWN_BLACK];
 			if (moveBoard) {
 				Square to = (Square) _bitboardImpl->lsb(moveBoard);
 				if (from - to == 16) {
@@ -889,8 +897,8 @@ void MoveGenerator::generatePawnDirectCheckingMoves(Square from)
 void MoveGenerator::generateKnightDirectCheckingMoves(Square from)
 {
 	Bitboard directCheckPos = _positionState->whiteToPlay() ?
-	   	(_positionState->getDirectCheck()[KNIGHT_WHITE] & ~_positionState->occupiedSquares()) :
-	   	(_positionState->getDirectCheck()[KNIGHT_BLACK] & ~_positionState->occupiedSquares());
+		(_checkPinInfo->_directCheck[KNIGHT_WHITE] & ~_positionState->occupiedSquares()) :
+		(_checkPinInfo->_directCheck[KNIGHT_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -905,8 +913,8 @@ void MoveGenerator::generateKnightDirectCheckingMoves(Square from)
 void MoveGenerator::generateRookDirectCheckingMoves(Square from)
 {
 	Bitboard directCheckPos = _positionState->whiteToPlay() ?
-	   	(_positionState->getDirectCheck()[ROOK_WHITE] & ~_positionState->occupiedSquares()) :
-	   	(_positionState->getDirectCheck()[ROOK_BLACK] & ~_positionState->occupiedSquares());
+		(_checkPinInfo->_directCheck[ROOK_WHITE] & ~_positionState->occupiedSquares()) :
+		(_checkPinInfo->_directCheck[ROOK_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -921,8 +929,8 @@ void MoveGenerator::generateRookDirectCheckingMoves(Square from)
 void MoveGenerator::generateBishopDirectCheckingMoves(Square from)
 {
 	Bitboard directCheckPos = _positionState->whiteToPlay() ?
-	   	(_positionState->getDirectCheck()[BISHOP_WHITE] & ~_positionState->occupiedSquares()) :
-	   	(_positionState->getDirectCheck()[BISHOP_BLACK] & ~_positionState->occupiedSquares());
+		(_checkPinInfo->_directCheck[BISHOP_WHITE] & ~_positionState->occupiedSquares()) :
+		(_checkPinInfo->_directCheck[BISHOP_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -937,8 +945,8 @@ void MoveGenerator::generateBishopDirectCheckingMoves(Square from)
 void MoveGenerator::generateQueenDirectCheckingMoves(Square from)
 {
 	Bitboard directCheckPos = _positionState->whiteToPlay() ?
-	   	(_positionState->getDirectCheck()[QUEEN_WHITE] & ~_positionState->occupiedSquares()) :
-	   	(_positionState->getDirectCheck()[QUEEN_BLACK] & ~_positionState->occupiedSquares());
+		(_checkPinInfo->_directCheck[QUEEN_WHITE] & ~_positionState->occupiedSquares()) :
+		(_checkPinInfo->_directCheck[QUEEN_BLACK] & ~_positionState->occupiedSquares());
 	Bitboard moveBoard = _bitboardImpl->queenAttackFrom(from, _positionState->occupiedSquares()) & directCheckPos;
 	while (moveBoard) {
 		Square to = (Square) _bitboardImpl->lsb(moveBoard);
@@ -954,7 +962,7 @@ void MoveGenerator::generateQueenDirectCheckingMoves(Square from)
 // already generated in generateCapturingMoves
 void MoveGenerator::generateWhiteDiscoveredCheckingMoves()
 {
-	Bitboard discPiecePos = _positionState->discPiecePos() & _positionState->whitePieces();
+	Bitboard discPiecePos = _checkPinInfo->_discPiecePos & _positionState->whitePieces();
 	while (discPiecePos) {
 		Square from = (Square) _bitboardImpl->lsb(discPiecePos);
 		switch (_positionState->getBoard()[mRank(from)][mFile(from)]) {
@@ -988,7 +996,7 @@ void MoveGenerator::generateWhiteDiscoveredCheckingMoves()
 // already generated in generateCapturingMoves
 void MoveGenerator::generateBlackDiscoveredCheckingMoves()
 {
-	Bitboard discPiecePos = _positionState->discPiecePos() & _positionState->blackPieces();
+	Bitboard discPiecePos = _checkPinInfo->_discPiecePos & _positionState->blackPieces();
 	while (discPiecePos) {
 		Square from = (Square) _bitboardImpl->lsb(discPiecePos);
 		switch (_positionState->getBoard()[mRank(from)][mFile(from)]) {
@@ -1061,7 +1069,7 @@ void MoveGenerator::generateKnightDiscoveredCheckingMoves(Square from)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) &
-		   	~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[KNIGHT_WHITE];
+			~_positionState->occupiedSquares() & ~_checkPinInfo->_directCheck[KNIGHT_WHITE];
 		// Direct checking moves are removed from moveBoard, because they have been already
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
@@ -1072,7 +1080,7 @@ void MoveGenerator::generateKnightDiscoveredCheckingMoves(Square from)
 	}
 	else {
 		Bitboard moveBoard = _bitboardImpl->knightAttackFrom(from) &
-		   	~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[KNIGHT_BLACK];
+			~_positionState->occupiedSquares() & ~_checkPinInfo->_directCheck[KNIGHT_BLACK];
 		// Direct checking moves are removed from moveBoard, because they have been already
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
@@ -1088,7 +1096,7 @@ void MoveGenerator::generateRookDiscoveredCheckingMoves(Square from)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) &
-		   	~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[ROOK_WHITE];
+			~_positionState->occupiedSquares() & ~_checkPinInfo->_directCheck[ROOK_WHITE];
 		// Direct checking moves are removed from moveBoard, because they have been already
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
@@ -1099,7 +1107,7 @@ void MoveGenerator::generateRookDiscoveredCheckingMoves(Square from)
 	}
 	else {
 		Bitboard moveBoard = _bitboardImpl->rookAttackFrom(from, _positionState->occupiedSquares()) &
-		   	~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[ROOK_BLACK];
+			~_positionState->occupiedSquares() & ~_checkPinInfo->_directCheck[ROOK_BLACK];
 		// Direct checking moves are removed from moveBoard, because they have been already
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
@@ -1115,7 +1123,7 @@ void MoveGenerator::generateBishopDiscoveredCheckingMoves(Square from)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) &
-		   	~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[BISHOP_WHITE];
+			~_positionState->occupiedSquares() & ~_checkPinInfo->_directCheck[BISHOP_WHITE];
 		// Direct checking moves are removed from moveBoard, because they have been already
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
@@ -1126,7 +1134,7 @@ void MoveGenerator::generateBishopDiscoveredCheckingMoves(Square from)
 	}
 	else {
 		Bitboard moveBoard = _bitboardImpl->bishopAttackFrom(from, _positionState->occupiedSquares()) &
-		   	~_positionState->occupiedSquares() & ~_positionState->getDirectCheck()[BISHOP_BLACK];
+			~_positionState->occupiedSquares() & ~_checkPinInfo->_directCheck[BISHOP_BLACK];
 		// Direct checking moves are removed from moveBoard, because they have been already
 		// generated in generateDirectCheckingMoves
 		while (moveBoard) {
@@ -1679,6 +1687,9 @@ void MoveGenerator::sortEvasionMoves()
 				_moveGenInfo->_availableMoves[beginBadCapture] = _moveGenInfo->_availableMoves[moveCount];
 				_moveGenInfo->_availableMoves[moveCount] = moveTemp;
 			}
+		}
+		else {
+			++moveCount;
 		}
 	}
 

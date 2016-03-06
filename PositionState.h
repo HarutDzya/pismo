@@ -11,6 +11,7 @@ namespace pismo
 
 class BitboardImpl;
 class ZobKeyImpl;
+struct CheckPinInfo;
 
 const unsigned int MOVE_STACK_CAPACITY = 20;
 
@@ -46,19 +47,14 @@ public:
 	*/
 	bool pseudoMoveIsLegalMove(const MoveInfo& move) const;
 
-	/* Updates direct check and discovered checks
-	   info if depth is different from previous call,
-	   otherwise do nothing. This function should be called
-	   before calling makeMove
-	 */
-	void updateCheckInfo(int depth);
+	// Calculates direct check and discovered checks info
+	// and state pin info and stores it in the memory pool
+	// for appropriate depth
+	void initCheckPinInfo(uint16_t depth, bool isQuiescenceSearch = false);
 
-	/* Updates state pin info if depth is different
-	   from previous call, otherwise do nothing.
-	   This function should be called before calling
-	   pseudoMoveIsLegalMove
-	*/
-	void updateStatePinInfo(int depth);
+	// Retrieves check and pin info from memory pool
+	// for checking the move legality and making the move
+	void updateCheckPinInfo(uint16_t depth, bool isQuiescenceSearch = false);
 
 	/* Updates the move type, so that
 	   the move can be processed by makeMove
@@ -109,14 +105,12 @@ public:
 	bool blackRightCastling() const {return _blackRightCastling;}
 
 	Bitboard absolutePinsPos() const {return _absolutePinsPos;}
-	Bitboard discPiecePos() const {return _discPiecePos;}
 
 	Bitboard occupiedSquares() const {return _occupiedSquares;}
 	Bitboard whitePieces() const {return _whitePieces;}
 	Bitboard blackPieces() const {return _blackPieces;}
 
 	Bitboard const (&getPiecePos() const)[PIECE_COUNT] {return _piecePos;}
-	Bitboard const (&getDirectCheck() const)[PIECE_COUNT] {return _directCheck;}
 
 	uint32_t materialKey() const {return _materialKey;}
 	uint16_t unusualMaterial() const {return _unusualMaterial;}
@@ -153,6 +147,7 @@ private:
 
 	void updateDirectCheckArray();
 	void updateDiscoveredChecksInfo();
+	void updateStatePinInfo();
 
 	void updateMoveChecksOpponentKing(const MoveInfo& move);	
 	bool moveOpensDiscoveredCheck(const MoveInfo& move, Square& slidingPiecePos) const;
@@ -236,18 +231,14 @@ private:
 	// Occupation bitboards for each peace
 	Bitboard _piecePos[PIECE_COUNT];
 
-	// Bitboard for each piece where set bits show the
-	// positions from which it can attack the king	
-	Bitboard _directCheck[PIECE_COUNT];
-
-	// Bitboard of the positions where discovered 
-	// pieces are located; opposite color discovered 
-	// pawns are also considered for en passant capture
-	Bitboard _discPiecePos;
-
-	// Bitboard of the positions where pinned pieces
-	// are located
-	Bitboard _pinPiecePos;
+	// CheckPinInfo contains bitboards for direct
+	// checking the opponent king for each piece,
+	// Bitboard of positions where discovered pieces
+	// are located plus the opponent pawns which can open
+	// check during en passant capture,
+	// Bitboard of positions where pinned pieces are
+	// located
+	CheckPinInfo* _checkPinInfo;
 
 	const BitboardImpl* _bitboardImpl;
 	const ZobKeyImpl* _zobKeyImpl;
@@ -298,12 +289,6 @@ private:
 
 	// Stack of the moves to be used by undoMove
 	MoveStack _moveStack;
-
-	// UpdateCheckInfo previous call depth
-	int _checkDepth;
-
-	//UpdateStatePinInfo previous call depth
-	int _pinDepth;
 
 	// Halfmove count for fifty move rule
 	uint16_t _halfmoveClock;

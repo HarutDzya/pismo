@@ -9,32 +9,30 @@ namespace pismo
 
 uint64_t Perft::analyze(PositionState& pos, uint16_t depth, bool begin) const
 {
-  if (depth == 0)
-    return 1;
+	if (depth == 0) {
+		return 1;
+	}
 
-  MoveGenerator::instance()->generatePerftMoves(pos, depth);
+	pos.initCheckPinInfo(depth);
+	MoveGenerator::instance()->generatePerftMoves(pos, depth);
 
-  uint64_t moveCount = 0;
-  MoveGenInfo* genInfo = MemPool::getMoveGenInfo(depth);
-  pos.updateStatePinInfo(depth);
-  while (genInfo->_currentMovePos < genInfo->_availableMovesSize)
-  {
-    uint64_t mc = 0;
-    if (pos.pseudoMoveIsLegalMove((genInfo->_availableMoves)[genInfo->_currentMovePos++]))
-    {
-      pos.updateCheckInfo(depth);
-      pos.makeMove((genInfo->_availableMoves)[genInfo->_currentMovePos - 1]);
-      mc = analyze(pos, depth - 1);
-      pos.undoMove();
-      pos.updateStatePinInfo(depth);
-    }
-    moveCount += mc;
-    if (begin) {
-		//std::cout << "Move: " << pismo::moveToNotation((genInfo->_availableMoves)[genInfo->_currentMovePos - 1]) << "    " << mc << "   FEN: " << pos.getStateFEN() << std::endl;
-    }
-  }
+	uint64_t moveCount = 0;
+	MoveGenInfo* genInfo = MemPool::getMoveGenInfo(depth);
+	while (genInfo->_currentMovePos < genInfo->_availableMovesSize) {
+		uint64_t mc = 0;
+		if (pos.pseudoMoveIsLegalMove((genInfo->_availableMoves)[genInfo->_currentMovePos++])) {
+			pos.makeMove((genInfo->_availableMoves)[genInfo->_currentMovePos - 1]);
+			mc = analyze(pos, depth - 1);
+			pos.undoMove();
+			pos.updateCheckPinInfo(depth);
+		}
+		moveCount += mc;
+		if (begin) {
+			//std::cout << "Move: " << pismo::moveToNotation((genInfo->_availableMoves)[genInfo->_currentMovePos - 1]) << "    " << mc << "   FEN: " << pos.getStateFEN() << std::endl;
+		}
+	}
 
-  return moveCount;
+	return moveCount;
 }
 
 Perft::Perft()

@@ -1,5 +1,5 @@
-#ifndef _MEM_POOL_
-#define _MEM_POOL_
+#ifndef _MEM_POOL_H_
+#define _MEM_POOL_H_
 
 #include "utils.h"
 
@@ -27,6 +27,13 @@ struct MoveGenInfo
 	MoveInfo _cachedMove;
 };
 
+struct CheckPinInfo
+{
+	Bitboard _directCheck[PIECE_COUNT];
+	Bitboard _discPiecePos;
+	Bitboard _pinPiecePos;
+};
+
 namespace MemPool
 {
 	// call this function at the beginning of program
@@ -34,7 +41,17 @@ namespace MemPool
 	void initMoveGenInfo();
 
 	// deletes all the memory allocated to memory pool
+	// for move generation
 	void destroyMoveGenInfo();
+
+	// call this function at the beginning of the program
+	// to initialize memory pool for position state
+	// check and pin info
+	void initCheckPinInfo();
+
+	// deletes all the memory allocated to memory pool
+	// for position state check and pin info
+	void destroyCheckPinInfo();
 
 
 	// Returns the move generator info for the
@@ -44,8 +61,16 @@ namespace MemPool
 	// Returns the quiescence search move generator info for the
 	// appropriate depth
 	MoveGenInfo* getQuiescenceMoveGenInfo(uint16_t depth);
+
+	// Returns the position state check and pin ifno
+	// for appropriate depth
+	CheckPinInfo* getCheckPinInfo(uint16_t depth);
+
+	// Returns the quiescence search position state check and
+	// pin info for appropriate depth
+	CheckPinInfo* getQuiescenceCheckPinInfo(uint16_t depth);
 }
 
 }
 
-#endif
+#endif // _MEM_POOL_H_

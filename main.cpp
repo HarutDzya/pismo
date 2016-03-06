@@ -17,6 +17,7 @@ int main()
 	} 
 
 	MemPool::initMoveGenInfo();
+	MemPool::initCheckPinInfo();
 	PositionState pos;
 
 	pos.initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 1");
@@ -53,7 +54,7 @@ int main()
 				move.promoted = ETY_SQUARE;
 			}
 			pos.updateMoveType(move);
-			pos.updateCheckInfo(MAX_SEARCH_DEPTH);
+			pos.initCheckPinInfo(0);
 			pos.makeMove(move);
 			pos.printBoard();	
 		}
@@ -62,7 +63,7 @@ int main()
 			pos.printBoard();
 		} 
 		else if (choice == "t") {
-			MoveInfo mv = p->think(pos, 3);
+			MoveInfo mv = p->think(pos, 4);
 			pos.makeMove(mv);
 			pos.printBoard();
 			std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;
@@ -79,6 +80,7 @@ int main()
 	pos.printWhitePieces();
 	pos.printBlackPieces();
 	MemPool::destroyMoveGenInfo();
+	MemPool::destroyCheckPinInfo();
 }
 
 void printBitboard(const pismo::Bitboard& board)
