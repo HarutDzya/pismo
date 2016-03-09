@@ -63,7 +63,7 @@ int main()
 			pos.printBoard();
 		} 
 		else if (choice == "t") {
-			MoveInfo mv = p->think(pos, 4);
+			MoveInfo mv = p->think(pos, 6);
 			pos.makeMove(mv);
 			pos.printBoard();
 			std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;
