@@ -261,7 +261,7 @@ void MoveGenerator::generatePawnsEvasionMoves(Square to, MoveType type)
 // which are evasion moves; type shows whether it is normal or capture move
 void MoveGenerator::generatePawnsWhiteEvasionMoves(Square to, MoveType type)
 {
-	Bitboard pawnsWhitePos = _positionState->getPiecePos()[PAWN_WHITE];
+	Bitboard pawnsWhitePos = _positionState->_piecePos[PAWN_WHITE];
 	if (type == CAPTURE_MOVE) {
 		Bitboard attackingPawnsPos = _bitboardImpl->pawnsWhiteAttackTo(to, pawnsWhitePos);
 		int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_WHITE];
@@ -314,7 +314,7 @@ void MoveGenerator::generatePawnsWhiteEvasionMoves(Square to, MoveType type)
 // which are evasion moves; type shows whether it is normal or capture move
 void MoveGenerator::generatePawnsBlackEvasionMoves(Square to, MoveType type)
 {
-	Bitboard pawnsBlackPos = _positionState->getPiecePos()[PAWN_BLACK];
+	Bitboard pawnsBlackPos = _positionState->_piecePos[PAWN_BLACK];
 	if (type == CAPTURE_MOVE) {
 		Bitboard attackingPawnsPos = _bitboardImpl->pawnsBlackAttackTo(to, pawnsBlackPos);
 		int16_t value = PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[PAWN_BLACK];
@@ -368,7 +368,7 @@ void MoveGenerator::generatePawnsBlackEvasionMoves(Square to, MoveType type)
 void MoveGenerator::generateKnightsEvasionMoves(Square to, MoveType type)
 {
 	if (_positionState->whiteToPlay()) {
-		Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, _positionState->getPiecePos()[KNIGHT_WHITE]);
+		Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, _positionState->_piecePos[KNIGHT_WHITE]);
 		int16_t value = (type == CAPTURE_MOVE) ? 
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KNIGHT_WHITE] : 0;
 		while (movingKnightsPos) {
@@ -378,7 +378,7 @@ void MoveGenerator::generateKnightsEvasionMoves(Square to, MoveType type)
 		}
 	}
 	else {
-		Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, _positionState->getPiecePos()[KNIGHT_BLACK]);
+		Bitboard movingKnightsPos = _bitboardImpl->knightsAttackTo(to, _positionState->_piecePos[KNIGHT_BLACK]);
 		int16_t value = (type == CAPTURE_MOVE) ? 
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[KNIGHT_BLACK] : 0;
 		while (movingKnightsPos) {
@@ -395,7 +395,7 @@ void MoveGenerator::generateBishopsEvasionMoves(Square to, MoveType type)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingBishopsPos = _bitboardImpl->bishopsAttackTo(to, 
-				_positionState->occupiedSquares(), _positionState->getPiecePos()[BISHOP_WHITE]);
+				_positionState->occupiedSquares(), _positionState->_piecePos[BISHOP_WHITE]);
 		int16_t value = (type == CAPTURE_MOVE) ? 
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[BISHOP_WHITE] : 0;	
 		while (movingBishopsPos) {
@@ -406,7 +406,7 @@ void MoveGenerator::generateBishopsEvasionMoves(Square to, MoveType type)
 	}
 	else {
 		Bitboard movingBishopsPos = _bitboardImpl->bishopsAttackTo(to, 
-				_positionState->occupiedSquares(), _positionState->getPiecePos()[BISHOP_BLACK]);
+				_positionState->occupiedSquares(), _positionState->_piecePos[BISHOP_BLACK]);
 		int16_t value = (type == CAPTURE_MOVE) ? 
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[BISHOP_BLACK] : 0;	
 		while (movingBishopsPos) {
@@ -423,7 +423,7 @@ void MoveGenerator::generateRooksEvasionMoves(Square to, MoveType type)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingRooksPos = _bitboardImpl->rooksAttackTo(to,
-				_positionState->occupiedSquares(), _positionState->getPiecePos()[ROOK_WHITE]);
+				_positionState->occupiedSquares(), _positionState->_piecePos[ROOK_WHITE]);
 		int16_t value = (type == CAPTURE_MOVE) ?
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[ROOK_WHITE] : 0;
 		while (movingRooksPos) {
@@ -434,7 +434,7 @@ void MoveGenerator::generateRooksEvasionMoves(Square to, MoveType type)
 	}
 	else {
 		Bitboard movingRooksPos = _bitboardImpl->rooksAttackTo(to,
-				_positionState->occupiedSquares(), _positionState->getPiecePos()[ROOK_BLACK]);
+				_positionState->occupiedSquares(), _positionState->_piecePos[ROOK_BLACK]);
 		int16_t value = (type == CAPTURE_MOVE) ?
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[ROOK_BLACK] : 0;
 		while (movingRooksPos) {
@@ -451,7 +451,7 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 {
 	if (_positionState->whiteToPlay()) {
 		Bitboard movingQueensPos = _bitboardImpl->queensAttackTo(to,
-				_positionState->occupiedSquares(), _positionState->getPiecePos()[QUEEN_WHITE]);
+				_positionState->occupiedSquares(), _positionState->_piecePos[QUEEN_WHITE]);
 		int16_t value = (type == CAPTURE_MOVE) ?
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[QUEEN_WHITE] : 0;
 		while (movingQueensPos) {
@@ -462,7 +462,7 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 	}
 	else {
 		Bitboard movingQueensPos = _bitboardImpl->queensAttackTo(to,
-				_positionState->occupiedSquares(), _positionState->getPiecePos()[QUEEN_BLACK]);
+				_positionState->occupiedSquares(), _positionState->_piecePos[QUEEN_BLACK]);
 		int16_t value = (type == CAPTURE_MOVE) ?
 			PIECE_VALUES[_positionState->getBoard()[mRank(to)][mFile(to)]] - PIECE_VALUES[QUEEN_BLACK] : 0;
 		while (movingQueensPos) {
@@ -478,35 +478,35 @@ void MoveGenerator::generateQueensEvasionMoves(Square to, MoveType type)
 void MoveGenerator::generateCapturingMoves()
 {
 	if(_positionState->whiteToPlay()) {
-		Bitboard pawnsWhitePos = _positionState->getPiecePos()[PAWN_WHITE];
+		Bitboard pawnsWhitePos = _positionState->_piecePos[PAWN_WHITE];
 		while (pawnsWhitePos) {
 			Square from = (Square) _bitboardImpl->lsb(pawnsWhitePos);
 			generatePawnWhiteCapturingMoves(from);
 			pawnsWhitePos &= (pawnsWhitePos - 1);
 		}
 	
-		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_WHITE];
+		Bitboard knightsPos = _positionState->_piecePos[KNIGHT_WHITE];
 		while (knightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(knightsPos);
 			generateKnightCapturingMoves(from);
 			knightsPos &= (knightsPos - 1);
 		}
 		
-		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_WHITE];
+		Bitboard rooksPos = _positionState->_piecePos[ROOK_WHITE];
 		while (rooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(rooksPos);
 			generateRookCapturingMoves(from);
 			rooksPos &= (rooksPos - 1);
 		}
 
-		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_WHITE];
+		Bitboard bishopsPos = _positionState->_piecePos[BISHOP_WHITE];
 		while (bishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
 			generateBishopCapturingMoves(from);
 			bishopsPos &= (bishopsPos - 1);
 		}
 
-		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_WHITE];
+		Bitboard queensPos = _positionState->_piecePos[QUEEN_WHITE];
 		while (queensPos) {
 			Square from = (Square) _bitboardImpl->lsb(queensPos);
 			generateQueenCapturingMoves(from);
@@ -516,35 +516,35 @@ void MoveGenerator::generateCapturingMoves()
 		generateKingCapturingMoves(_positionState->whiteKingPosition());
 	}
 	else {
-		Bitboard pawnsBlackPos = _positionState->getPiecePos()[PAWN_BLACK];
+		Bitboard pawnsBlackPos = _positionState->_piecePos[PAWN_BLACK];
 		while (pawnsBlackPos) {
 			Square from = (Square) _bitboardImpl->lsb(pawnsBlackPos);
 			generatePawnBlackCapturingMoves(from);
 			pawnsBlackPos &= (pawnsBlackPos - 1);
 		}
 	
-		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_BLACK];
+		Bitboard knightsPos = _positionState->_piecePos[KNIGHT_BLACK];
 		while (knightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(knightsPos);
 			generateKnightCapturingMoves(from);
 			knightsPos &= (knightsPos - 1);
 		}
 		
-		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_BLACK];
+		Bitboard rooksPos = _positionState->_piecePos[ROOK_BLACK];
 		while (rooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(rooksPos);
 			generateRookCapturingMoves(from);
 			rooksPos &= (rooksPos - 1);
 		}
 
-		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_BLACK];
+		Bitboard bishopsPos = _positionState->_piecePos[BISHOP_BLACK];
 		while (bishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
 			generateBishopCapturingMoves(from);
 			bishopsPos &= (bishopsPos - 1);
 		}
 
-		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_BLACK];
+		Bitboard queensPos = _positionState->_piecePos[QUEEN_BLACK];
 		while (queensPos) {
 			Square from = (Square) _bitboardImpl->lsb(queensPos);
 			generateQueenCapturingMoves(from);
@@ -751,14 +751,14 @@ void MoveGenerator::generateKingCapturingMoves(Square from)
 void MoveGenerator::generateCheckingMoves()
 {
 	if (_positionState->whiteToPlay()) {
-		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_WHITE];
+		Bitboard pawnsPos = _positionState->_piecePos[PAWN_WHITE];
 		while (pawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(pawnsPos);
 			generatePawnDirectCheckingMoves(from);
 			pawnsPos &= (pawnsPos - 1);
 		}
 
-		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_WHITE];
+		Bitboard knightsPos = _positionState->_piecePos[KNIGHT_WHITE];
 		if (squareToBitboard[_positionState->blackKingPosition()] & WHITE_SQUARES_MASK) {
 			knightsPos &= BLACK_SQUARES_MASK;
 		}
@@ -771,14 +771,14 @@ void MoveGenerator::generateCheckingMoves()
 			knightsPos &= (knightsPos - 1);
 		}
 
-		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_WHITE];
+		Bitboard rooksPos = _positionState->_piecePos[ROOK_WHITE];
 		while (rooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(rooksPos);
 			generateRookDirectCheckingMoves(from);
 			rooksPos &= (rooksPos - 1);
 		}
 
-		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_WHITE];
+		Bitboard bishopsPos = _positionState->_piecePos[BISHOP_WHITE];
 		if (squareToBitboard[_positionState->blackKingPosition()] & WHITE_SQUARES_MASK) {
 			bishopsPos &= WHITE_SQUARES_MASK;
 		}
@@ -791,7 +791,7 @@ void MoveGenerator::generateCheckingMoves()
 			bishopsPos &= (bishopsPos - 1);
 		}
 		
-		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_WHITE];
+		Bitboard queensPos = _positionState->_piecePos[QUEEN_WHITE];
 		while (queensPos) {
 			Square from = (Square) _bitboardImpl->lsb(queensPos);
 			generateQueenDirectCheckingMoves(from);
@@ -801,14 +801,14 @@ void MoveGenerator::generateCheckingMoves()
 		generateWhiteDiscoveredCheckingMoves();
 	}
 	else {
-		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_BLACK];
+		Bitboard pawnsPos = _positionState->_piecePos[PAWN_BLACK];
 		while (pawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(pawnsPos);
 			generatePawnDirectCheckingMoves(from);
 			pawnsPos &= (pawnsPos - 1);
 		}
 
-		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_BLACK];
+		Bitboard knightsPos = _positionState->_piecePos[KNIGHT_BLACK];
 		if (squareToBitboard[_positionState->whiteKingPosition()] & WHITE_SQUARES_MASK) {
 			knightsPos &= BLACK_SQUARES_MASK;
 		}
@@ -821,14 +821,14 @@ void MoveGenerator::generateCheckingMoves()
 			knightsPos &= (knightsPos - 1);
 		}
 
-		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_BLACK];
+		Bitboard rooksPos = _positionState->_piecePos[ROOK_BLACK];
 		while (rooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(rooksPos);
 			generateRookDirectCheckingMoves(from);
 			rooksPos &= (rooksPos - 1);
 		}
 
-		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_BLACK];
+		Bitboard bishopsPos = _positionState->_piecePos[BISHOP_BLACK];
 		if (squareToBitboard[_positionState->whiteKingPosition()] & WHITE_SQUARES_MASK) {
 			bishopsPos &= WHITE_SQUARES_MASK;
 		}
@@ -841,7 +841,7 @@ void MoveGenerator::generateCheckingMoves()
 			bishopsPos &= (bishopsPos - 1);
 		}
 		
-		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_BLACK];
+		Bitboard queensPos = _positionState->_piecePos[QUEEN_BLACK];
 		while (queensPos) {
 			Square from = (Square) _bitboardImpl->lsb(queensPos);
 			generateQueenDirectCheckingMoves(from);
@@ -1181,35 +1181,35 @@ void MoveGenerator::generateKingDiscoveredCheckingMoves(Square from)
 void MoveGenerator::generateQuiteMoves()
 {
 	if (_positionState->whiteToPlay()) {
-		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_WHITE];
+		Bitboard pawnsPos = _positionState->_piecePos[PAWN_WHITE];
 		while (pawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(pawnsPos);
 			generatePawnWhiteQuiteMoves(from);
 			pawnsPos &= (pawnsPos - 1);
 		}
 
-		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_WHITE];
+		Bitboard knightsPos = _positionState->_piecePos[KNIGHT_WHITE];
 		while (knightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(knightsPos);
 			generateKnightQuiteMoves(from);
 			knightsPos &= (knightsPos - 1);
 		}
 
-		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_WHITE];
+		Bitboard rooksPos = _positionState->_piecePos[ROOK_WHITE];
 		while (rooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(rooksPos);
 			generateRookQuiteMoves(from);
 			rooksPos &= (rooksPos - 1);
 		}
 
-		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_WHITE];
+		Bitboard bishopsPos = _positionState->_piecePos[BISHOP_WHITE];
 		while (bishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
 			generateBishopQuiteMoves(from);
 			bishopsPos &= (bishopsPos - 1);
 		}
 		
-		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_WHITE];
+		Bitboard queensPos = _positionState->_piecePos[QUEEN_WHITE];
 		while (queensPos) {
 			Square from = (Square) _bitboardImpl->lsb(queensPos);
 			generateQueenQuiteMoves(from);
@@ -1219,35 +1219,35 @@ void MoveGenerator::generateQuiteMoves()
 		generateKingWhiteQuiteMoves(_positionState->whiteKingPosition());
 	}
 	else {
-		Bitboard pawnsPos = _positionState->getPiecePos()[PAWN_BLACK];
+		Bitboard pawnsPos = _positionState->_piecePos[PAWN_BLACK];
 		while (pawnsPos) {
 			Square from = (Square) _bitboardImpl->lsb(pawnsPos);
 			generatePawnBlackQuiteMoves(from);
 			pawnsPos &= (pawnsPos - 1);
 		}
 
-		Bitboard knightsPos = _positionState->getPiecePos()[KNIGHT_BLACK];
+		Bitboard knightsPos = _positionState->_piecePos[KNIGHT_BLACK];
 		while (knightsPos) {
 			Square from = (Square) _bitboardImpl->lsb(knightsPos);
 			generateKnightQuiteMoves(from);
 			knightsPos &= (knightsPos - 1);
 		}
 
-		Bitboard rooksPos = _positionState->getPiecePos()[ROOK_BLACK];
+		Bitboard rooksPos = _positionState->_piecePos[ROOK_BLACK];
 		while (rooksPos) {
 			Square from = (Square) _bitboardImpl->lsb(rooksPos);
 			generateRookQuiteMoves(from);
 			rooksPos &= (rooksPos - 1);
 		}
 
-		Bitboard bishopsPos = _positionState->getPiecePos()[BISHOP_BLACK];
+		Bitboard bishopsPos = _positionState->_piecePos[BISHOP_BLACK];
 		while (bishopsPos) {
 			Square from = (Square) _bitboardImpl->lsb(bishopsPos);
 			generateBishopQuiteMoves(from);
 			bishopsPos &= (bishopsPos - 1);
 		}
 		
-		Bitboard queensPos = _positionState->getPiecePos()[QUEEN_BLACK];
+		Bitboard queensPos = _positionState->_piecePos[QUEEN_BLACK];
 		while (queensPos) {
 			Square from = (Square) _bitboardImpl->lsb(queensPos);
 			generateQueenQuiteMoves(from);
@@ -1575,32 +1575,32 @@ Bitboard MoveGenerator::getLeastValuablePiece(Square to, bool whiteToPlay, const
 {
 	Bitboard attackingPos = 0;
 	if (whiteToPlay) {
-		attackingPos = _bitboardImpl->pawnsWhiteAttackTo(to, _positionState->getPiecePos()[PAWN_WHITE]) & ~movedPieces;
+		attackingPos = _bitboardImpl->pawnsWhiteAttackTo(to, _positionState->_piecePos[PAWN_WHITE]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = PAWN_WHITE;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->knightsAttackTo(to, _positionState->getPiecePos()[KNIGHT_WHITE]) & ~movedPieces;
+		attackingPos = _bitboardImpl->knightsAttackTo(to, _positionState->_piecePos[KNIGHT_WHITE]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = KNIGHT_WHITE;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->getPiecePos()[BISHOP_WHITE]) & ~movedPieces;
+		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->_piecePos[BISHOP_WHITE]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = BISHOP_WHITE;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->rooksAttackTo(to, occupiedSquares, _positionState->getPiecePos()[ROOK_WHITE]) & ~movedPieces;
+		attackingPos = _bitboardImpl->rooksAttackTo(to, occupiedSquares, _positionState->_piecePos[ROOK_WHITE]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = ROOK_WHITE;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->getPiecePos()[QUEEN_WHITE]) & ~movedPieces;
+		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->_piecePos[QUEEN_WHITE]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = QUEEN_WHITE;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->kingAttackTo(to, _positionState->getPiecePos()[KING_WHITE]);
+		attackingPos = _bitboardImpl->kingAttackTo(to, _positionState->_piecePos[KING_WHITE]);
 		// There is no need to and it with ~movedPieces, because king can be only the last 
 		// moved piece
 		if (attackingPos) {
@@ -1609,32 +1609,32 @@ Bitboard MoveGenerator::getLeastValuablePiece(Square to, bool whiteToPlay, const
 		}
 	}
 	else {
-		attackingPos = _bitboardImpl->pawnsWhiteAttackTo(to, _positionState->getPiecePos()[PAWN_BLACK]) & ~movedPieces;
+		attackingPos = _bitboardImpl->pawnsWhiteAttackTo(to, _positionState->_piecePos[PAWN_BLACK]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = PAWN_BLACK;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->knightsAttackTo(to, _positionState->getPiecePos()[KNIGHT_BLACK]) & ~movedPieces;
+		attackingPos = _bitboardImpl->knightsAttackTo(to, _positionState->_piecePos[KNIGHT_BLACK]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = KNIGHT_BLACK;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->getPiecePos()[BISHOP_BLACK]) & ~movedPieces;
+		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->_piecePos[BISHOP_BLACK]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = BISHOP_BLACK;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->rooksAttackTo(to, occupiedSquares, _positionState->getPiecePos()[ROOK_BLACK]) & ~movedPieces;
+		attackingPos = _bitboardImpl->rooksAttackTo(to, occupiedSquares, _positionState->_piecePos[ROOK_BLACK]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = ROOK_BLACK;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->getPiecePos()[QUEEN_BLACK]) & ~movedPieces;
+		attackingPos = _bitboardImpl->bishopsAttackTo(to, occupiedSquares, _positionState->_piecePos[QUEEN_BLACK]) & ~movedPieces;
 		if (attackingPos) {
 			attackingPiece = QUEEN_BLACK;
 			return attackingPos & -attackingPos;
 		}
-		attackingPos = _bitboardImpl->kingAttackTo(to, _positionState->getPiecePos()[KING_BLACK]);
+		attackingPos = _bitboardImpl->kingAttackTo(to, _positionState->_piecePos[KING_BLACK]);
 		// There is no need to and it with ~movedPieces, because king can be only the last 
 		// moved piece
 		if (attackingPos) {

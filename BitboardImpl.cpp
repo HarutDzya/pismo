@@ -84,6 +84,8 @@ Bitboard RankBitboard[RANKS_COUNT] =
     Rank1Bitboard << RANK_5 * 8, Rank1Bitboard << RANK_6 * 8, Rank1Bitboard << RANK_7 * 8, Rank1Bitboard << RANK_8 * 8,
 };
 
+Bitboard KingZone[SQUARES_COUNT];
+
 
 const Bitboard BITSCAN_MAGIC = 0x07EDD5E59A4E28C2;
 
@@ -113,6 +115,8 @@ BitboardImpl::BitboardImpl()
 	initMovePosBoardKing();
 	initAttackingPosBoardPawnWhite();
 	initAttackingPosBoardPawnBlack();
+
+	initKingZone();
 
 	initSquaresBetween();
 }
@@ -431,6 +435,32 @@ void BitboardImpl::initAttackingPosBoardPawnBlack()
 			_attackingPosBoardPawnBlack[sq - A2] = (PAWN_BLACK_ATTACK_G7 >> (G7 - sq));
 		}
 	}
+}
+
+//king zone are squares adjacent to given square
+// e.g. for f5 square, kingzone are e4, f4, g4, e5, g5, e6, f6, f7 and f5
+// or for a8 square - a7, b7, b8 and a8
+// TODO: init directly with numbers (do not calculate)
+
+void BitboardImpl::initKingZone()
+{
+  for (unsigned int sq = A1; sq < SQUARES_COUNT; ++sq)
+  {
+    Bitboard b = 0;
+    b |= (1LU << sq);
+    if (sq > 8 && sq % 8) b |= (1LU << (sq - 9));
+    if (sq > 7) b |= (1LU << (sq - 8));
+    if (sq > 7 && ((sq + 1) % 8)) b |= (1LU << (sq - 7));
+
+    if (sq > 0 && sq % 8) b |= (1LU << (sq - 1));
+    if (sq < 63 && ((sq + 1) % 8)) b |= (1LU << (sq + 1));
+
+    if (sq > 0 && sq % 8 && sq < 56 ) b |= (1LU << (sq + 7));
+    if (sq < 56) b |= (1LU << (sq + 8));
+    if (sq < 55 && ((sq + 1) % 8)) b |= (1LU << (sq + 9));
+
+    KingZone[sq] = b;
+  }
 }
 
 // Initializes _squaresBetween array to bitboards of positions

@@ -47,6 +47,7 @@ extern Bitboard DiagonalMask[SQUARES_COUNT];
 extern Bitboard FileBitboard[FILES_COUNT];
 extern Bitboard RankBitboard[RANKS_COUNT];
 
+extern Bitboard KingZone[SQUARES_COUNT];
 
 class BitboardImpl
 {
@@ -153,6 +154,8 @@ private:
 	void initMovePosBoardKing();
 	void initAttackingPosBoardPawnWhite();
 	void initAttackingPosBoardPawnBlack();
+
+	void initKingZone();
 
 	void initSquaresBetween();
 

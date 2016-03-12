@@ -120,8 +120,24 @@ private:
 
 	const PositionState* _pos;
 
-	//white and black free space
-	Bitboard _freeSpace[2];
+	//white and black available space
+	Bitboard _availableSpace[2];
+
+	// KING RELATED
+
+	//king adjacent squares.
+	//If square is defended with pawn (and not attacked with opponnent's pawn)
+	// we do not include it in king zone
+	Bitboard _kingZone[2];
+
+	// number of pieces who attacks opponent's king zone
+  int16_t _attackers[2];
+
+  // weight of the attacker
+  int16_t _attackersWeight[2];
+
+  // number of attacks in the king zone
+  int16_t _attacks[2];
 };
 
 }

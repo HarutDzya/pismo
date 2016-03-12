@@ -12,6 +12,8 @@ namespace pismo
 {
 
 PositionState::PositionState(): 
+_whiteKingPosition(E1),
+_blackKingPosition(E8),
 _whitePieces(0), 
 _blackPieces(0),
 _occupiedSquares(0),
@@ -22,8 +24,6 @@ _absolutePinsPos(0),
 _isDoubleCheck(false),
 _whiteToPlay(true),
 _enPassantFile(-1),
-_whiteKingPosition(E1),
-_blackKingPosition(E8),
 _kingUnderCheck(false),
 _whiteLeftCastling(false),
 _whiteRightCastling(false),

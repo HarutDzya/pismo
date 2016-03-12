@@ -13,7 +13,7 @@ class BitboardImpl;
 class ZobKeyImpl;
 struct CheckPinInfo;
 
-const unsigned int MOVE_STACK_CAPACITY = 20;
+const unsigned int MOVE_STACK_CAPACITY = 100;
 
 class PositionState
 {
@@ -109,8 +109,6 @@ public:
 	Bitboard occupiedSquares() const {return _occupiedSquares;}
 	Bitboard whitePieces() const {return _whitePieces;}
 	Bitboard blackPieces() const {return _blackPieces;}
-
-	Bitboard const (&getPiecePos() const)[PIECE_COUNT] {return _piecePos;}
 
 	uint32_t materialKey() const {return _materialKey;}
 	uint16_t unusualMaterial() const {return _unusualMaterial;}
@@ -217,6 +215,13 @@ public:
   // piece available
   uint8_t _pieceCount[PIECE_COUNT];
 
+  // Occupation bitboards for each peace
+  Bitboard _piecePos[PIECE_COUNT];
+
+  //Shows white and black king position after the move
+  Square _whiteKingPosition;
+  Square _blackKingPosition;
+
 //data members
 private:
 	Piece _board[8][8];
@@ -227,9 +232,6 @@ private:
 	
 	// Occupation bitboard
 	Bitboard _occupiedSquares;
-
-	// Occupation bitboards for each peace
-	Bitboard _piecePos[PIECE_COUNT];
 
 	// CheckPinInfo contains bitboards for direct
 	// checking the opponent king for each piece,
@@ -256,10 +258,6 @@ private:
 	
 	// the file number of possible enPassant, -1 if none
 	int _enPassantFile;
-	
-	//Shows white and black king position after the move
-	Square _whiteKingPosition;
-	Square _blackKingPosition;
 
 	// Shows whether moving side king is under check
 	bool _kingUnderCheck;

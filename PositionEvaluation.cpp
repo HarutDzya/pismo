@@ -27,6 +27,8 @@ namespace pismo
 
 extern int bitCount(uint64_t);
 
+extern Bitboard KingZone[SQUARES_COUNT];
+
 uint16_t piecePhaseValue[PEACE_TYPE_COUNT] = {10, 32, 32, 50, 92, 0}; //all together
 uint16_t maxPhase = 750; //a bit smaller than all pieces values
 uint16_t minPhase = 50;  //a bit bigger than zero
@@ -64,6 +66,9 @@ int QueenMobility[2][28] =
 		44, 45, 46, 47, 47, 47, 47, 48, 48, 48, 49, 49, 50
 	}
 };
+
+//Attacker's weight: pawn knight bishop rook queen
+int AttackerWeight[6] = {0, 10, 4, 7, 8, 0};
 
 //bonuses and penalties for material imbalance
 const int16_t KnightRedundancyPenalty = 10;
@@ -395,8 +400,8 @@ void PositionEvaluation::reset(const PositionState& pos)
   _score._mgScore = 0;
   _score._egScore = 0;
 	_currentPawnEval = 0;
-  _freeSpace[WHITE] = 0;
-  _freeSpace[BLACK] = 0;
+  _availableSpace[WHITE] = 0;
+  _availableSpace[BLACK] = 0;
 
 	resetEvalLog();
 }
@@ -479,25 +484,37 @@ int16_t PositionEvaluation::evalMaterial()
 void PositionEvaluation::evalPawnsState()
 {
 	_currentPawnEval = &_pawnHash[_pos->getPawnKey() & PAWN_HASH_INDEX_MASK];
-	if (_currentPawnEval->key == _pos->getPawnKey()) {
-		_freeSpace[WHITE] = ~(_currentPawnEval->blackPawnAttacks |
-	                    _pos->getPiecePos()[PAWN_WHITE] | _pos->getPiecePos()[KING_WHITE]);
+
+	if (_currentPawnEval->key != _pos->getPawnKey()) {
 	
-		_freeSpace[BLACK] = ~(_currentPawnEval->whitePawnAttacks |
-	                  _pos->getPiecePos()[PAWN_BLACK] | _pos->getPiecePos()[KING_BLACK]);
-	    return;
+	  _currentPawnEval->whitePawnAttacks = BitboardImpl::instance()->whitePawnAnyAttacks(_pos->_piecePos[PAWN_WHITE]);
+	  _currentPawnEval->blackPawnAttacks = BitboardImpl::instance()->blackPawnAnyAttacks(_pos->_piecePos[PAWN_BLACK]);
+
+	  _currentPawnEval->key = _pos->getPawnKey();
 	}
 	
-	_currentPawnEval->key = _pos->getPawnKey();
-	
-	_currentPawnEval->whitePawnAttacks = BitboardImpl::instance()->whitePawnAnyAttacks(_pos->getPiecePos()[PAWN_WHITE]);
-	_currentPawnEval->blackPawnAttacks = BitboardImpl::instance()->blackPawnAnyAttacks(_pos->getPiecePos()[PAWN_BLACK]);
-	
-	_freeSpace[WHITE] = ~(_currentPawnEval->blackPawnAttacks |
-						_pos->getPiecePos()[PAWN_WHITE] | _pos->getPiecePos()[KING_WHITE]);
+	_availableSpace[WHITE] = ~(_currentPawnEval->blackPawnAttacks |
+						_pos->_piecePos[PAWN_WHITE] | _pos->_piecePos[KING_WHITE]);
 
-	_freeSpace[BLACK] = ~(_currentPawnEval->whitePawnAttacks |
-						_pos->getPiecePos()[PAWN_BLACK] | _pos->getPiecePos()[KING_BLACK]);
+	_availableSpace[BLACK] = ~(_currentPawnEval->whitePawnAttacks |
+						_pos->_piecePos[PAWN_BLACK] | _pos->_piecePos[KING_BLACK]);
+
+	//king related
+	_kingZone[WHITE] = KingZone[_pos->_whiteKingPosition] &
+	                                  (~_currentPawnEval->whitePawnAttacks | _currentPawnEval->blackPawnAttacks);
+	_kingZone[BLACK] = KingZone[_pos->_blackKingPosition] &
+	                                  (~_currentPawnEval->blackPawnAttacks | _currentPawnEval->whitePawnAttacks);
+
+	Bitboard b = _kingZone[BLACK] & _currentPawnEval->whitePawnAttacks;
+	_attacks[WHITE] = b ? bitCount(b) : 0;
+
+  b = _kingZone[WHITE] & _currentPawnEval->blackPawnAttacks;
+	_attacks[BLACK] = b ? bitCount(b) : 0;
+
+  _attackers[WHITE] = 0;
+	_attackers[BLACK] = 0;
+  _attackersWeight[WHITE] = 0;
+  _attackersWeight[BLACK] = 0;
 }
 
 template <Color clr>
@@ -505,19 +522,28 @@ void PositionEvaluation::evalKnights()
 {
 	assert(_currentPawnEval);
 	
-	Bitboard knightsPos = _pos->getPiecePos()[clr == WHITE ? KNIGHT_WHITE : KNIGHT_BLACK];
+	Bitboard knightsPos = _pos->_piecePos[clr == WHITE ? KNIGHT_WHITE : KNIGHT_BLACK];
 	int count = 0;
 	Square from = INVALID_SQUARE;
 	
 	while (knightsPos) {
 		from = (Square)BitboardImpl::instance()->lsb(knightsPos);
-		count = bitCount(BitboardImpl::instance()->knightAttackFrom(from) & _freeSpace[clr]);
+		Bitboard knightAttacks = BitboardImpl::instance()->knightAttackFrom(from);
+		count = bitCount(knightAttacks & _availableSpace[clr]);
 		if (clr == WHITE) {
 			incrScore(_score, KnightMobility[MIDDLE_GAME][count], KnightMobility[END_GAME][count], whiteMobility);
 		}
 		else {
 			decrScore(_score, KnightMobility[MIDDLE_GAME][count], KnightMobility[END_GAME][count], blackMobility);
 		}
+
+    Bitboard nAttacks = knightAttacks && _kingZone[clr == WHITE ? BLACK : WHITE];
+    if (nAttacks)
+    {
+      _attackers[clr]++;
+      _attackersWeight[clr] += AttackerWeight[KNIGHT];
+      _attacks[clr] += bitCount(nAttacks);
+    }
 
 		knightsPos &= (knightsPos - 1);
 	}
@@ -526,18 +552,32 @@ void PositionEvaluation::evalKnights()
 template <Color clr>
 void PositionEvaluation::evalBishops()
 {
-	Bitboard bishopsPos = _pos->getPiecePos()[clr == WHITE ? BISHOP_WHITE : BISHOP_BLACK];
+	Bitboard bishopsPos = _pos->_piecePos[clr == WHITE ? BISHOP_WHITE : BISHOP_BLACK];
 	int count = 0;
 	Square from = INVALID_SQUARE;
 	
 	while (bishopsPos) {
 		from = (Square)BitboardImpl::instance()->lsb(bishopsPos);
-		count = bitCount(BitboardImpl::instance()->bishopAttackFrom(from, _pos->occupiedSquares()) & _freeSpace[clr]);
+    // it includes bishop queen x-ray
+		Bitboard bishopAttacks = BitboardImpl::instance()->bishopAttackFrom(from,
+                   _pos->occupiedSquares() ^ _pos->_piecePos[clr == WHITE ? QUEEN_WHITE : QUEEN_BLACK]);
+
+		//TODO: check if the bishop is pinned , bishopAttacks should contain only valid possible moves (same for other pieces)
+ 		count = bitCount(bishopAttacks & _availableSpace[clr]);
 		if (clr == WHITE) {
 			incrScore(_score, BishopMobility[MIDDLE_GAME][count], BishopMobility[END_GAME][count], whiteMobility);
+
 		} else {
 			decrScore(_score, BishopMobility[MIDDLE_GAME][count], BishopMobility[END_GAME][count], blackMobility);
 		}
+
+    Bitboard nAttacks = bishopAttacks && _kingZone[clr == WHITE ? BLACK : WHITE];
+    if (nAttacks)
+    {
+      _attackers[clr]++;
+      _attackersWeight[clr] += AttackerWeight[BISHOP];
+      _attacks[clr] += bitCount(nAttacks);
+    }
 
 		bishopsPos &= (bishopsPos - 1);
 	}
@@ -546,18 +586,31 @@ void PositionEvaluation::evalBishops()
 template <Color clr>
 void PositionEvaluation::evalRooks()
 {
-	Bitboard rooksPos = _pos->getPiecePos()[clr == WHITE ? ROOK_WHITE : ROOK_BLACK];
+	Bitboard rooksPos = _pos->_piecePos[clr == WHITE ? ROOK_WHITE : ROOK_BLACK];
 	int count = 0;
 	Square from = INVALID_SQUARE;
 
 	while (rooksPos) {
 		from = (Square)BitboardImpl::instance()->lsb(rooksPos);
-    count = bitCount(BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares()) & _freeSpace[clr]);
+		// it includes rook and other major piece x-ray
+		Bitboard rookAttacks = BitboardImpl::instance()->rookAttackFrom(from, _pos->occupiedSquares() ^
+		                                _pos->_piecePos[clr == WHITE ? ROOK_WHITE : ROOK_BLACK] ^
+		                                _pos->_piecePos[clr == WHITE ? QUEEN_WHITE : QUEEN_BLACK]);
+
+    count = bitCount(rookAttacks & _availableSpace[clr]);
 		if (clr == WHITE) {
 			incrScore(_score, RookMobility[MIDDLE_GAME][count], RookMobility[END_GAME][count], whiteMobility);
 		} else {
 			decrScore(_score, RookMobility[MIDDLE_GAME][count], RookMobility[END_GAME][count], blackMobility);
 		}
+
+    Bitboard nAttacks = rookAttacks && _kingZone[clr == WHITE ? BLACK : WHITE];
+    if (nAttacks)
+    {
+      _attackers[clr]++;
+      _attackersWeight[clr] += AttackerWeight[ROOK];
+      _attacks[clr] += bitCount(nAttacks);
+    }
 
 		rooksPos &= (rooksPos - 1);
 	}
@@ -566,18 +619,27 @@ void PositionEvaluation::evalRooks()
 template <Color clr>
 void PositionEvaluation::evalQueens()
 {
-	Bitboard queensPos = _pos->getPiecePos()[clr == WHITE ? QUEEN_WHITE : QUEEN_BLACK];
+	Bitboard queensPos = _pos->_piecePos[clr == WHITE ? QUEEN_WHITE : QUEEN_BLACK];
 	int count = 0;
 	Square from = INVALID_SQUARE;
 
 	while (queensPos) {
 		from = (Square)BitboardImpl::instance()->lsb(queensPos);
-    count = bitCount(BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares()) & _freeSpace[clr]);
+		Bitboard queenAttacks = BitboardImpl::instance()->queenAttackFrom(from, _pos->occupiedSquares());
+    count = bitCount(queenAttacks & _availableSpace[clr]);
 		if (clr == WHITE) {
 			incrScore(_score, QueenMobility[MIDDLE_GAME][count], QueenMobility[END_GAME][count], whiteMobility);
 		} else {
 			decrScore(_score, QueenMobility[MIDDLE_GAME][count], QueenMobility[END_GAME][count], blackMobility);
 		}
+
+    Bitboard nAttacks = queenAttacks && _kingZone[clr == WHITE ? BLACK : WHITE];
+    if (nAttacks)
+    {
+      _attackers[clr]++;
+      _attackersWeight[clr] += AttackerWeight[QUEEN];
+      _attacks[clr] += bitCount(nAttacks);
+    }
 
 		queensPos &= (queensPos - 1);
 	}
