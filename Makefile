@@ -1,4 +1,5 @@
 CC = g++
+#CC = /usr/bin/x86_64-w64-mingw32-g++ -static-libgcc -static-libstdc++ -static -lpthread
 CFLAGS = -Wall -O3 -g 
 LFLAGS = -g
 

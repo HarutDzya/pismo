@@ -20,7 +20,7 @@ int main()
 	MemPool::initCheckPinInfo();
 	PositionState pos;
 
-	pos.initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 1");
+	pos.initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	pos.printBoard();
 	std::cout << "Please enter: \n\tn - to make next move \n\tu - to undo the move"
 		"\n\tt - for engine to think (and make a move) \n\tf - to print FEN \n\tq - to stop the game" << std::endl;
@@ -64,9 +64,15 @@ int main()
 		} 
 		else if (choice == "t") {
 			MoveInfo mv = p->think(pos, 6);
-			pos.makeMove(mv);
-			pos.printBoard();
-			std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;
+			if (mv.from != INVALID_SQUARE) {
+				pos.makeMove(mv);
+				pos.printBoard();
+				std::cout << "Move: " <<  moveToNotation(mv) << "\n" << std::endl;
+			}
+			else {
+				std::cout << "Game over: there is no more moves" << std::endl;
+				break;
+			}
 		}
     else if (choice == "f") {
       std::cout << pos.getStateFEN() << std::endl;
