@@ -23,6 +23,9 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 		score = -MAX_SCORE;
 		while(generatedMove.from != INVALID_SQUARE) {
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				if (move.from == INVALID_SQUARE) {
+					move = generatedMove;
+				}
 				_pos->makeMove(generatedMove);
 				int16_t s = alphaBetaIterative(depth - 1, score, MAX_SCORE);
 				_pos->undoMove();
@@ -39,6 +42,9 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 		score = MAX_SCORE;
 		while(generatedMove.from != INVALID_SQUARE) {
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
+				if (move.from == INVALID_SQUARE) {
+					move = generatedMove;
+				}
 				_pos->makeMove(generatedMove);
 				int16_t s = alphaBetaIterative(depth - 1, -MAX_SCORE, score);
 				_pos->undoMove();
