@@ -3,13 +3,25 @@
 #include "PositionState.h"
 #include "ABCore.h"
 #include "MemPool.h"
+#include "Uci.h"
+#include <thread>
 
 void printBitboard(const pismo::Bitboard& board);
 
 int main()
 {
 	using namespace pismo;
-	std::map<std::string, Square> boardRep;
+	std::thread searchThread(UCI::manageSearch);
+	std::thread timerThread(UCI::manageTimer);
+	MemPool::initMoveGenInfo();
+	MemPool::initCheckPinInfo();
+	UCI::manageUCI();
+	searchThread.join();
+	timerThread.join();
+	MemPool::destroyMoveGenInfo();
+	MemPool::destroyCheckPinInfo();
+
+/*	std::map<std::string, Square> boardRep;
 	for (int i = 0; i < 8; ++i) {
 		for(int j = 0; j < 8; ++j) {
 			boardRep[std::string(1, ('A' + j)) + std::string(1, ('1' + i))] = (Square)(i * 8 + j);
@@ -86,7 +98,7 @@ int main()
 	pos.printWhitePieces();
 	pos.printBlackPieces();
 	MemPool::destroyMoveGenInfo();
-	MemPool::destroyCheckPinInfo();
+	MemPool::destroyCheckPinInfo();*/
 }
 
 void printBitboard(const pismo::Bitboard& board)

@@ -6,6 +6,10 @@
 
 namespace pismo
 {
+namespace UCI
+{
+extern bool stopSearch;
+}
 
 MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 {
@@ -21,7 +25,7 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 	int16_t score;
 	if (_pos->whiteToPlay()) {
 		score = -MAX_SCORE;
-		while(generatedMove.from != INVALID_SQUARE) {
+		while(generatedMove.from != INVALID_SQUARE && !UCI::stopSearch) {
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
 				if (move.from == INVALID_SQUARE) {
 					move = generatedMove;
@@ -40,7 +44,7 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 	}
 	else {
 		score = MAX_SCORE;
-		while(generatedMove.from != INVALID_SQUARE) {
+		while(generatedMove.from != INVALID_SQUARE && !UCI::stopSearch) {
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
 				if (move.from == INVALID_SQUARE) {
 					move = generatedMove;

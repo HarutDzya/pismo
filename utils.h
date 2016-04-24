@@ -117,6 +117,7 @@ const int PIECE_VALUES[PIECE_COUNT] =
 const int16_t MAX_SCORE = 10000; //white has 100% winning position (-MAX_SCORE black wins)
 
 std::string moveToNotation(const MoveInfo& move);
+std::string getPromoted(Piece piece);
 }
 
 #endif //UTILS_H_
