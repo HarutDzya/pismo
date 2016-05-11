@@ -3,12 +3,14 @@
 #include "PositionState.h"
 #include "PositionEvaluation.h"
 #include "TranspositionTable.h"
+#include <mutex>
 
 namespace pismo
 {
 namespace UCI
 {
 extern bool stopSearch;
+extern std::mutex stopMtx;
 }
 
 MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
@@ -25,7 +27,12 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 	int16_t score;
 	if (_pos->whiteToPlay()) {
 		score = -MAX_SCORE;
-		while(generatedMove.from != INVALID_SQUARE && !UCI::stopSearch) {
+		while(generatedMove.from != INVALID_SQUARE) {
+			std::unique_lock<std::mutex> timerLck(UCI::stopMtx);
+			if (UCI::stopSearch) {
+				break;
+			}
+			timerLck.unlock();
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
 				if (move.from == INVALID_SQUARE) {
 					move = generatedMove;
@@ -44,7 +51,12 @@ MoveInfo ABCore::think(PositionState& pos, uint16_t depth)
 	}
 	else {
 		score = MAX_SCORE;
-		while(generatedMove.from != INVALID_SQUARE && !UCI::stopSearch) {
+		while(generatedMove.from != INVALID_SQUARE) {
+			std::unique_lock<std::mutex> timerLck(UCI::stopMtx);
+			if (UCI::stopSearch) {
+				break;
+			}
+			timerLck.unlock();
 			if (_pos->pseudoMoveIsLegalMove(generatedMove)) {
 				if (move.from == INVALID_SQUARE) {
 					move = generatedMove;

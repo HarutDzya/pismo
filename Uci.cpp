@@ -6,6 +6,7 @@
 #include <chrono>
 #include "ABCore.h"
 #include "PositionState.h"
+#include "MemPool.h"
 
 namespace pismo
 {
@@ -44,6 +45,8 @@ void initUCI()
 void manageUCI()
 {
 	initUCI();
+	MemPool::initMoveGenInfo();
+	MemPool::initCheckPinInfo();
 	//const char* delimiter = " \t";
 	char command[MAX_COMMAND_SIZE];
 	while (fgets(command, MAX_COMMAND_SIZE, stdin)) {
@@ -65,6 +68,14 @@ void manageUCI()
 					std::fputs("Unknown option:\n", stdout);
 			}
 		}*/
+		else if (!std::strncmp(command, "position", std::strlen("position"))) {
+			if (!std::strcmp(command, "position startpos\n")) {
+				std::unique_lock<std::mutex> timerLck(stopMtx);
+				stopSearch = true;
+				stopCV.wait(timerLck, []() {return !doSearch;});
+				pos->initPositionFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+			}
+		}
 		else if (!std::strcmp(command, "go\n")) {
 			std::unique_lock<std::mutex> searchLck(searchMtx);
 			std::unique_lock<std::mutex> timerLck(stopMtx);
@@ -73,7 +84,12 @@ void manageUCI()
 			stopCV.notify_one();
 			searchCV.notify_one();
 		}
+		else if (!std::strcmp(command, "quit\n")) {
+			std::exit(EXIT_SUCCESS);
+		}
 	}
+	MemPool::destroyMoveGenInfo();
+	MemPool::destroyCheckPinInfo();
 }
 
 void manageSearch()
@@ -84,6 +100,7 @@ void manageSearch()
 		MoveInfo move = engine->think(*pos, 8);
 		printMove(move);
 		doSearch = false;
+		stopCV.notify_all();
 	}
 }
 
@@ -92,6 +109,7 @@ void manageTimer()
 	std::unique_lock<std::mutex> timerLck(stopMtx);
 	while (true) {
 		stopCV.wait(timerLck, []() {return doSearch;});
+		timerLck.unlock();
 		auto startTime = std::chrono::steady_clock::now();
 		bool elapsed = false;
 		while (!elapsed) {
@@ -101,7 +119,9 @@ void manageTimer()
 				elapsed = true;
 			}
 		}
+		timerLck.lock();
 		stopSearch = true;
+		stopCV.wait(timerLck, []() {return !doSearch;});
 	}
 }
 
